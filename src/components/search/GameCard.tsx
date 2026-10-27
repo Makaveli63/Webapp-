@@ -29,9 +29,8 @@ export function GameCard({ game }: { game: SearchGame }) {
       </div>
       <div className="p-3">
         <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-heading">{game.title}</h3>
-        <p className="mt-1 truncate text-xs text-muted">
-          {[game.note, game.date && fullDate(game.date), game.platforms.join(" · ")].filter(Boolean).join(" — ")}
-        </p>
+        {(game.date || game.note) && <p className="mt-1 line-clamp-2 text-xs text-muted">{[game.date && fullDate(game.date), game.note].filter(Boolean).join(" · ")}</p>}
+        {game.platforms.length > 0 && <p className="mt-0.5 truncate text-xs font-medium text-fg">{game.platforms.join(" · ")}</p>}
         {game.anime ? (
           <span className="mt-2 flex flex-wrap items-center gap-1.5">
             <EpisodeTracker anime={{ id: game.id, title: game.title, image: game.image, ...game.anime }} />

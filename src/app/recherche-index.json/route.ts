@@ -10,6 +10,8 @@ import type { SearchGame, SearchIndex } from "@/types";
 // Index de recherche généré au build (fichier statique), téléchargé seulement sur la page Recherche.
 export const dynamic = "force-static";
 
+const dayLabel = (ymd: string) =>
+  new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${ymd}T12:00:00Z`));
 const norm = (t: string) => t.toLowerCase().normalize("NFD").replace(/[^a-z0-9]/g, "");
 
 export async function GET() {
@@ -31,7 +33,12 @@ export async function GET() {
     if (!k) return;
     const known = byKey.get(k);
     if (known) {
-      // Même jeu dans plusieurs sources (ex. version Switch 2 à venir + version PS5 / PC déjà sortie) : plateformes réunies.
+      // Même jeu dans plusieurs sources (ex. version Switch 2 à venir + version PS5 / PC déjà sortie) : plateformes réunies,
+      // date la plus ancienne affichée, la sortie plus tardive gardée en note (« Switch 2 : 18 mars 2027 »).
+      if (g.date && known.date && g.date < known.date && known.platforms.length) {
+        known.note ??= `${known.platforms.join(", ")} : ${dayLabel(known.date)}`;
+        known.date = g.date;
+      }
       known.platforms = [...new Set([...known.platforms, ...g.platforms])];
       known.image ??= g.image;
       return;

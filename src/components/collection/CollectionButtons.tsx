@@ -13,7 +13,7 @@ export function CollectionButtons({ game, className = "" }: Props) {
   const c = useCollection();
   const owned = !!c?.owned.some((g) => g.id === game.id);
   const wanted = !!c?.wanted.some((g) => g.id === game.id);
-  const base = "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold transition-colors";
+  const base = "inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold transition-colors";
   // Au-dessus d'un éventuel lien qui couvre toute la carte.
   const stop = (e: React.MouseEvent, fn: () => void) => {
     e.preventDefault();
@@ -21,7 +21,7 @@ export function CollectionButtons({ game, className = "" }: Props) {
     fn();
   };
   return (
-    <div className={`relative z-10 flex gap-1.5 ${className}`}>
+    <div className={`relative z-10 flex flex-wrap gap-1.5 ${className}`}>
       <button
         type="button"
         aria-pressed={owned}
