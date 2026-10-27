@@ -21,7 +21,8 @@ const ERRORS: Record<string, string> = {
 export async function rpc<T>(fn: string, args: Record<string, unknown>): Promise<T> {
   const res = await fetch(`${URL}/rest/v1/rpc/${fn}`, {
     method: "POST",
-    headers: { apikey: KEY, Authorization: `Bearer ${KEY}`, "Content-Type": "application/json" },
+    // Nouvelle clé « publishable » (sb_publishable_…) : en-tête apikey seul ; ancienne clé « anon » (JWT) : aussi en Bearer.
+    headers: { apikey: KEY, ...(KEY.startsWith("eyJ") ? { Authorization: `Bearer ${KEY}` } : {}), "Content-Type": "application/json" },
     body: JSON.stringify(args),
   });
   if (!res.ok) {
