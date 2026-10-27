@@ -5,12 +5,14 @@ import { Bookmark } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Logo } from "@/components/ui/Logo";
+import { AdminLink } from "./AdminLink";
 import { activeHref, NAV_LINKS, SEARCH_LINK } from "./nav-links";
 import { SearchBar } from "./SearchBar";
 
 /** En-tête : navigation complète sur ordinateur, logo + recherche sur mobile (onglets en bas d'écran). */
 export function Navbar() {
-  const active = activeHref(usePathname());
+  const pathname = usePathname();
+  const active = activeHref(pathname);
   const SearchIcon = SEARCH_LINK.icon;
 
   return (
@@ -36,22 +38,25 @@ export function Navbar() {
 
         <SearchBar className="ml-auto hidden w-56 lg:block" />
 
-        <ThemeToggle className="-mr-1 ml-auto lg:ml-0" />
-        <Link
-          href="/favoris"
-          aria-label="Mes favoris"
-          className="-mr-1 flex size-11 items-center justify-center rounded-full text-muted hover:text-fg"
-        >
-          <Bookmark className="size-5" aria-hidden />
-        </Link>
+        <div className="ml-auto flex items-center gap-4 lg:ml-0">
+          <AdminLink active={pathname.startsWith("/admin")} />
+          <ThemeToggle className="-mr-1" />
+          <Link
+            href="/favoris"
+            aria-label="Mes favoris"
+            className="-mr-1 flex size-11 items-center justify-center rounded-full text-muted hover:text-fg"
+          >
+            <Bookmark className="size-5" aria-hidden />
+          </Link>
 
-        <Link
-          href={SEARCH_LINK.href}
-          aria-label="Rechercher"
-          className="-mr-2 flex size-11 items-center justify-center rounded-full text-muted hover:text-fg lg:hidden"
-        >
-          <SearchIcon className="size-5" aria-hidden />
-        </Link>
+          <Link
+            href={SEARCH_LINK.href}
+            aria-label="Rechercher"
+            className="-mr-2 flex size-11 items-center justify-center rounded-full text-muted hover:text-fg lg:hidden"
+          >
+            <SearchIcon className="size-5" aria-hidden />
+          </Link>
+        </div>
       </nav>
     </header>
   );

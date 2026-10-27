@@ -108,3 +108,37 @@ export const ADMIN_ERRORS: Record<string, string> = {
   MOT_DE_PASSE_NON_DEFINI:
     "Aucun mot de passe enregistré : dans Supabase (SQL Editor), lance select public.admin_set_password('…');",
 };
+
+/**
+ * Appareil de l'administrateur : simple repère (pas un secret) posé après une connexion réussie,
+ * pour afficher l'onglet « Admin » sur ses appareils seulement. Sans mot de passe, il ne donne accès à rien.
+ */
+const ADMIN_DEVICE_KEY = "gb-admin-appareil";
+const ADMIN_DEVICE_EVENT = "gb-admin-appareil";
+
+export function setAdminDevice(on: boolean) {
+  try {
+    if (on) localStorage.setItem(ADMIN_DEVICE_KEY, "1");
+    else localStorage.removeItem(ADMIN_DEVICE_KEY);
+    window.dispatchEvent(new Event(ADMIN_DEVICE_EVENT));
+  } catch {
+    // stockage indisponible (navigation privée) : l'onglet reste simplement masqué
+  }
+}
+
+export function isAdminDevice(): boolean {
+  try {
+    return localStorage.getItem(ADMIN_DEVICE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function onAdminDeviceChange(listener: () => void): () => void {
+  window.addEventListener(ADMIN_DEVICE_EVENT, listener);
+  window.addEventListener("storage", listener);
+  return () => {
+    window.removeEventListener(ADMIN_DEVICE_EVENT, listener);
+    window.removeEventListener("storage", listener);
+  };
+}

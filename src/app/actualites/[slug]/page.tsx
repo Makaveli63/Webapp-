@@ -78,7 +78,7 @@ export default async function ArticlePage({ params }: Props) {
           <div className="prose-article mt-8">
             {article.score && (
               <p className="flex items-center gap-3">
-                <span className={`rounded-2xl px-3.5 py-2 text-2xl font-extrabold ${scoreTier(article.score).className}`}>
+                <span className={`score-solid rounded-2xl px-3.5 py-2 text-2xl font-extrabold ${scoreTier(article.score).className}`}>
                   {article.score}
                 </span>
                 <span className="text-sm text-muted">

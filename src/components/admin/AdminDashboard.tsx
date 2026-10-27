@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { loadSearchIndex } from "@/lib/search-index";
 import { setPageGlow } from "@/lib/background";
-import { ADMIN_ERRORS, ADMIN_SESSION_KEY, rpc, socialEnabled, timeAgo } from "@/lib/social";
+import { ADMIN_ERRORS, ADMIN_SESSION_KEY, rpc, setAdminDevice, socialEnabled, timeAgo } from "@/lib/social";
 import { BarList, DailyChart, type DailyPoint } from "./charts";
 
 interface Stats {
@@ -74,6 +74,7 @@ export function AdminDashboard() {
         setStats(data);
         setPassword(pwd);
         sessionStorage.setItem(SESSION_KEY, pwd);
+        setAdminDevice(true); // affiche l'onglet « Admin » sur cet appareil
       }
     } catch (err) {
       setError((err as Error).message);
@@ -172,6 +173,19 @@ export function AdminDashboard() {
           className="ml-auto inline-flex items-center gap-1.5 text-sm text-muted hover:text-fg"
         >
           <LogOut className="size-4" aria-hidden /> Se déconnecter
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            if (!confirm("Masquer l'onglet Admin sur cet appareil et se déconnecter ?")) return;
+            setAdminDevice(false);
+            sessionStorage.removeItem(SESSION_KEY);
+            setPassword("");
+            setStats(null);
+          }}
+          className="text-sm text-muted underline underline-offset-2 hover:text-fg"
+        >
+          Oublier cet appareil
         </button>
       </div>
       {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
