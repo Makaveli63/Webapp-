@@ -35,7 +35,7 @@ export function OfflineSupport() {
           if (!navigator.onLine || conn?.saveData || Date.now() - last < 3 * 3600_000) return;
           await navigator.serviceWorker.ready;
           const index = await loadSearchIndex().catch(() => null);
-          const pages = ["/", "/actualites/", "/tests/", "/sorties/", "/jeux-gratuits/", "/promos/", "/favoris/", "/collection/"];
+          const pages = ["/", "/actualites/", "/tests/", "/sorties/", "/jeux-gratuits/", "/promos/", "/favoris/", "/collection/", "/reglages/"];
           const articles = (index?.articles ?? []).slice(0, 25).map((a) => `/actualites/${a.slug}/`);
           (reg.active ?? navigator.serviceWorker.controller)?.postMessage({
             type: "precache",

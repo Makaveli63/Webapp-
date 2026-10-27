@@ -25,11 +25,21 @@ export async function GET() {
   const calendar = getCalendar();
   const games: SearchGame[] = [];
   const seen = new Set<string>();
+  const byKey = new Map<string, SearchGame>();
   const add = (g: SearchGame) => {
     const k = norm(g.title);
-    if (!k || seen.has(k)) return;
+    if (!k) return;
+    const known = byKey.get(k);
+    if (known) {
+      // Même jeu dans plusieurs sources (ex. version Switch 2 à venir + version PS5 / PC déjà sortie) : plateformes réunies.
+      known.platforms = [...new Set([...known.platforms, ...g.platforms])];
+      known.image ??= g.image;
+      return;
+    }
     seen.add(k);
-    games.push(g);
+    const copy = { ...g, platforms: [...g.platforms] };
+    byKey.set(k, copy);
+    games.push(copy);
   };
   for (const r of getUpcomingReleases())
     add({ id: r.id, title: r.title, date: r.date, platforms: r.platforms, image: r.image, url: "/sorties", video: r.video });
@@ -37,6 +47,7 @@ export async function GET() {
   for (const g of getFreeGames().games)
     add({ id: g.id, title: g.title, platforms: [g.store], image: g.image, url: g.url, note: "Gratuit en ce moment" });
   for (const g of calendar.database) add(g);
+  for (const g of calendar.searchGames) add(g);
   // Animes de la saison et à venir (AniList) : « solo leveling » trouve l'anime même sans actu.
   const anime = getAnime();
   for (const a of [...anime.airing, ...anime.upcoming])

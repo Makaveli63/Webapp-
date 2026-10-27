@@ -121,6 +121,8 @@ export interface CalendarData {
   consolePhotos: Record<string, { url: string; credit: string; page: string }>;
   /** Jeux populaires (RAWG) pour la recherche ; date facultative */
   database: (Omit<CalendarGame, "date"> & { date?: string; playtime?: number; genres?: string[] })[];
+  /** Grande base de jeux (plusieurs milliers, RAWG), uniquement pour la recherche */
+  searchGames: (Omit<CalendarGame, "date"> & { date?: string })[];
 }
 
 /** Jeu affiché dans la recherche (base RAWG, calendrier, sorties, jeux gratuits). */

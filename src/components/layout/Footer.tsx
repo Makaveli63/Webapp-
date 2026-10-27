@@ -18,6 +18,7 @@ const SECTIONS = [
       { href: "/collection", label: "Ma bibliothèque" },
       { href: "/recherche", label: "Recherche" },
       { href: "/favoris", label: "Mon espace" },
+      { href: "/reglages", label: "Réglages" },
     ],
   },
   {

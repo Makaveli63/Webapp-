@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { CircleUserRound } from "lucide-react";
+import { CircleUserRound, Settings } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Logo } from "@/components/ui/Logo";
 import { AdminLink } from "./AdminLink";
 import { activeHref, NAV_LINKS, SEARCH_LINK } from "./nav-links";
@@ -42,7 +41,6 @@ export function Navbar() {
 
         <div className="ml-auto flex items-center gap-1 sm:gap-4 lg:ml-0">
           <AdminLink active={pathname.startsWith("/admin")} />
-          <ThemeToggle className="-mr-1" />
           <Link
             href="/favoris"
             aria-label="Mon espace"
@@ -56,9 +54,17 @@ export function Navbar() {
           <Link
             href={SEARCH_LINK.href}
             aria-label="Rechercher"
-            className="-mr-2 flex size-11 items-center justify-center rounded-full text-muted hover:text-fg lg:hidden"
+            className="-mr-1 flex size-11 items-center justify-center rounded-full text-muted hover:text-fg lg:hidden"
           >
             <SearchIcon className="size-5" aria-hidden />
+          </Link>
+          <Link
+            href="/reglages"
+            aria-label="Réglages"
+            aria-current={pathname.startsWith("/reglages") ? "page" : undefined}
+            className={`-mr-2 flex size-11 items-center justify-center rounded-full hover:text-fg ${pathname.startsWith("/reglages") ? "text-accent" : "text-muted"}`}
+          >
+            <Settings className="size-5" aria-hidden />
           </Link>
         </div>
       </nav>

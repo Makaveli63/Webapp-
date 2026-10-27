@@ -15,7 +15,7 @@ export default function CollectionPage() {
       <h1 className="mt-2 text-2xl font-extrabold text-heading sm:text-3xl">Ma bibliothèque</h1>
       <p className="mt-2 text-muted">
         Tes jeux et tes animes : ton avancement, tes heures de jeu et de visionnage, les jeux que tu possèdes et ceux que tu veux, avec
-        leurs promos et leurs actus. Conservé sur cet appareil (synchronisable dans Mon espace).
+        leurs promos et leurs actus. Conservé sur cet appareil (synchronisable dans Réglages).
       </p>
       <CollectionView deals={getDeals().steam} />
     </div>

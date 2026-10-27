@@ -17,12 +17,38 @@ const matches = (words: string[], ...fields: (string | undefined)[]) => {
   return words.every((w) => hay.includes(w));
 };
 
+// Petits mots ignorés (« 007 first light sur ps5 ») et noms de plateformes traités comme un filtre.
+const STOP_WORDS = new Set(["sur", "le", "la", "les", "de", "des", "du", "un", "une", "jeu", "jeux", "pour", "en", "et", "l", "d", "video"]);
+const PLATFORM_WORDS: Record<string, RegExp> = {
+  ps5: /^PS5$/, ps4: /^PS4$/, playstation: /^PS/, xbox: /^Xbox/, switch: /^Switch/, nintendo: /^Switch/,
+  pc: /^PC$/, steam: /^PC$/, mobile: /^(Mobile|iOS|Android)$/, ios: /^(Mobile|iOS)$/, android: /^(Mobile|Android)$/,
+};
+
+function parseQuery(query: string) {
+  const all = normalize(query).split(" ").filter(Boolean);
+  const platforms: RegExp[] = [];
+  const words: string[] = [];
+  all.forEach((w, i) => {
+    if (PLATFORM_WORDS[w]) platforms.push(w === "switch" && all[i + 1] === "2" ? /^Switch 2$/ : PLATFORM_WORDS[w]);
+    else if (w === "2" && all[i - 1] === "switch") return;
+    else if (!STOP_WORDS.has(w) || all.length === 1) words.push(w);
+  });
+  // Recherche d'une plateforme seule (« ps5 ») : on cherche le mot, pas un filtre vide.
+  return words.length ? { words, platforms } : { words: all, platforms: [] };
+}
+
+const onPlatforms = (list: string[], platforms: RegExp[]) =>
+  !platforms.length || list.includes("Multi") || platforms.every((re) => list.some((p) => re.test(p)));
+
 function runSearch(index: SearchIndex | null, query: string) {
-  const words = normalize(query).split(" ").filter(Boolean);
+  const { words, platforms } = parseQuery(query);
   if (!index || !words.length) return { articles: [], games: [] };
+  const games = index.games.filter((g) => matches(words, g.title, g.aka));
+  const onPlatform = games.filter((g) => onPlatforms(g.platforms, platforms));
   return {
-    articles: index.articles.filter((a) => matches(words, a.title, a.excerpt, a.source.name, ...a.tags, ...a.platforms)),
-    games: index.games.filter((g) => matches(words, g.title, g.aka)),
+    articles: index.articles.filter((a) => matches(words, a.title, a.excerpt, a.source.name, ...a.tags) && onPlatforms(a.platforms, platforms)),
+    // Plateformes parfois incomplètes dans les bases de jeux : sans résultat sur la plateforme, on montre quand même le jeu.
+    games: onPlatform.length ? onPlatform : games,
   };
 }
 
@@ -89,8 +115,8 @@ export function SearchResults() {
         </section>
       )}
 
-      <AniListResults query={shownQuery} onCount={setAnimeCount} />
-      <WikipediaResults query={shownQuery} />
+      <AniListResults query={parseQuery(shownQuery).words.join(" ")} onCount={setAnimeCount} />
+      <WikipediaResults query={parseQuery(shownQuery).words.join(" ")} />
     </>
   );
 }

@@ -8,6 +8,11 @@ import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 const OUT_FILE = path.resolve(".cache/news/calendar.json");
+// Grande base de jeux pour la recherche (plusieurs milliers), conservée d'un build à l'autre (cache GitHub Actions)
+// et complétée quelques pages RAWG à la fois pour ménager le quota gratuit.
+const SEARCH_DB_FILE = path.resolve(".cache/news/games-db.json");
+const SEARCH_DB_MAX = 6000;
+const SEARCH_DB_KEEP_DAYS = 45;
 const RAWG_KEY = process.env.RAWG_API_KEY?.trim();
 const RAWG_BASE = process.env.RAWG_BASE?.trim() || "https://api.rawg.io"; // remplaçable pour les tests
 const MAX_BYTES = 3 * 1024 * 1024;
@@ -235,6 +240,74 @@ async function gameDatabase() {
   return games;
 }
 
+/** Image RAWG réduite (cartes de la recherche) : /media/crop/600/400/… au lieu de l'original. */
+const smallImage = (url) => url?.replace("https://media.rawg.io/media/", "https://media.rawg.io/media/crop/600/400/");
+
+/**
+ * Base de recherche : listes RAWG parcourues par morceaux d'un build à l'autre
+ * (à venir, sorties des 3 dernières années, les plus populaires de tous les temps).
+ */
+async function searchDatabase() {
+  let db = { cursor: 0, games: {} };
+  try {
+    db = JSON.parse(readFileSync(SEARCH_DB_FILE, "utf8"));
+  } catch {
+    // premier passage : base vide
+  }
+  if (!RAWG_KEY) return Object.values(db.games ?? {});
+  const now = new Date();
+  const later = new Date(now.getTime() + 548 * 86_400_000);
+  const before = new Date(now.getTime() - 3 * 365 * 86_400_000);
+  const lists = [
+    ...Array.from({ length: 10 }, (_, i) => `dates=${ymd(now)},${ymd(later)}&ordering=-added&page=${i + 1}`),
+    ...Array.from({ length: 40 }, (_, i) => `dates=${ymd(before)},${ymd(now)}&ordering=-added&page=${i + 1}`),
+    ...Array.from({ length: 60 }, (_, i) => `ordering=-added&page=${i + 1}`),
+  ];
+  const games = db.games ?? {};
+  // Les 2 premières pages « à venir » à chaque fois (annonces récentes), puis la suite de la rotation.
+  const count = Object.keys(games).length < 1000 ? 25 : 6;
+  let cursor = Number.isInteger(db.cursor) ? db.cursor % lists.length : 0;
+  const todo = [lists[0], lists[1]];
+  for (let i = 0; i < count; i++) {
+    todo.push(lists[cursor]);
+    cursor = (cursor + 1) % lists.length;
+  }
+  let fetched = 0;
+  for (const query of [...new Set(todo)]) {
+    try {
+      const data = await get(`${RAWG_BASE}/api/games?key=${encodeURIComponent(RAWG_KEY)}&page_size=40&${query}`);
+      for (const g of data?.results ?? []) {
+        if (!g?.name || !Number.isInteger(g.id)) continue;
+        games[`rawg-${g.id}`] = {
+          id: `rawg-${g.id}`,
+          title: clean(g.name, 120),
+          date: /^\d{4}-\d{2}-\d{2}$/.test(g.released ?? "") ? g.released : undefined,
+          platforms: platformLabels((g.platforms ?? []).map((p) => p?.platform?.name ?? "")),
+          image: smallImage(httpsUrl(g.background_image)),
+          url: httpsUrl(`https://rawg.io/games/${g.slug}`),
+          rating: typeof g.metacritic === "number" ? g.metacritic : undefined,
+          added: Number.isInteger(g.added) ? g.added : 0,
+          seen: now.toISOString().slice(0, 10),
+        };
+        fetched++;
+      }
+    } catch (err) {
+      console.log(`[recherche] page RAWG indisponible (${err.message})`);
+    }
+  }
+  // Oublie les jeux qui ne sont plus dans aucune liste depuis longtemps, garde les plus suivis.
+  const limit = ymd(new Date(now.getTime() - SEARCH_DB_KEEP_DAYS * 86_400_000));
+  const kept = Object.values(games)
+    .filter((g) => (g.seen ?? "") >= limit)
+    .sort((a, b) => (b.added ?? 0) - (a.added ?? 0))
+    .slice(0, SEARCH_DB_MAX);
+  const next = { cursor, games: Object.fromEntries(kept.map((g) => [g.id, g])) };
+  writeFileSync(`${SEARCH_DB_FILE}.tmp`, JSON.stringify(next));
+  renameSync(`${SEARCH_DB_FILE}.tmp`, SEARCH_DB_FILE);
+  console.log(`[recherche] base de jeux : ${kept.length} jeux (${fetched} mis à jour ce build)`);
+  return kept;
+}
+
 /**
  * Vraies photos des consoles, sous licence libre uniquement (Wikipédia, paramètre pilicense=free),
  * avec l'auteur et la licence pour le crédit. Utilisées quand un article n'a pas d'image.
@@ -292,6 +365,12 @@ async function main() {
   } catch (err) {
     console.log(`[sorties] base de jeux indisponible (${err.message})`);
   }
+  let searchGames = [];
+  try {
+    searchGames = await searchDatabase();
+  } catch (err) {
+    console.log(`[recherche] base de jeux indisponible (${err.message})`);
+  }
   const { images, videos } = await releaseMedia();
   const photos = await consolePhotos();
   console.log(`[sorties] photos libres des consoles : ${Object.keys(photos).join(", ") || "aucune"}`);
@@ -308,6 +387,7 @@ async function main() {
     releaseImages: images,
     releaseVideos: videos,
     database,
+    searchGames: searchGames.map((g) => ({ id: g.id, title: g.title, date: g.date, platforms: g.platforms, image: g.image, url: g.url, rating: g.rating })),
     consolePhotos: photos,
   };
   writeFileSync(`${OUT_FILE}.tmp`, JSON.stringify(result));
