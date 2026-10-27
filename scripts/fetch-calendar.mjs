@@ -232,6 +232,43 @@ async function gameDatabase() {
   return games;
 }
 
+/**
+ * Vraies photos des consoles, sous licence libre uniquement (Wikipédia, paramètre pilicense=free),
+ * avec l'auteur et la licence pour le crédit. Utilisées quand un article n'a pas d'image.
+ */
+const CONSOLE_PAGES = { switch: "Nintendo Switch 2", ps: "PlayStation 5", xbox: "Xbox Series X and Series S" };
+
+async function consolePhotos() {
+  const out = {};
+  for (const [theme, page] of Object.entries(CONSOLE_PAGES)) {
+    try {
+      const q = new URLSearchParams({
+        action: "query", format: "json", redirects: "1", titles: page,
+        prop: "pageimages", piprop: "name|thumbnail", pithumbsize: "1280", pilicense: "free",
+      });
+      const data = await get(`https://en.wikipedia.org/w/api.php?${q}`);
+      const p = Object.values(data?.query?.pages ?? {})[0];
+      const url = httpsUrl(p?.thumbnail?.source);
+      if (!url || !p?.pageimage) continue;
+      const meta = await get(
+        `https://commons.wikimedia.org/w/api.php?${new URLSearchParams({ action: "query", format: "json", titles: `File:${p.pageimage}`, prop: "imageinfo", iiprop: "extmetadata" })}`,
+      );
+      const em = Object.values(meta?.query?.pages ?? {})[0]?.imageinfo?.[0]?.extmetadata ?? {};
+      const strip = (h) => clean(String(h ?? "").replace(/<[^>]*>/g, ""), 80);
+      const author = strip(em.Artist?.value);
+      const license = strip(em.LicenseShortName?.value);
+      out[theme] = {
+        url,
+        credit: `Photo : ${author || "Wikimedia Commons"}${license ? `, ${license}` : ""} (Wikimedia Commons)`,
+        page: `https://commons.wikimedia.org/wiki/File:${encodeURIComponent(p.pageimage)}`,
+      };
+    } catch (err) {
+      console.log(`[sorties] photo de console indisponible pour ${page} (${err.message})`);
+    }
+  }
+  return out;
+}
+
 async function main() {
   mkdirSync(path.dirname(OUT_FILE), { recursive: true });
   // RAWG (toutes plateformes, si clé) complété par Steam (PC) ; doublons retirés par titre.
@@ -253,6 +290,8 @@ async function main() {
     console.log(`[sorties] base de jeux indisponible (${err.message})`);
   }
   const { images, videos } = await releaseMedia();
+  const photos = await consolePhotos();
+  console.log(`[sorties] photos libres des consoles : ${Object.keys(photos).join(", ") || "aucune"}`);
   console.log(
     `[sorties] grosses sorties : ${Object.keys(images).length} visuels, ${Object.keys(videos).length} vidéos ; ` +
       `calendrier : ${games.filter((g) => g.video).length} bandes-annonces`,
@@ -266,6 +305,7 @@ async function main() {
     releaseImages: images,
     releaseVideos: videos,
     database,
+    consolePhotos: photos,
   };
   writeFileSync(`${OUT_FILE}.tmp`, JSON.stringify(result));
   renameSync(`${OUT_FILE}.tmp`, OUT_FILE);

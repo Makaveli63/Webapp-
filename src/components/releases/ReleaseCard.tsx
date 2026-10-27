@@ -3,11 +3,12 @@ import { PlatformBadge } from "@/components/ui/Badge";
 import { Countdown } from "@/components/ui/Countdown";
 import { RemoteImage } from "@/components/ui/RemoteImage";
 import { TrailerButton } from "@/components/ui/TrailerButton";
+import { PinButton } from "./PinButton";
 import { formatDate } from "@/lib/format";
 import { THEMES, themeFor, type ThemeId } from "@/lib/themes";
 import type { Release } from "@/types";
 
-export function ReleaseCard({ release }: { release: Release & { at: string } }) {
+export function ReleaseCard({ release, pinned = false }: { release: Release & { at: string }; pinned?: boolean }) {
   const theme = release.theme && release.theme in THEMES ? THEMES[release.theme as ThemeId] : themeFor(release.title, release.platforms);
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-surface">
@@ -16,10 +17,12 @@ export function ReleaseCard({ release }: { release: Release & { at: string } }) 
         <div className="absolute inset-0">
           <RemoteImage src={release.image} alt={release.title} theme={theme} seed={release.id} className="h-full w-full" />
         </div>
-        {release.video && (
-          <div className="absolute right-3 top-3 z-10">
-            <TrailerButton video={release.video} title={release.title} />
-          </div>
+        <div className="absolute right-3 top-3 z-10 flex items-center gap-2">
+          {release.video && <TrailerButton video={release.video} title={release.title} />}
+          <PinButton id={release.id} title={release.title} />
+        </div>
+        {pinned && (
+          <span className="absolute left-3 top-3 z-10 rounded-md bg-accent px-2 py-0.5 text-xs font-bold text-white">Épinglé</span>
         )}
         <div className="relative flex h-full flex-col justify-end bg-gradient-to-t from-black/80 via-black/25 to-transparent p-4">
           <div className="flex flex-wrap gap-1.5">

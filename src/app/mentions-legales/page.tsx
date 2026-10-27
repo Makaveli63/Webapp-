@@ -45,8 +45,15 @@ export default function LegalPage() {
 
       <h2 id="confidentialite">Confidentialité</h2>
       <p>
-        Ce site ne dépose aucun cookie et n&apos;utilise aucun outil de suivi. Vos favoris, votre thème, votre pseudo et
-        les sujets consultés (pour colorer le fond d&apos;écran) restent enregistrés uniquement sur votre appareil.
+        Ce site ne dépose aucun cookie et n&apos;utilise aucun outil de suivi publicitaire. Vos favoris, vos jeux épinglés,
+        votre thème, votre pseudo et les sujets consultés (pour colorer le fond d&apos;écran) restent enregistrés
+        uniquement sur votre appareil.
+      </p>
+      <p>
+        Une mesure d&apos;audience anonyme, sans cookie, compte les pages vues : page consultée, site d&apos;origine et
+        type d&apos;appareil. Aucune adresse IP n&apos;est conservée ; un visiteur est reconnu au plus pendant une
+        journée grâce à une empreinte chiffrée qui change chaque jour. Les données sont effacées après 13 mois. Si votre
+        navigateur envoie le signal « Do Not Track » ou « Global Privacy Control », rien n&apos;est mesuré.
       </p>
     </article>
   );

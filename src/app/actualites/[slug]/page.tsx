@@ -53,7 +53,7 @@ export default async function ArticlePage({ params }: Props) {
           theme={themeFor(`${article.title} ${article.tags.join(" ")}`, article.platforms)}
           seed={article.slug}
           className="mt-4 aspect-[2/1] w-full rounded-2xl sm:mt-5"
-          credit={article.image ? `Image : ${article.source.name}` : undefined}
+          credit={article.imageCredit ?? (article.image ? `Image : ${article.source.name}` : undefined)}
         />
         <div className="mt-5 flex flex-wrap gap-1.5 sm:mt-6">
           <CategoryBadge category={article.category} />

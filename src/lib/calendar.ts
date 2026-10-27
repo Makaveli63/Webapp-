@@ -19,9 +19,10 @@ export function getCalendar(): CalendarData {
       releaseImages: data.releaseImages ?? {},
       releaseVideos: data.releaseVideos ?? {},
       database: (Array.isArray(data.database) ? data.database : []).filter((g) => !!g && typeof g.title === "string"),
+      consolePhotos: data.consolePhotos ?? {},
     };
   } catch {
-    return { games: [], releaseImages: {}, releaseVideos: {}, database: [] };
+    return { games: [], releaseImages: {}, releaseVideos: {}, database: [], consolePhotos: {} };
   }
 }
 

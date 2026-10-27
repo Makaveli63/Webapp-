@@ -2,6 +2,8 @@ import "server-only";
 import fs from "node:fs";
 import path from "node:path";
 import { mockArticles } from "@/data/news";
+import { getCalendar } from "@/lib/calendar";
+import { themeFor } from "@/lib/themes";
 import type { Article, Category } from "@/types";
 
 /** Écrit par `npm run news` (scripts/fetch-news.mjs) avant le build. */
@@ -27,7 +29,13 @@ export async function getArticles(): Promise<Article[]> {
     } catch {
       // fichier absent (développement local sans `npm run news`) : articles de démo
     }
-    cache = articles.length ? articles : mockArticles;
+    // Article sans image sur une console précise : vraie photo libre de la console, créditée.
+    const photos = getCalendar().consolePhotos;
+    cache = (articles.length ? articles : mockArticles).map((a) => {
+      if (a.image) return a;
+      const photo = photos[themeFor(`${a.title} ${a.tags.join(" ")}`, a.platforms).id];
+      return photo ? { ...a, image: photo.url, imageCredit: photo.credit } : a;
+    });
   }
   return cache;
 }

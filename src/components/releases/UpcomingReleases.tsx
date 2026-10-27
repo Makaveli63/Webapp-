@@ -1,7 +1,7 @@
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { getUpcomingReleases } from "@/lib/releases";
-import { ReleaseCard } from "./ReleaseCard";
+import { PinnedReleaseGrid } from "./PinnedReleaseGrid";
 
 /** Accueil : les prochaines grosses sorties, en carrousel horizontal sur mobile. */
 export function UpcomingReleases() {
@@ -15,13 +15,7 @@ export function UpcomingReleases() {
           Tout voir <ArrowRight className="size-4" aria-hidden />
         </Link>
       </div>
-      <div className="scroll-row -mx-4 mt-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 lg:grid-cols-4">
-        {releases.map((r) => (
-          <div key={r.id} className="w-[78%] shrink-0 snap-start sm:w-auto">
-            <ReleaseCard release={r} />
-          </div>
-        ))}
-      </div>
+      <PinnedReleaseGrid releases={releases} className="scroll-row -mx-4 mt-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 lg:grid-cols-4" />
     </section>
   );
 }

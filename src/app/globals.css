@@ -222,3 +222,14 @@ html[data-splash="off"] .splash { display: none; }
 @keyframes dyn-drift-b { to { transform: translate(-16vw, -12vh) scale(.9); } }
 @keyframes dyn-drift-c { to { transform: translate(-10vw, -20vh) scale(1.2); } }
 @media (prefers-reduced-motion: reduce) { .dyn-blob { animation: none; } }
+
+/* ---------- Graphiques du tableau de bord (palette catégorielle validée, clair / sombre) ---------- */
+.viz-root {
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --grid: color-mix(in srgb, var(--fg) 12%, transparent);
+}
+:root[data-theme="dark"] .viz-root {
+  --series-1: #3987e5;
+  --series-2: #d95926;
+}

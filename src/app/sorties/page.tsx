@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { CalendarSection } from "@/components/releases/CalendarSection";
-import { ReleaseCard } from "@/components/releases/ReleaseCard";
+import { PinnedReleaseGrid } from "@/components/releases/PinnedReleaseGrid";
 import { getCalendar, groupCalendar } from "@/lib/calendar";
 import { getUpcomingReleases } from "@/lib/releases";
 
@@ -30,13 +30,7 @@ export default function ReleasesPage() {
       {releases.length > 0 && (
         <section aria-labelledby="big-title">
           <h2 id="big-title" className="text-xl font-bold text-heading">Les plus attendus</h2>
-          <div className="scroll-row -mx-4 mt-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 lg:grid-cols-3">
-            {releases.map((r) => (
-              <div key={r.id} className="w-[78%] shrink-0 snap-start sm:w-auto">
-                <ReleaseCard release={r} />
-              </div>
-            ))}
-          </div>
+          <PinnedReleaseGrid releases={releases} className="scroll-row -mx-4 mt-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 lg:grid-cols-3" />
         </section>
       )}
 

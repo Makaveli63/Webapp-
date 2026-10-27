@@ -70,7 +70,16 @@ insert into public.banned_terms (term) values
   ('tapette'), ('tarlouze'), ('gouine'), ('sale gay'), ('heil hitler'), ('sieg heil'), ('hitler avait raison'), ('gazer les'),
   -- insultes et haine (EN)
   ('fuck you'), ('motherfucker'), ('cunt'), ('whore'), ('bitch'), ('nigger'), ('nigga'), ('faggot'),
-  ('fag'), ('kike'), ('spic'), ('chink'), ('tranny'), ('kill yourself'), ('kys')
+  ('fag'), ('kike'), ('spic'), ('chink'), ('tranny'), ('kill yourself'), ('kys'),
+  -- ajouts (insultes courantes FR / EN)
+  ('enfoire'), ('enflure'), ('espece d ordure'), ('sale ordure'), ('grosse ordure'), ('raclure'), ('salopard'), ('salop'), ('petasse'), ('pouffiasse'),
+  ('grognasse'), ('garce'), ('connasse'), ('conne'), ('con'), ('gros con'), ('pauvre con'), ('sale con'),
+  ('abruti'), ('cretin'), ('imbecile'), ('debile'), ('merdeux'), ('sous merde'), ('fils de chien'),
+  ('fiotte'), ('lopette'), ('pedale'), ('nique'), ('niquer'), ('nique ta race'), ('ta gueule'),
+  ('ta mere'), ('va te faire foutre'), ('va te faire enculer'), ('va niquer'), ('casse toi'),
+  ('cassos'), ('gros porc'), ('grosse vache'), ('bouffon'), ('tocard'), ('baltringue'),
+  ('asshole'), ('dickhead'), ('bastard'), ('fuck'), ('fucking'), ('piece of shit'), ('stfu'), ('twat'),
+  ('wanker'), ('son of a bitch')
 on conflict do nothing;
 
 -- ---------------------------------------------------------------- Fonctions internes
@@ -93,7 +102,9 @@ declare
   w text;
 begin
   for w in select term from public.banned_terms loop
-    if position(' ' || w || ' ' in spaced) > 0 then return true; end if;
+    -- Mot entier, y compris au féminin et au pluriel : enfoire / enfoiree / enfoires / enfoirees.
+    -- (mots de 3 lettres ou moins : pluriel seulement, pour ne pas bloquer « cône »)
+    if spaced ~ ('\m' || w || case when char_length(w) <= 3 then 's?' else '(e|s|es|x)?' end || '\M') then return true; end if;
     -- Termes longs : recherchés aussi sans espaces ni lettres répétées (contournements).
     if char_length(replace(w, ' ', '')) >= 6 and (
          position(replace(w, ' ', '') in squashed) > 0 or
@@ -191,10 +202,21 @@ begin
   where id = p_id and (select count(*) from public.reports where comment_id = p_id) >= 3;
 end $$;
 
--- Seules les fonctions publiques sont appelables depuis le site.
-revoke execute on all functions in schema public from anon, authenticated, public;
+-- Seules les fonctions publiques sont appelables depuis le site : les fonctions internes sont fermées.
+-- (Révocation ciblée : ré-exécuter ce fichier ne touche pas aux fonctions de stats.sql.)
+revoke execute on function public.gb_normalize(text) from anon, authenticated, public;
+revoke execute on function public.gb_is_offensive(text) from anon, authenticated, public;
+revoke execute on function public.gb_ip_hash() from anon, authenticated, public;
 grant execute on function public.get_comments(text, text) to anon;
 grant execute on function public.add_comment(text, text, text, text) to anon;
 grant execute on function public.toggle_like(text, text, text) to anon;
 grant execute on function public.get_article_likes(text[], text) to anon;
 grant execute on function public.report_comment(uuid, text) to anon;
+
+-- Termes retirés de la liste (faux positifs) lors d'une mise à jour.
+delete from public.banned_terms where term in ('ordure', 'chien de');
+
+-- Ré-exécuter ce fichier applique la liste à jour aux commentaires déjà publiés : ceux qui contiennent
+-- désormais un terme interdit sont masqués.
+update public.comments set hidden = true
+where not hidden and (public.gb_is_offensive(body) or public.gb_is_offensive(author));

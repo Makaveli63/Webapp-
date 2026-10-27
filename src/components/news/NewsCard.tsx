@@ -18,7 +18,7 @@ export function NewsCard({ article }: { article: Article }) {
         seed={article.slug}
         className="aspect-[2/1] w-full"
         imgClassName="transition-transform duration-300 group-hover:scale-[1.03]"
-        credit={article.image ? article.source.name : undefined}
+        credit={article.imageCredit ? "Wikimedia Commons" : article.image ? article.source.name : undefined}
       />
       {article.score && (
         <span className="pointer-events-none absolute right-2 top-2 rounded-lg bg-amber-400 px-2 py-1 text-sm font-extrabold text-black shadow">

@@ -37,6 +37,8 @@ export interface Article {
   source: { name: string; url?: string };
   /** Image d'illustration fournie par le média dans son flux RSS (affichée depuis son site, créditée) */
   image?: string;
+  /** Crédit d'une image qui ne vient pas du média (photo libre de la console, Wikimedia Commons) */
+  imageCredit?: string;
   /** Vidéo intégrée par le média dans l'article (YouTube) ou jointe au flux */
   video?: Video;
   /** Résumé original rédigé automatiquement (IA) à partir de la source */
@@ -114,6 +116,8 @@ export interface CalendarData {
   releaseImages: Record<string, string>;
   /** Bandes-annonces des grosses sorties (id de releases.json → vidéo) */
   releaseVideos: Record<string, Video>;
+  /** Photos libres des consoles (thème → photo), pour les articles sans image */
+  consolePhotos: Record<string, { url: string; credit: string; page: string }>;
   /** Jeux populaires (RAWG) pour la recherche ; date facultative */
   database: (Omit<CalendarGame, "date"> & { date?: string })[];
 }

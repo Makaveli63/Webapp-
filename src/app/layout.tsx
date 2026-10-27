@@ -6,6 +6,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { ReleaseBanner } from "@/components/releases/ReleaseBanner";
 import { Splash } from "@/components/splash/Splash";
 import { DynamicBackground } from "@/components/theme/DynamicBackground";
+import { Tracker } from "@/components/analytics/Tracker";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -58,6 +59,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:py-8">{children}</main>
         <Footer />
         <MobileTabBar />
+        <Tracker />
       </body>
     </html>
   );
