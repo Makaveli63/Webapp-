@@ -21,6 +21,10 @@ export interface AnimeTrack {
   /** Prochain épisode à sortir (pour savoir combien sont déjà sortis) */
   next?: { episode: number; at: string };
   seen: number[];
+  /** ❤️ Favori */
+  fav?: boolean;
+  /** 🕒 À voir plus tard */
+  later?: boolean;
   updatedAt: string;
 }
 
@@ -87,6 +91,8 @@ export function cleanTracker(raw: unknown): Tracker {
       duration: typeof a.duration === "number" && a.duration > 0 && a.duration < 400 ? Math.round(a.duration) : undefined,
       next: a.next && isEpisode(a.next.episode) && typeof a.next.at === "string" ? { episode: a.next.episode, at: a.next.at } : undefined,
       seen: [...new Set((Array.isArray(a.seen) ? a.seen : []).filter(isEpisode))].sort((x, y) => x - y),
+      fav: a.fav === true || undefined,
+      later: a.later === true || undefined,
       updatedAt: typeof a.updatedAt === "string" ? a.updatedAt : new Date(0).toISOString(),
     };
   }
@@ -177,8 +183,35 @@ export function setEpisodes(info: AnimeInfo, seen: number[]) {
     duration,
     next: info.next ?? (info.total ? undefined : prev?.next),
     seen: clean.sort((x, y) => x - y),
+    fav: prev?.fav,
+    later: clean.length ? undefined : prev?.later, // un épisode vu : ce n'est plus « à voir »
     updatedAt: new Date().toISOString(),
   };
+  writeTracker(t);
+}
+
+/** Favori / à voir plus tard ; l'anime quitte le suivi s'il n'a plus ni drapeau ni épisode vu. */
+export function setAnimeFlags(info: AnimeInfo, flags: { fav?: boolean; later?: boolean }) {
+  const t = readTracker();
+  const prev = t.anime[info.id];
+  const fav = "fav" in flags ? flags.fav : prev?.fav;
+  const later = "later" in flags ? flags.later : prev?.later;
+  if (!fav && !later && !prev?.seen.length && prev) {
+    delete t.anime[info.id];
+  } else {
+    t.anime[info.id] = {
+      id: info.id,
+      title: info.title,
+      image: info.image ?? prev?.image,
+      total: info.total ?? prev?.total,
+      duration: info.duration ?? prev?.duration,
+      next: info.next ?? prev?.next,
+      seen: prev?.seen ?? [],
+      fav: fav || undefined,
+      later: later || undefined,
+      updatedAt: new Date().toISOString(),
+    };
+  }
   writeTracker(t);
 }
 

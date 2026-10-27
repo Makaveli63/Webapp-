@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CollectionButtons } from "@/components/collection/CollectionButtons";
+import { AnimeFollow } from "@/components/tracker/AnimeFollow";
 import { EpisodeTracker } from "@/components/tracker/EpisodeTracker";
 import { GameProgress } from "@/components/tracker/GameProgress";
 import { RemoteImage } from "@/components/ui/RemoteImage";
@@ -32,7 +33,10 @@ export function GameCard({ game }: { game: SearchGame }) {
           {[game.note, game.date && fullDate(game.date), game.platforms.join(" · ")].filter(Boolean).join(" — ")}
         </p>
         {game.anime ? (
-          <EpisodeTracker anime={{ id: game.id, title: game.title, image: game.image, ...game.anime }} className="mt-2" />
+          <span className="mt-2 flex flex-wrap items-center gap-1.5">
+            <EpisodeTracker anime={{ id: game.id, title: game.title, image: game.image, ...game.anime }} />
+            <AnimeFollow anime={{ id: game.id, title: game.title, image: game.image, ...game.anime }} compact />
+          </span>
         ) : (
           <>
             <CollectionButtons game={{ id: game.id, title: game.title, image: game.image }} className="mt-2" />

@@ -1,8 +1,9 @@
 "use client";
 
-import { Mic, Search } from "lucide-react";
+import { Mic, Search, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useState, type FormEvent, type KeyboardEvent } from "react";
+import { animeHref, https, searchAnime, titleOf, type AniMedia } from "@/lib/anilist";
 import { suggestTitles } from "@/lib/fuzzy";
 import { loadSearchIndex } from "@/lib/search-index";
 
@@ -16,6 +17,26 @@ export function SearchBar({ className = "", autoFocus = false }: { className?: s
   const [active, setActive] = useState(-1);
   const [canSpeak, setCanSpeak] = useState(false);
   const [listening, setListening] = useState(false);
+  const [anime, setAnime] = useState<AniMedia[]>([]);
+
+  // Animes suggérés en direct (AniList) dès 3 lettres, sans attendre le nom complet.
+  useEffect(() => {
+    const term = q.trim();
+    if (!open || term.length < 3) {
+      setAnime([]);
+      return;
+    }
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      searchAnime(term, controller.signal)
+        .then((list) => setAnime(list.slice(0, 4)))
+        .catch(() => {});
+    }, 350);
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [q, open]);
 
   // Recherche vocale (API Web Speech) : bouton affiché seulement si le navigateur la propose.
   useEffect(() => {
@@ -51,6 +72,7 @@ export function SearchBar({ className = "", autoFocus = false }: { className?: s
   }, []);
 
   const suggestions = open ? suggestTitles(q, titles) : [];
+  const animeShown = open ? anime : [];
 
   const go = (query: string) => {
     const term = query.trim();
@@ -100,7 +122,7 @@ export function SearchBar({ className = "", autoFocus = false }: { className?: s
         autoFocus={autoFocus}
         autoComplete="off"
         role="combobox"
-        aria-expanded={suggestions.length > 0}
+        aria-expanded={suggestions.length + animeShown.length > 0}
         aria-controls={listId}
         aria-autocomplete="list"
         aria-label="Rechercher"
@@ -116,11 +138,11 @@ export function SearchBar({ className = "", autoFocus = false }: { className?: s
           <Mic className="size-4" aria-hidden />
         </button>
       )}
-      {suggestions.length > 0 && (
+      {suggestions.length + animeShown.length > 0 && (
         <ul
           id={listId}
           role="listbox"
-          className="absolute inset-x-0 top-full z-50 mt-1 overflow-hidden rounded-lg glass glass-strong shadow-xl"
+          className="absolute inset-x-0 top-full z-50 mt-1 max-h-[70vh] overflow-y-auto rounded-lg glass glass-strong shadow-xl"
         >
           {suggestions.map((s, i) => (
             <li key={s} role="option" aria-selected={i === active}>
@@ -132,6 +154,35 @@ export function SearchBar({ className = "", autoFocus = false }: { className?: s
               >
                 <Search className="size-3.5 shrink-0 text-muted" aria-hidden />
                 <span className="truncate">{s}</span>
+              </button>
+            </li>
+          ))}
+          {animeShown.length > 0 && (
+            <li role="presentation" className="border-t border-border px-3 pb-1 pt-2 text-xs font-semibold uppercase tracking-wide text-muted">
+              Animes
+            </li>
+          )}
+          {animeShown.map((m) => (
+            <li key={m.id} role="option" aria-selected={false}>
+              <button
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  setOpen(false);
+                  router.push(animeHref(m.id));
+                }}
+                className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-fg hover:bg-surface-2"
+              >
+                {https(m.coverImage?.large) ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- site statique
+                  <img src={https(m.coverImage?.large)} alt="" referrerPolicy="no-referrer" className="h-10 w-7 shrink-0 rounded object-cover" />
+                ) : (
+                  <Sparkles className="size-3.5 shrink-0 text-accent" aria-hidden />
+                )}
+                <span className="min-w-0">
+                  <span className="block truncate font-semibold text-heading">{titleOf(m)}</span>
+                  <span className="block truncate text-xs text-muted">{[m.startDate?.year, m.episodes && `${m.episodes} ép.`].filter(Boolean).join(" · ")}</span>
+                </span>
               </button>
             </li>
           ))}

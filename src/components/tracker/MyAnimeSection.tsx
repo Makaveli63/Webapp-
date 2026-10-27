@@ -10,7 +10,7 @@ export function MyAnimeSection() {
   return (
     <section aria-labelledby="anime-suivi">
       <h2 id="anime-suivi" className="text-xl font-bold text-heading">📋 Mon suivi</h2>
-      <p className="mt-1 text-sm text-muted">Tes animes et les épisodes à rattraper. Touche un anime pour cocher tes épisodes.</p>
+      <p className="mt-1 text-sm text-muted">Tes favoris, tes animes à voir et les épisodes à rattraper. Touche un anime pour cocher tes épisodes.</p>
       <MyAnimeTracking />
     </section>
   );

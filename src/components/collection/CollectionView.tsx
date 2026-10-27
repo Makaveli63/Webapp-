@@ -90,7 +90,7 @@ export function CollectionView({ deals }: { deals: Deal[] }) {
       </section>
       <section>
         <h2 className="text-xl font-bold text-heading">📺 Mes animes</h2>
-        <MyAnimeTracking empty="Touche « Suivre les épisodes » sur un anime (onglet Anime ou recherche) pour cocher les épisodes vus." />
+        <MyAnimeTracking empty="Touche ❤️ (favori), 🕒 (à voir) ou « Suivre les épisodes » sur un anime, dans l'onglet Anime ou la recherche." />
       </section>
       <GameList title="Je le veux" icon={<Heart className="size-5 text-rose-500" aria-hidden />} games={c.wanted} list="wanted" />
       <GameList title="Je l'ai" icon={<Check className="size-5 text-emerald-500" aria-hidden />} games={c.owned} list="owned" />

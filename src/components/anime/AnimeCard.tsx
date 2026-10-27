@@ -1,5 +1,6 @@
 import { ExternalLink, PlayCircle } from "lucide-react";
 import Link from "next/link";
+import { AnimeFollow } from "@/components/tracker/AnimeFollow";
 import { EpisodeTracker } from "@/components/tracker/EpisodeTracker";
 import { Countdown } from "@/components/ui/Countdown";
 import { RemoteImage } from "@/components/ui/RemoteImage";
@@ -67,7 +68,10 @@ export function AnimeCard({ anime }: { anime: Anime }) {
               ))}
             </div>
           )}
-          <EpisodeTracker anime={{ id: anime.id, title: anime.title, image: anime.image, total: anime.episodes, duration: anime.duration, next: anime.next }} className="mt-2" />
+          <span className="mt-2 flex flex-wrap items-center gap-1.5">
+            <EpisodeTracker anime={{ id: anime.id, title: anime.title, image: anime.image, total: anime.episodes, duration: anime.duration, next: anime.next }} />
+            <AnimeFollow anime={{ id: anime.id, title: anime.title, image: anime.image, total: anime.episodes, duration: anime.duration, next: anime.next }} compact />
+          </span>
         </div>
       </div>
     </article>

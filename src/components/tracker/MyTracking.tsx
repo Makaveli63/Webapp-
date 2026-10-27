@@ -9,17 +9,57 @@ import { airedEpisodes, GAME_STATUS, useTracker, type AnimeTrack, type GameStatu
 
 const ORDER: GameStatus[] = ["en-cours", "a-jouer", "termine", "platine", "abandonne"];
 
+type AnimeFilter = "tous" | "favoris" | "a-voir" | "en-cours" | "termines";
+const FILTERS: { id: AnimeFilter; label: string }[] = [
+  { id: "tous", label: "Tous" },
+  { id: "favoris", label: "❤️ Favoris" },
+  { id: "a-voir", label: "🕒 À voir" },
+  { id: "en-cours", label: "▶️ En cours" },
+  { id: "termines", label: "✅ Terminés" },
+];
+
+const done = (a: AnimeTrack) => {
+  const max = a.total ?? airedEpisodes(a);
+  return !!max && a.seen.length >= max && a.total !== undefined;
+};
+const keep: Record<AnimeFilter, (a: AnimeTrack) => boolean> = {
+  tous: () => true,
+  favoris: (a) => !!a.fav,
+  "a-voir": (a) => !!a.later,
+  "en-cours": (a) => a.seen.length > 0 && !done(a),
+  termines: done,
+};
+
 /** Animes suivis : avancement, épisodes sortis pas encore vus ; un clic ouvre la grille des épisodes. */
 export function MyAnimeTracking({ empty }: { empty?: string }) {
   const t = useTracker();
   const [open, setOpen] = useState<AnimeTrack | null>(null);
+  const [filter, setFilter] = useState<AnimeFilter>("tous");
   if (!t) return null;
-  const list = Object.values(t.anime).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
-  if (!list.length) return empty ? <p className="mt-2 text-sm text-muted">{empty}</p> : null;
+  const all = Object.values(t.anime).sort((a, b) => Number(!!b.fav) - Number(!!a.fav) || b.updatedAt.localeCompare(a.updatedAt));
+  if (!all.length) return empty ? <p className="mt-2 text-sm text-muted">{empty}</p> : null;
+  const list = all.filter(keep[filter]);
   const current = open && t.anime[open.id];
 
   return (
     <>
+      <div className="scroll-row -mx-4 mt-3 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:px-0" role="group" aria-label="Filtrer mes animes">
+        {FILTERS.map((f) => {
+          const n = all.filter(keep[f.id]).length;
+          return (
+            <button
+              key={f.id}
+              type="button"
+              aria-pressed={filter === f.id}
+              onClick={() => setFilter(f.id)}
+              className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold ring-1 ring-inset ${filter === f.id ? "bg-accent text-white ring-accent" : "glass-pill text-fg ring-border"}`}
+            >
+              {f.label} <span className="opacity-70">{n}</span>
+            </button>
+          );
+        })}
+      </div>
+      {list.length === 0 && <p className="mt-3 text-sm text-muted">Aucun anime dans cette liste.</p>}
       <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {list.map((a) => {
           const aired = airedEpisodes(a);
@@ -33,11 +73,21 @@ export function MyAnimeTracking({ empty }: { empty?: string }) {
                   <RemoteImage src={a.image} alt="" theme={themeFor(a.title)} seed={a.id} className="h-full w-full" />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="line-clamp-2 text-sm font-semibold text-heading">{a.title}</span>
+                  <span className="line-clamp-2 text-sm font-semibold text-heading">
+                    {a.fav && <span aria-label="Favori">❤️ </span>}
+                    {a.later && <span aria-label="À voir">🕒 </span>}
+                    {a.title}
+                  </span>
                   <span className="mt-0.5 block text-xs text-muted">
-                    {a.seen.length}
-                    {max ? `/${max}` : ""} épisode{a.seen.length > 1 ? "s" : ""} vu{a.seen.length > 1 ? "s" : ""}
-                    {late > 0 && <span className="font-semibold text-accent"> · {late} à rattraper</span>}
+                    {a.seen.length === 0 ? (
+                      `Pas commencé${max ? ` · ${max} épisode${max > 1 ? "s" : ""}` : ""}`
+                    ) : (
+                      <>
+                        {a.seen.length}
+                        {max ? `/${max}` : ""} épisode{a.seen.length > 1 ? "s" : ""} vu{a.seen.length > 1 ? "s" : ""}
+                        {late > 0 && <span className="font-semibold text-accent"> · {late} à rattraper</span>}
+                      </>
+                    )}
                     {max !== undefined && a.seen.length >= max && <span className="font-semibold text-emerald-500"> · à jour ✓</span>}
                   </span>
                   <span className="mt-2 block h-1.5 overflow-hidden rounded-full bg-black/10 dark:bg-white/10">

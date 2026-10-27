@@ -4,6 +4,7 @@ import { ArrowLeft, ExternalLink, PlayCircle } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { AnimeFollow } from "@/components/tracker/AnimeFollow";
 import { EpisodeTracker } from "@/components/tracker/EpisodeTracker";
 import { Countdown } from "@/components/ui/Countdown";
 import { TrailerButton } from "@/components/ui/TrailerButton";
@@ -93,31 +94,34 @@ export function AnimeDetail() {
   return (
     <div className="space-y-8">
       {back}
-      <section className="glass relative overflow-hidden rounded-2xl">
-        <Banner src={https(media.bannerImage) ?? https(media.coverImage?.extraLarge)} />
-        <div className="relative flex gap-4 bg-gradient-to-t from-black/85 via-black/60 to-black/30 p-4 pt-20 sm:p-6 sm:pt-32">
-          {https(media.coverImage?.large) && (
-            // eslint-disable-next-line @next/next/no-img-element -- site statique
-            <img src={https(media.coverImage?.large)} alt="" referrerPolicy="no-referrer" className="h-40 w-28 shrink-0 rounded-xl object-cover shadow-lg sm:h-56 sm:w-40" />
-          )}
-          <div className="min-w-0 self-end text-white">
-            <h1 className="text-2xl font-extrabold leading-tight drop-shadow sm:text-4xl">{titleOf(media)}</h1>
-            {originalOf(media) && <p className="mt-1 text-sm text-white/75">{originalOf(media)}</p>}
-            <p className="mt-2 text-sm text-white/85">{facts.join(" · ")}</p>
-            {typeof media.averageScore === "number" && <p className="mt-1 text-sm font-bold">⭐ {media.averageScore}/100 sur AniList</p>}
+      <section className="glass-strong overflow-hidden rounded-2xl">
+        <div className="relative overflow-hidden">
+          <Banner src={https(media.bannerImage) ?? https(media.coverImage?.extraLarge)} />
+          <div className="relative flex gap-4 bg-gradient-to-t from-black/90 via-black/65 to-black/30 p-4 pt-20 sm:p-6 sm:pt-32">
+            {https(media.coverImage?.large) && (
+              // eslint-disable-next-line @next/next/no-img-element -- site statique
+              <img src={https(media.coverImage?.large)} alt="" referrerPolicy="no-referrer" className="h-40 w-28 shrink-0 rounded-xl object-cover shadow-lg sm:h-56 sm:w-40" />
+            )}
+            <div className="min-w-0 self-end text-white">
+              <h1 className="text-2xl font-extrabold leading-tight drop-shadow sm:text-4xl">{titleOf(media)}</h1>
+              {originalOf(media) && <p className="mt-1 text-sm text-white/75">{originalOf(media)}</p>}
+              <p className="mt-2 text-sm text-white/85">{facts.join(" · ")}</p>
+              {typeof media.averageScore === "number" && <p className="mt-1 text-sm font-bold">⭐ {media.averageScore}/100 sur AniList</p>}
+            </div>
           </div>
         </div>
-        <div className="relative flex flex-wrap items-center gap-2 p-4 sm:px-6">
+        <div className="flex flex-wrap items-center gap-2 p-4 sm:px-6">
           <EpisodeTracker anime={info(media)} />
+          <AnimeFollow anime={info(media)} />
           {trailer && <TrailerButton video={{ youtube: trailer }} title={titleOf(media)} />}
           {links.map((l) => (
-            <a key={l.site} href={l.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded-full bg-accent/15 px-3 py-1.5 text-xs font-semibold text-accent hover:bg-accent/25">
+            <a key={l.site} href={l.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded-full bg-surface px-3 py-1.5 text-xs font-semibold text-heading ring-1 ring-inset ring-border hover:ring-accent">
               {l.site} <ExternalLink className="size-3" aria-hidden />
             </a>
           ))}
         </div>
         {next && (
-          <p className="relative border-t border-border px-4 py-3 text-sm sm:px-6">
+          <p className="border-t border-border px-4 py-3 text-sm sm:px-6">
             <PlayCircle className="mr-1 inline size-4 text-accent" aria-hidden />
             <strong className="text-heading">Épisode {next.episode}</strong>{" "}
             <span className="text-accent">
@@ -138,7 +142,7 @@ export function AnimeDetail() {
       )}
 
       {synopsis && (
-        <section>
+        <section className="glass rounded-2xl p-4 sm:p-5">
           <h2 className="text-xl font-bold text-heading">Synopsis</h2>
           <p className="mt-1 text-xs text-muted">Résumé AniList (en anglais).</p>
           <p lang="en" className="mt-2 whitespace-pre-line text-fg">{synopsis.length > 1200 ? `${synopsis.slice(0, 1199)}…` : synopsis}</p>
@@ -196,7 +200,10 @@ function FamilyList({ title, items, current, loading, tracker }: { title: string
                       {track.seen.length}/{total ?? aired ?? "?"} vus{(total ?? aired) && track.seen.length >= (total ?? aired)! ? " ✓" : ""}
                     </p>
                   )}
-                  <EpisodeTracker anime={info(m)} className="mt-1.5" />
+                  <span className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                    <EpisodeTracker anime={info(m)} />
+                    <AnimeFollow anime={info(m)} compact />
+                  </span>
                 </div>
               </li>
             );
