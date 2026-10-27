@@ -70,3 +70,93 @@ body {
 .prose-article strong { color: var(--heading); }
 .prose-article code { font-family: var(--font-mono); background: var(--surface-2); padding: 0.1em 0.35em; border-radius: 4px; font-size: 0.9em; }
 .prose-article blockquote { border-left: 3px solid var(--accent); padding-left: 1em; color: var(--muted); font-style: italic; }
+
+/* ---------- Animation d'ouverture (≈ 2 s) ---------- */
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--accent) 22%, var(--bg)), var(--bg) 65%);
+  pointer-events: none;
+  animation: splash-out 2.1s ease-in forwards;
+}
+html[data-splash="off"] .splash { display: none; }
+@media (prefers-reduced-motion: reduce) { .splash { display: none; } }
+
+.splash-group {
+  position: absolute;
+  width: min(28vw, 130px);
+  height: min(28vw, 130px);
+  opacity: 0;
+}
+/* Déclarations complètes : le minifieur CSS perd la durée si elle est séparée du nom. */
+.splash-ps   { animation: fly-ps 1.5s cubic-bezier(.2,.8,.2,1) 0s forwards; }
+.splash-xbox { animation: fly-xbox 1.5s cubic-bezier(.2,.8,.2,1) .06s forwards; }
+.splash-nin  { animation: fly-nin 1.5s cubic-bezier(.2,.8,.2,1) .12s forwards; }
+.splash-pc   { animation: fly-pc 1.5s cubic-bezier(.2,.8,.2,1) .18s forwards; }
+
+@keyframes fly-ps {
+  0%   { opacity: 0; transform: translate(-60vw, -55vh) rotate(-140deg) scale(.5); }
+  15%  { opacity: 1; }
+  55%  { opacity: 1; transform: translate(-70px, -70px) rotate(0) scale(1); }
+  78%  { opacity: 0; transform: translate(0, 0) rotate(90deg) scale(0); }
+  100% { opacity: 0; transform: scale(0); }
+}
+@keyframes fly-xbox {
+  0%   { opacity: 0; transform: translate(60vw, -55vh) rotate(140deg) scale(.5); }
+  15%  { opacity: 1; }
+  55%  { opacity: 1; transform: translate(70px, -70px) rotate(0) scale(1); }
+  78%  { opacity: 0; transform: translate(0, 0) rotate(-90deg) scale(0); }
+  100% { opacity: 0; transform: scale(0); }
+}
+@keyframes fly-nin {
+  0%   { opacity: 0; transform: translate(-60vw, 55vh) rotate(140deg) scale(.5); }
+  15%  { opacity: 1; }
+  55%  { opacity: 1; transform: translate(-70px, 70px) rotate(0) scale(1); }
+  78%  { opacity: 0; transform: translate(0, 0) rotate(-90deg) scale(0); }
+  100% { opacity: 0; transform: scale(0); }
+}
+@keyframes fly-pc {
+  0%   { opacity: 0; transform: translate(60vw, 55vh) rotate(-140deg) scale(.5); }
+  15%  { opacity: 1; }
+  55%  { opacity: 1; transform: translate(70px, 70px) rotate(0) scale(1); }
+  78%  { opacity: 0; transform: translate(0, 0) rotate(90deg) scale(0); }
+  100% { opacity: 0; transform: scale(0); }
+}
+
+.splash-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0;
+  animation: logo-pop 1.9s cubic-bezier(.3,1.5,.5,1) forwards;
+}
+.splash-logo-icon {
+  width: 96px;
+  height: 96px;
+  border-radius: 22px;
+  box-shadow: 0 0 60px color-mix(in srgb, var(--accent) 55%, transparent);
+}
+.splash-title {
+  margin-top: 16px;
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--heading);
+}
+.splash-title span { color: var(--accent-2); }
+.splash-tagline { margin-top: 4px; font-size: .9rem; color: var(--muted); }
+
+@keyframes logo-pop {
+  0%, 50% { opacity: 0; transform: scale(.4); }
+  68%     { opacity: 1; transform: scale(1.12); }
+  80%     { transform: scale(1); }
+  100%    { opacity: 1; transform: scale(1); }
+}
+@keyframes splash-out {
+  0%, 84% { opacity: 1; visibility: visible; }
+  100%    { opacity: 0; visibility: hidden; }
+}

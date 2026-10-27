@@ -4,6 +4,7 @@ import { Footer } from "@/components/layout/Footer";
 import { MobileTabBar } from "@/components/layout/MobileTabBar";
 import { Navbar } from "@/components/layout/Navbar";
 import { ReleaseBanner } from "@/components/releases/ReleaseBanner";
+import { Splash } from "@/components/splash/Splash";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -37,13 +38,17 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="fr" className={`${inter.variable} ${mono.variable}`}>
+    // suppressHydrationWarning : public/splash.js peut ajouter data-splash avant l'hydratation.
+    <html lang="fr" className={`${inter.variable} ${mono.variable}`} suppressHydrationWarning>
       <head>
         {/* Chargé en premier, de façon bloquante, pour masquer la page si elle est encadrée. */}
         {/* eslint-disable-next-line @next/next/no-sync-scripts */}
         <script src={`${BASE_PATH}/frame-guard.js`} />
+        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
+        <script src={`${BASE_PATH}/splash.js`} />
       </head>
       <body className="flex min-h-dvh flex-col font-sans antialiased">
+        <Splash />
         <Navbar />
         <ReleaseBanner />
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:py-8">{children}</main>
