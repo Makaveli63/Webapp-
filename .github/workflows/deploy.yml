@@ -43,7 +43,7 @@ jobs:
             .cache/news/summaries.json
             .cache/news/archive.json
             .cache/news/proofread.json
-            .cache/news/scores.json
+            .cache/news/scores-v2.json
           key: news-summaries-${{ github.run_id }}
           restore-keys: news-summaries-
       - name: Récupérer les actus et rédiger les résumés
