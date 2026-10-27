@@ -160,7 +160,9 @@ async function summarizeBatch(articles, token) {
   try {
     data = JSON.parse(raw);
   } catch {
-    throw new Error(`réponse inattendue (HTTP ${res.status}, ${res.headers.get("content-type")}) : ${clean(raw, 200)}`);
+    const where = `${res.redirected ? "redirigé vers " : ""}${res.url}`;
+    const server = [...res.headers].filter(([k]) => /^(server|x-github|via|x-cache)/i.test(k)).map(([k, v]) => `${k}=${v}`);
+    throw new Error(`réponse inattendue (HTTP ${res.status}, ${where}, ${server.join(" ")}) : ${clean(raw, 200)}`);
   }
   const parsed = JSON.parse(data.choices?.[0]?.message?.content ?? "{}");
   const ids = new Set(articles.map((a) => a.slug));
