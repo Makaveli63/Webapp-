@@ -22,10 +22,10 @@ export default async function HomePage() {
     <div className="space-y-10 sm:space-y-12">
       <section>
         <h1 className="text-2xl font-extrabold tracking-tight text-heading sm:text-4xl">
-          Tout le jeu vidéo, <span className="logo-gradient">au même endroit</span>.
+          Le jeu vidéo et l&apos;anime, <span className="logo-gradient">au même endroit</span>.
         </h1>
         <p className="mt-2 max-w-2xl text-muted sm:mt-3">
-          Les dernières news, les tests, l&apos;actualité des consoles et les jeux gratuits de la semaine, mis à jour toutes les 2 heures.
+          Les dernières news jeux vidéo et anime, les tests, les sorties, les nouveaux épisodes et les jeux gratuits, mis à jour toutes les 2 heures.
         </p>
       </section>
 

@@ -1,7 +1,7 @@
 {
   "name": "GamingBase",
   "short_name": "GamingBase",
-  "description": "L'actualité du jeu vidéo en français : news, tests et nouvelles consoles.",
+  "description": "L'actualité du jeu vidéo et de l'anime en français : news, tests, sorties et épisodes.",
   "lang": "fr",
   "start_url": "./",
   "scope": "./",

@@ -2,7 +2,7 @@ import { LogoMark } from "@/components/ui/Logo";
 
 /**
  * Animation d'ouverture (≈ 2 s, CSS uniquement) : des éléments évoquant chaque plateforme
- * convergent vers le logo. Formes dessinées pour le site, aucun logo de marque.
+ * et l'anime convergent vers le logo. Formes dessinées pour le site, aucun logo de marque.
  * Masquée après la première page vue (public/splash.js) et si l'animation est réduite.
  */
 export function Splash() {
@@ -68,12 +68,23 @@ export function Splash() {
         ))}
       </svg>
 
+      {/* Anime : fleur de cerisier et étincelle, façon manga */}
+      <svg className="splash-group splash-anime" viewBox="0 0 120 120">
+        <g transform="translate(60 64)">
+          {[0, 72, 144, 216, 288].map((r) => (
+            <path key={r} transform={`rotate(${r})`} d="M0 0 C -16 -12 -14 -36 -5 -42 L 0 -36 L 5 -42 C 14 -36 16 -12 0 0 Z" fill="#ff9ec7" stroke="#ff6fae" strokeWidth="2" />
+          ))}
+          <circle r="7" fill="#ffd166" />
+        </g>
+        <path d="M100 10 L104 22 L116 26 L104 30 L100 42 L96 30 L84 26 L96 22 Z" fill="#ffe27a" />
+      </svg>
+
       <div className="splash-logo">
         <LogoMark id="gb-splash" className="splash-logo-icon" />
         <p className="splash-title">
           Gaming<span className="logo-gradient">Base</span>
         </p>
-        <p className="splash-tagline">Toutes les plateformes, un seul endroit</p>
+        <p className="splash-tagline">Jeux vidéo et anime, un seul endroit</p>
       </div>
     </div>
   );

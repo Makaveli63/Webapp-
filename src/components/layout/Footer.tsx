@@ -49,7 +49,7 @@ export function Footer() {
             <Logo id="gb-footer" />
           </Link>
           <p className="mt-3 text-sm text-muted">
-            L&apos;actualité du jeu vidéo en français : news, tests et nouvelles consoles.
+            L&apos;actualité du jeu vidéo et de l&apos;anime en français : news, tests, sorties et épisodes.
           </p>
           <p className="mt-2 text-sm text-muted">
             Site créé par <SecretAdminTap>Makaveli63</SecretAdminTap>

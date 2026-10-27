@@ -19,7 +19,7 @@ const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 export const metadata: Metadata = {
   title: { default: "GamingBase", template: "%s · GamingBase" },
-  description: "L'actualité du jeu vidéo en français : news, tests et nouvelles consoles, mis à jour toutes les 2 heures.",
+  description: "L'actualité du jeu vidéo et de l'anime en français : news, tests, sorties et épisodes, mis à jour toutes les 2 heures.",
   manifest: `${BASE_PATH}/manifest.webmanifest`,
   icons: { icon: `${BASE_PATH}/icon.svg`, apple: `${BASE_PATH}/apple-touch-icon.png` },
   appleWebApp: { capable: true, title: "GamingBase", statusBarStyle: "default" },

@@ -140,6 +140,7 @@ html[data-splash="off"] .splash { display: none; }
 .splash-xbox { animation: fly-xbox 1.5s cubic-bezier(.2,.8,.2,1) .06s forwards; }
 .splash-nin  { animation: fly-nin 1.5s cubic-bezier(.2,.8,.2,1) .12s forwards; }
 .splash-pc   { animation: fly-pc 1.5s cubic-bezier(.2,.8,.2,1) .18s forwards; }
+.splash-anime { animation: fly-anime 1.5s cubic-bezier(.2,.8,.2,1) .24s forwards; }
 
 @keyframes fly-ps {
   0%   { opacity: 0; transform: translate(-60vw, -55vh) rotate(-140deg) scale(.5); }
@@ -167,6 +168,14 @@ html[data-splash="off"] .splash { display: none; }
   15%  { opacity: 1; }
   55%  { opacity: 1; transform: translate(70px, 70px) rotate(0) scale(1); }
   78%  { opacity: 0; transform: translate(0, 0) rotate(90deg) scale(0); }
+  100% { opacity: 0; transform: scale(0); }
+}
+
+@keyframes fly-anime {
+  0%   { opacity: 0; transform: translate(0, -65vh) rotate(-180deg) scale(.5); }
+  15%  { opacity: 1; }
+  55%  { opacity: 1; transform: translate(0, -160px) rotate(0) scale(1); }
+  78%  { opacity: 0; transform: translate(0, 0) rotate(120deg) scale(0); }
   100% { opacity: 0; transform: scale(0); }
 }
 
