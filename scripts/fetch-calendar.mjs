@@ -248,7 +248,7 @@ const smallImage = (url) => url?.replace("https://media.rawg.io/media/", "https:
  * (à venir, sorties des 3 dernières années, les plus populaires de tous les temps).
  */
 async function searchDatabase() {
-  let db = { cursor: 0, games: {} };
+  let db = { cursor: 0, games: {}, ends: {} };
   try {
     db = JSON.parse(readFileSync(SEARCH_DB_FILE, "utf8"));
   } catch {
@@ -258,24 +258,30 @@ async function searchDatabase() {
   const now = new Date();
   const later = new Date(now.getTime() + 548 * 86_400_000);
   const before = new Date(now.getTime() - 3 * 365 * 86_400_000);
+  const pages = (list, n, query) => Array.from({ length: n }, (_, i) => ({ list, page: i + 1, query: `${query}&page=${i + 1}` }));
   const lists = [
-    ...Array.from({ length: 10 }, (_, i) => `dates=${ymd(now)},${ymd(later)}&ordering=-added&page=${i + 1}`),
-    ...Array.from({ length: 40 }, (_, i) => `dates=${ymd(before)},${ymd(now)}&ordering=-added&page=${i + 1}`),
-    ...Array.from({ length: 60 }, (_, i) => `ordering=-added&page=${i + 1}`),
+    ...pages("avenir", 10, `dates=${ymd(now)},${ymd(later)}&ordering=-added`),
+    ...pages("recents", 40, `dates=${ymd(before)},${ymd(now)}&ordering=-added`),
+    ...pages("populaires", 60, "ordering=-added"),
   ];
+  // Dernière page de chaque liste (RAWG répond 404 au-delà) : on ne redemande pas ces pages pendant une semaine.
+  const week = ymd(new Date(now.getTime() - 7 * 86_400_000));
+  const ends = Object.fromEntries(Object.entries(db.ends ?? {}).filter(([, v]) => v?.at >= week));
+  const exists = (p) => !ends[p.list] || p.page < ends[p.list].page;
   const games = db.games ?? {};
   // Les 2 premières pages « à venir » à chaque fois (annonces récentes), puis la suite de la rotation.
   const count = Object.keys(games).length < 1000 ? 25 : 6;
   let cursor = Number.isInteger(db.cursor) ? db.cursor % lists.length : 0;
-  const todo = [lists[0], lists[1]];
-  for (let i = 0; i < count; i++) {
-    todo.push(lists[cursor]);
+  const todo = [lists[0], lists[1]].filter(exists);
+  for (let tries = 0; todo.length < count + 2 && tries < lists.length; tries++) {
+    if (exists(lists[cursor]) && !todo.includes(lists[cursor])) todo.push(lists[cursor]);
     cursor = (cursor + 1) % lists.length;
   }
   let fetched = 0;
-  for (const query of [...new Set(todo)]) {
+  for (const p of todo) {
+    if (!exists(p)) continue;
     try {
-      const data = await get(`${RAWG_BASE}/api/games?key=${encodeURIComponent(RAWG_KEY)}&page_size=40&${query}`);
+      const data = await get(`${RAWG_BASE}/api/games?key=${encodeURIComponent(RAWG_KEY)}&page_size=40&${p.query}`);
       for (const g of data?.results ?? []) {
         if (!g?.name || !Number.isInteger(g.id)) continue;
         games[`rawg-${g.id}`] = {
@@ -291,8 +297,10 @@ async function searchDatabase() {
         };
         fetched++;
       }
+      if (!data?.next) ends[p.list] = { page: p.page + 1, at: ymd(now) };
     } catch (err) {
-      console.log(`[recherche] page RAWG indisponible (${err.message})`);
+      if (err.message === "HTTP 404") ends[p.list] = { page: Math.min(p.page, ends[p.list]?.page ?? Infinity), at: ymd(now) };
+      else console.log(`[recherche] page RAWG indisponible (${err.message})`);
     }
   }
   // Oublie les jeux qui ne sont plus dans aucune liste depuis longtemps, garde les plus suivis.
@@ -301,7 +309,7 @@ async function searchDatabase() {
     .filter((g) => (g.seen ?? "") >= limit)
     .sort((a, b) => (b.added ?? 0) - (a.added ?? 0))
     .slice(0, SEARCH_DB_MAX);
-  const next = { cursor, games: Object.fromEntries(kept.map((g) => [g.id, g])) };
+  const next = { cursor, ends, games: Object.fromEntries(kept.map((g) => [g.id, g])) };
   writeFileSync(`${SEARCH_DB_FILE}.tmp`, JSON.stringify(next));
   renameSync(`${SEARCH_DB_FILE}.tmp`, SEARCH_DB_FILE);
   console.log(`[recherche] base de jeux : ${kept.length} jeux (${fetched} mis à jour ce build)`);
