@@ -28,7 +28,7 @@ export function CalendarCard({ game, isToday = false }: { game: CalendarGame; is
       </div>
     </>
   );
-  const className = "block overflow-hidden rounded-xl border border-border bg-surface transition-colors hover:border-accent/60";
+  const className = "block overflow-hidden rounded-xl glass transition-colors hover:border-accent/60";
   return game.url ? (
     <a href={game.url} target="_blank" rel="noopener noreferrer" className={className}>
       {content}

@@ -84,7 +84,7 @@ export function SearchBar({ className = "", autoFocus = false }: { className?: s
         <ul
           id={listId}
           role="listbox"
-          className="absolute inset-x-0 top-full z-50 mt-1 overflow-hidden rounded-lg border border-border bg-surface shadow-xl"
+          className="absolute inset-x-0 top-full z-50 mt-1 overflow-hidden rounded-lg glass glass-strong shadow-xl"
         >
           {suggestions.map((s, i) => (
             <li key={s} role="option" aria-selected={i === active}>

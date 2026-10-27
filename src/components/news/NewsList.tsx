@@ -126,7 +126,7 @@ function FilterableNewsList({ articles, showCategories, initialPlatform }: Props
               <button
                 type="button"
                 onClick={() => setShown((n) => n + PAGE_SIZE)}
-                className="w-full rounded-lg border border-border bg-surface px-4 py-3 text-sm font-medium hover:border-accent/60 sm:w-auto sm:py-2"
+                className="w-full rounded-lg glass px-4 py-3 text-sm font-medium hover:border-accent/60 sm:w-auto sm:py-2"
               >
                 Afficher plus ({filtered.length - shown} restants)
               </button>

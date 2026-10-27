@@ -8,7 +8,7 @@ import type { FreeGame } from "@/types";
 export function FreeGameCard({ game }: { game: FreeGame }) {
   const upcoming = game.status === "upcoming";
   return (
-    <article className="flex flex-col overflow-hidden rounded-xl border border-border bg-surface">
+    <article className="flex flex-col overflow-hidden rounded-xl glass">
       <RemoteImage
         src={game.image}
         alt={game.title}

@@ -98,7 +98,7 @@ export function Comments({ slug }: { slug: string }) {
         </p>
       )}
 
-      <form onSubmit={submit} className="mt-4 space-y-2 rounded-xl border border-border bg-surface p-3">
+      <form onSubmit={submit} className="mt-4 space-y-2 rounded-xl glass p-3">
         <input
           value={pseudo}
           onChange={(e) => setPseudo(e.target.value)}

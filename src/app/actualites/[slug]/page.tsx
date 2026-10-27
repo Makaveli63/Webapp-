@@ -78,7 +78,7 @@ export default async function ArticlePage({ params }: Props) {
           <div className="prose-article mt-8">
             {article.score && (
               <p className="flex items-center gap-3">
-                <span className={`rounded-xl px-3 py-1.5 text-2xl font-extrabold ${scoreTier(article.score).className}`}>
+                <span className={`rounded-2xl px-3.5 py-2 text-2xl font-extrabold ${scoreTier(article.score).className}`}>
                   {article.score}
                 </span>
                 <span className="text-sm text-muted">
@@ -115,7 +115,7 @@ export default async function ArticlePage({ params }: Props) {
         )}
 
         {article.external && (
-          <aside className="mt-8 rounded-xl border border-border bg-surface p-4 text-sm">
+          <aside className="mt-8 rounded-xl glass p-4 text-sm">
             <p className="flex items-center gap-2 font-semibold text-heading">
               <Newspaper className="size-4 text-accent-2" aria-hidden /> Source : {article.source.name}
             </p>

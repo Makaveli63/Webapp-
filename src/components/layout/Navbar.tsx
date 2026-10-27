@@ -14,7 +14,7 @@ export function Navbar() {
   const SearchIcon = SEARCH_LINK.icon;
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-bg/75 pt-[env(safe-area-inset-top)] backdrop-blur-md">
+    <header className="sticky top-0 z-40 glass-bar border-b pt-[env(safe-area-inset-top)]">
       <nav className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4 md:h-16">
         <Link href="/" aria-label="GamingBase, accueil">
           <Logo id="gb-nav" className="text-lg" />

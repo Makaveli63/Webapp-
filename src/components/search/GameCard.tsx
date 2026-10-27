@@ -31,7 +31,7 @@ export function GameCard({ game }: { game: SearchGame }) {
       </div>
     </>
   );
-  const className = "block overflow-hidden rounded-xl border border-border bg-surface transition-colors hover:border-accent/60";
+  const className = "block overflow-hidden rounded-xl glass transition-colors hover:border-accent/60";
   if (!game.url) return <div className={className}>{body}</div>;
   return game.url.startsWith("/") ? (
     <Link href={game.url} className={className}>

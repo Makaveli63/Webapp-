@@ -29,7 +29,7 @@ const ADMIN_GLOW = ["#10b981", "#0d9488", "#34d399"] as const;
 
 function StatTile({ icon, label, value, delta, note }: { icon: ReactNode; label: string; value: number; delta?: number | null; note?: string }) {
   return (
-    <div className="rounded-xl border border-border bg-surface p-4">
+    <div className="rounded-xl glass p-4">
       <p className="flex items-center gap-2 text-sm text-muted">
         {icon}
         {label}
@@ -113,7 +113,7 @@ export function AdminDashboard() {
       load(input.trim(), days);
     };
     return (
-      <form onSubmit={submit} className="mt-6 max-w-sm space-y-3 rounded-xl border border-border bg-surface p-4">
+      <form onSubmit={submit} className="mt-6 max-w-sm space-y-3 rounded-xl glass p-4">
         <label className="block text-sm font-medium text-heading" htmlFor="admin-pwd">
           Mot de passe
         </label>
@@ -188,7 +188,7 @@ export function AdminDashboard() {
         />
       </div>
 
-      <section className="rounded-xl border border-border bg-surface p-4">
+      <section className="rounded-xl glass p-4">
         <div className="flex items-center justify-between gap-3">
           <h2 className="font-semibold text-heading">Fréquentation par jour</h2>
           <button type="button" onClick={() => setShowTable((v) => !v)} className="text-xs text-muted underline underline-offset-2 hover:text-fg">
@@ -224,21 +224,21 @@ export function AdminDashboard() {
       </section>
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <section className="rounded-xl border border-border bg-surface p-4">
+        <section className="rounded-xl glass p-4">
           <h2 className="mb-3 font-semibold text-heading">Pages les plus vues</h2>
           <BarList rows={stats.pages.map((p) => ({ label: titles[p.path.replace(/^\/actualites\/|\/$/g, "")] ?? p.path, value: p.views }))} />
         </section>
-        <section className="rounded-xl border border-border bg-surface p-4">
+        <section className="rounded-xl glass p-4">
           <h2 className="mb-3 font-semibold text-heading">Provenance des visiteurs</h2>
           <BarList rows={stats.sources.map((s) => ({ label: s.source, value: s.views }))} />
         </section>
-        <section className="rounded-xl border border-border bg-surface p-4">
+        <section className="rounded-xl glass p-4">
           <h2 className="mb-3 font-semibold text-heading">Appareils</h2>
           <BarList rows={stats.devices.map((d) => ({ label: d.device[0].toUpperCase() + d.device.slice(1), value: d.views }))} percent />
         </section>
       </div>
 
-      <section className="rounded-xl border border-border bg-surface p-4">
+      <section className="rounded-xl glass p-4">
         <h2 className="mb-3 flex items-center gap-2 font-semibold text-heading">
           <Heart className="size-4 text-pink-600" aria-hidden /> Articles les plus aimés
         </h2>
@@ -259,7 +259,7 @@ export function AdminDashboard() {
         )}
       </section>
 
-      <section className="rounded-xl border border-border bg-surface p-4">
+      <section className="rounded-xl glass p-4">
         <h2 className="mb-1 flex items-center gap-2 font-semibold text-heading">
           <MessageCircle className="size-4 text-accent" aria-hidden /> Commentaires (modération)
         </h2>

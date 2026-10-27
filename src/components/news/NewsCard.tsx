@@ -11,7 +11,7 @@ import type { Article } from "@/types";
 export function NewsCard({ article }: { article: Article }) {
   const theme = themeFor(`${article.title} ${article.tags.join(" ")}`, article.platforms);
   return (
-    <article className="group relative flex flex-col overflow-hidden rounded-xl border border-border bg-surface transition-colors hover:border-accent/60 active:bg-surface-2">
+    <article className="group relative flex flex-col overflow-hidden rounded-xl glass transition-colors hover:border-accent/60 active:bg-surface-2">
       <RemoteImage
         src={article.image}
         alt=""

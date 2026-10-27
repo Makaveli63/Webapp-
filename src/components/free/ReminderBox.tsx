@@ -24,7 +24,7 @@ export function ReminderBox({ nextRefresh }: { nextRefresh: string }) {
       <a
         href={`${BASE_PATH}/rappel-jeux-gratuits.ics`}
         download
-        className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-surface px-4 py-2.5 text-sm font-semibold text-heading hover:border-accent/60 sm:w-auto"
+        className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg glass px-4 py-2.5 text-sm font-semibold text-heading hover:border-accent/60 sm:w-auto"
       >
         <CalendarPlus className="size-4 text-accent" aria-hidden /> Ajouter le rappel à mon agenda
       </a>

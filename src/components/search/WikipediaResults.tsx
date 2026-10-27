@@ -68,7 +68,7 @@ export function WikipediaResults({ query }: { query: string }) {
                 href={p.fullurl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex gap-3 rounded-xl border border-border bg-surface p-3 hover:border-accent/60"
+                className="flex gap-3 rounded-xl glass p-3 hover:border-accent/60"
               >
                 {p.thumbnail && (
                   // eslint-disable-next-line @next/next/no-img-element -- site statique

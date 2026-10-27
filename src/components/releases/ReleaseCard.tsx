@@ -11,7 +11,7 @@ import type { Release } from "@/types";
 export function ReleaseCard({ release, pinned = false }: { release: Release & { at: string }; pinned?: boolean }) {
   const theme = release.theme && release.theme in THEMES ? THEMES[release.theme as ThemeId] : themeFor(release.title, release.platforms);
   return (
-    <article className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-surface">
+    <article className="flex h-full flex-col overflow-hidden rounded-xl glass">
       {/* Visuel officiel du jeu ; à défaut, décor propre au jeu (forêt et épée pour Zelda…) */}
       <div className="relative aspect-[16/9] w-full">
         <div className="absolute inset-0">

@@ -1,10 +1,10 @@
 /** Échelle de couleurs de la note (rapportée à 100) et appréciation affichée avec elle. */
 const TIERS = [
-  { min: 0.85, className: "bg-emerald-500 text-black", label: "Excellent" },
-  { min: 0.7, className: "bg-lime-400 text-black", label: "Très bon" },
-  { min: 0.55, className: "bg-amber-400 text-black", label: "Correct" },
-  { min: 0.4, className: "bg-orange-500 text-black", label: "Moyen" },
-  { min: 0, className: "bg-rose-600 text-white", label: "Décevant" },
+  { min: 0.85, className: "score-glass score-excellent", label: "Excellent" },
+  { min: 0.7, className: "score-glass score-tres-bon", label: "Très bon" },
+  { min: 0.55, className: "score-glass score-correct", label: "Correct" },
+  { min: 0.4, className: "score-glass score-moyen", label: "Moyen" },
+  { min: 0, className: "score-glass score-decevant", label: "Décevant" },
 ];
 
 export function scoreTier(score: string) {
@@ -19,7 +19,7 @@ export function ScoreBadge({ score, className = "" }: { score: string; className
   const [value, scale] = score.split("/");
   return (
     <span
-      className={`pointer-events-none inline-flex flex-col items-center rounded-xl px-2.5 py-1.5 leading-none shadow-lg ring-2 ring-black/20 ${tone(score)} ${className}`}
+      className={`pointer-events-none inline-flex flex-col items-center rounded-2xl px-2.5 py-1.5 leading-none ${tone(score)} ${className}`}
       aria-label={`Note du test : ${score} (${scoreTier(score).label.toLowerCase()})`}
     >
       <span className="text-[10px] font-bold uppercase tracking-wide opacity-80">Note</span>
