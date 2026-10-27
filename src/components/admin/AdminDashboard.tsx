@@ -110,7 +110,7 @@ export function AdminDashboard() {
   if (!password || !stats) {
     const submit = (e: FormEvent) => {
       e.preventDefault();
-      load(input, days);
+      load(input.trim(), days);
     };
     return (
       <form onSubmit={submit} className="mt-6 max-w-sm space-y-3 rounded-xl border border-border bg-surface p-4">

@@ -66,12 +66,14 @@ create or replace function public.admin_set_password(p_password text)
 returns text
 language plpgsql volatile security definer set search_path = public, extensions as $$
 begin
-  if char_length(coalesce(p_password, '')) < 10 then raise exception 'MOT_DE_PASSE_TROP_COURT (10 caractères minimum)'; end if;
-  update public.admin_config set password_hash = crypt(p_password, gen_salt('bf', 10)) where id = 1;
+  -- Espaces de début et de fin ignorés (copier-coller), comme sur la page de connexion.
+  if char_length(trim(coalesce(p_password, ''))) < 10 then raise exception 'MOT_DE_PASSE_TROP_COURT (10 caractères minimum)'; end if;
+  update public.admin_config set password_hash = crypt(trim(p_password), gen_salt('bf', 10)) where id = 1;
+  delete from public.admin_attempts; -- nouveau mot de passe : on repart de zéro
   return 'Mot de passe du tableau de bord enregistré.';
 end $$;
 
--- Vérifie le mot de passe. Renvoie 'ok', 'ACCES_REFUSE' ou 'TROP_DE_TENTATIVES' sans lever d'erreur :
+-- Vérifie le mot de passe. Renvoie 'ok', 'ACCES_REFUSE', 'TROP_DE_TENTATIVES' ou 'MOT_DE_PASSE_NON_DEFINI' sans lever d'erreur :
 -- une erreur annulerait aussi l'enregistrement de l'essai raté, et la limite ne servirait à rien.
 create or replace function public.gb_admin_check(p_password text)
 returns text
@@ -81,10 +83,11 @@ declare
   v_hash text := (select password_hash from public.admin_config where id = 1);
 begin
   -- 5 essais ratés en 15 minutes au maximum par adresse (protection contre les essais en série).
+  if v_hash is null then return 'MOT_DE_PASSE_NON_DEFINI'; end if;
   if (select count(*) from public.admin_attempts where ip_hash = v_ip and created_at > now() - interval '15 minutes') >= 5 then
     return 'TROP_DE_TENTATIVES';
   end if;
-  if v_hash is null or p_password is null or crypt(p_password, v_hash) <> v_hash then
+  if p_password is null or crypt(trim(p_password), v_hash) <> v_hash then
     insert into public.admin_attempts (ip_hash) values (v_ip);
     return 'ACCES_REFUSE';
   end if;

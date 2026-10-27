@@ -29,7 +29,14 @@ export async function rpc<T>(fn: string, args: Record<string, unknown>): Promise
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     const code = Object.keys(ERRORS).find((k) => String(body?.message ?? "").includes(k));
-    throw new Error(code ? ERRORS[code] : "Service momentanément indisponible, réessayez plus tard.");
+    if (code) throw new Error(ERRORS[code]);
+    // Fonction absente de la base : le fichier SQL correspondant n'a pas été exécuté dans Supabase.
+    if (body?.code === "PGRST202" || body?.code === "42883") {
+      throw new Error(fn.startsWith("admin_")
+        ? "Tableau de bord pas encore installé : exécute supabase/stats.sql dans Supabase (SQL Editor)."
+        : "Service pas encore installé : exécute supabase/schema.sql dans Supabase (SQL Editor).");
+    }
+    throw new Error("Service momentanément indisponible, réessayez plus tard.");
   }
   return res.json() as Promise<T>;
 }
@@ -98,4 +105,6 @@ export function clearAdminSession() {
 export const ADMIN_ERRORS: Record<string, string> = {
   ACCES_REFUSE: "Mot de passe incorrect.",
   TROP_DE_TENTATIVES: "Trop de tentatives : réessayez dans 15 minutes.",
+  MOT_DE_PASSE_NON_DEFINI:
+    "Aucun mot de passe enregistré : dans Supabase (SQL Editor), lance select public.admin_set_password('…');",
 };
