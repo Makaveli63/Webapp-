@@ -23,6 +23,8 @@ const MAX_AGE_DAYS = 30;
 const MAX_NEW_SUMMARIES = 80; // par build, pour rester dans le quota gratuit
 const BATCH_SIZE = 5;
 const MAX_RETRIES = 3;
+// Temps maximal consacré à l'IA par mise à jour : le reste sera résumé à la suivante (cache).
+const AI_TIME_BUDGET_MS = 4 * 60_000;
 // Deux API compatibles OpenAI avec une offre gratuite.
 const PROVIDERS = {
   mistral: { url: "https://api.mistral.ai/v1/chat/completions", model: "mistral-small-latest", delayMs: 1500 },
@@ -178,7 +180,7 @@ async function summarizeBatch(articles, apiKey, provider, jsonMode = true) {
         { role: "user", content: JSON.stringify(payload) },
       ],
     }),
-    signal: AbortSignal.timeout(90_000),
+    signal: AbortSignal.timeout(60_000),
   });
   const raw = await res.text();
   if (!res.ok) {
@@ -238,7 +240,12 @@ async function main() {
     let provider = withName(EXPLICIT_PROVIDER || GUESSED_PROVIDER);
     let switched = !!EXPLICIT_PROVIDER;
     let jsonMode = true;
+    const deadline = Date.now() + AI_TIME_BUDGET_MS;
     for (let i = 0; i < todo.length; i += BATCH_SIZE) {
+      if (Date.now() > deadline) {
+        console.log("[ia] temps imparti écoulé : la suite sera résumée à la prochaine mise à jour.");
+        break;
+      }
       if (i > 0) await sleep(provider.delayMs); // limites de débit des offres gratuites
       let stop = false;
       for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
