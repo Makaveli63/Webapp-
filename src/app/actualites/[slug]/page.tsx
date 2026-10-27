@@ -4,7 +4,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { NewsCard } from "@/components/news/NewsCard";
 import { CategoryBadge, PlatformBadge } from "@/components/ui/Badge";
+import { FavoriteButton } from "@/components/news/FavoriteButton";
 import { RemoteImage } from "@/components/ui/RemoteImage";
+import { VideoPlayer } from "@/components/ui/VideoPlayer";
 import { renderMarkdown } from "@/lib/markdown";
 import { formatDate } from "@/lib/format";
 import { getArticles } from "@/lib/news";
@@ -54,15 +56,24 @@ export default async function ArticlePage({ params }: Props) {
           {article.platforms.map((p) => <PlatformBadge key={p} platform={p} />)}
         </div>
         <h1 className="mt-3 text-2xl font-extrabold leading-tight text-heading sm:text-4xl">{article.title}</h1>
-        <p className="mt-4 border-b border-border pb-6 text-sm text-muted">
+        <div className="mt-4 flex items-start justify-between gap-4 border-b border-border pb-6">
+        <p className="text-sm text-muted">
           {article.author !== article.source.name && <>Par {article.author} · </>}
           <time dateTime={article.publishedAt}>{formatDate(article.publishedAt)}</time>
           {" · "}Source : <span className="font-semibold text-fg">{article.source.name}</span>
         </p>
+        <FavoriteButton article={article} withLabel className="shrink-0" />
+        </div>
 
         {article.external ? (
           // Texte brut issu d'un flux externe ou de l'IA : jamais interprété comme du HTML.
           <div className="prose-article mt-8">
+            {article.score && (
+              <p className="flex items-center gap-3">
+                <span className="rounded-xl bg-amber-400 px-3 py-1.5 text-2xl font-extrabold text-black">{article.score}</span>
+                <span className="text-sm text-muted">Note attribuée par {article.source.name}</span>
+              </p>
+            )}
             {article.aiSummary ? (
               <>
                 <p className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-accent-2">
@@ -81,6 +92,13 @@ export default async function ArticlePage({ params }: Props) {
           </div>
         ) : (
           <div className="prose-article mt-8" dangerouslySetInnerHTML={{ __html: renderMarkdown(article.content) }} />
+        )}
+
+        {article.video && (
+          <section aria-label="Vidéo" className="mt-8">
+            <p className="mb-2 text-xs font-medium uppercase tracking-wider text-accent-2">Vidéo</p>
+            <VideoPlayer video={article.video} title={article.title} />
+          </section>
         )}
 
         {article.external && (

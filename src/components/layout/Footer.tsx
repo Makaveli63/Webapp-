@@ -11,6 +11,7 @@ const SECTIONS = [
       { href: "/jeux-gratuits", label: "Jeux gratuits" },
       { href: "/sorties", label: "Sorties de la semaine" },
       { href: "/recherche", label: "Recherche" },
+      { href: "/favoris", label: "Mes favoris" },
     ],
   },
   {

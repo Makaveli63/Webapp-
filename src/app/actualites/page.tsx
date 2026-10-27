@@ -5,7 +5,8 @@ import { getArticles } from "@/lib/news";
 export const metadata: Metadata = { title: "Actualités jeux vidéo" };
 
 export default async function NewsPage() {
-  const articles = await getArticles();
+  // Les 200 plus récents ; l'archive complète (4 mois) reste accessible via la recherche.
+  const articles = (await getArticles()).slice(0, 200);
   return (
     <CategoryPage
       title="Actualités jeux vidéo"

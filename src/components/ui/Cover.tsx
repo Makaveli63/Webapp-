@@ -328,15 +328,39 @@ function Rings({ c, r }: { c: Colors; r: Rand }) {
   );
 }
 
+/** Façon Switch 2 : console noire, reflets bleu et rouge des manettes côté écran. */
 function Split({ c }: { c: Colors }) {
   return (
     <>
-      <polygon points="0,0 230,0 170,200 0,200" fill={c[0]} />
-      <polygon points="230,0 400,0 400,200 170,200" fill={c[1]} />
-      <rect x="60" y="45" width="70" height="110" rx="35" fill="#ffffff" opacity=".18" />
-      <rect x="270" y="45" width="70" height="110" rx="35" fill="#ffffff" opacity=".18" />
-      <circle cx="95" cy="82" r="13" fill={c[3]} opacity=".5" />
-      <circle cx="305" cy="118" r="13" fill={c[3]} opacity=".5" />
+      <ellipse cx="110" cy="100" rx="150" ry="90" fill={c[2]} opacity=".18" />
+      <ellipse cx="290" cy="100" rx="150" ry="90" fill={c[3]} opacity=".18" />
+      <g transform="translate(70 52)">
+        <rect x="0" y="0" width="42" height="96" rx="21" fill="#1d2027" stroke="#3a3f4b" strokeWidth="2" />
+        <rect x="218" y="0" width="42" height="96" rx="21" fill="#1d2027" stroke="#3a3f4b" strokeWidth="2" />
+        <rect x="38" y="8" width="5" height="80" rx="2.5" fill={c[2]} />
+        <rect x="217" y="8" width="5" height="80" rx="2.5" fill={c[3]} />
+        <rect x="44" y="0" width="172" height="96" rx="8" fill="#111318" stroke="#3a3f4b" strokeWidth="2" />
+        <rect x="53" y="9" width="154" height="78" rx="3" fill={c[1]} />
+        <rect x="53" y="9" width="154" height="78" rx="3" fill={c[2]} opacity=".08" />
+        <circle cx="21" cy="28" r="10" fill="#0b0d12" stroke="#4a505d" strokeWidth="2.5" />
+        <circle cx="239" cy="62" r="10" fill="#0b0d12" stroke="#4a505d" strokeWidth="2.5" />
+        {[
+          [239, 22],
+          [231, 30],
+          [247, 30],
+          [239, 38],
+        ].map(([x, y], i) => (
+          <circle key={i} cx={x} cy={y} r="3.5" fill="#c9ced8" />
+        ))}
+        {[
+          [21, 58],
+          [13, 66],
+          [29, 66],
+          [21, 74],
+        ].map(([x, y], i) => (
+          <circle key={i} cx={x} cy={y} r="3.5" fill="#c9ced8" />
+        ))}
+      </g>
     </>
   );
 }

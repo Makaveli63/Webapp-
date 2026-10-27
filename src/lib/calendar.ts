@@ -12,9 +12,16 @@ export function getCalendar(): CalendarData {
     const games = (Array.isArray(data.games) ? data.games : []).filter(
       (g): g is CalendarGame => !!g && typeof g.title === "string" && /^\d{4}-\d{2}-\d{2}$/.test(g.date ?? ""),
     );
-    return { updatedAt: data.updatedAt, source: data.source, games, releaseImages: data.releaseImages ?? {} };
+    return {
+      updatedAt: data.updatedAt,
+      source: data.source,
+      games,
+      releaseImages: data.releaseImages ?? {},
+      releaseVideos: data.releaseVideos ?? {},
+      database: (Array.isArray(data.database) ? data.database : []).filter((g) => !!g && typeof g.title === "string"),
+    };
   } catch {
-    return { games: [], releaseImages: {} };
+    return { games: [], releaseImages: {}, releaseVideos: {}, database: [] };
   }
 }
 

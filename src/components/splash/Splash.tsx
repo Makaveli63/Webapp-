@@ -35,12 +35,18 @@ export function Splash() {
         ))}
       </svg>
 
-      {/* Façon Nintendo : deux manettes détachables rouge et bleue */}
+      {/* Façon Switch 2 : console noire, manettes aux reflets bleu et rouge côté écran */}
       <svg className="splash-group splash-nin" viewBox="0 0 120 120">
-        <rect x="18" y="14" width="36" height="92" rx="18" fill="#00b8d9" />
-        <rect x="66" y="14" width="36" height="92" rx="18" fill="#ff4b55" />
-        <circle cx="36" cy="44" r="8" fill="#0b0d12" opacity=".55" />
-        <circle cx="84" cy="72" r="8" fill="#0b0d12" opacity=".55" />
+        <rect x="2" y="34" width="22" height="52" rx="11" fill="#1d2027" stroke="#3a3f4b" strokeWidth="1.5" />
+        <rect x="96" y="34" width="22" height="52" rx="11" fill="#1d2027" stroke="#3a3f4b" strokeWidth="1.5" />
+        <rect x="21" y="38" width="3" height="44" rx="1.5" fill="#00b8ff" />
+        <rect x="96" y="38" width="3" height="44" rx="1.5" fill="#ff3c5a" />
+        <rect x="25" y="34" width="70" height="52" rx="5" fill="#111318" stroke="#3a3f4b" strokeWidth="1.5" />
+        <rect x="30" y="39" width="60" height="42" rx="2" fill="#2a2f3a" />
+        <circle cx="13" cy="48" r="5.5" fill="#0b0d12" stroke="#4a505d" strokeWidth="1.5" />
+        <circle cx="107" cy="70" r="5.5" fill="#0b0d12" stroke="#4a505d" strokeWidth="1.5" />
+        <circle cx="107" cy="49" r="2.2" fill="#c9ced8" />
+        <circle cx="13" cy="70" r="2.2" fill="#c9ced8" />
       </svg>
 
       {/* PC : touches W A S D */}

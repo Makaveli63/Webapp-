@@ -26,7 +26,11 @@ function policy(scriptHashes, styleHashes) {
     // Images des médias et des boutiques (flux RSS, Epic, Steam, RAWG…), chargées en HTTPS sans référent.
     "img-src 'self' data: https:",
     "font-src 'self'",
-    "connect-src 'self'",
+    // Vidéos : lecteur YouTube sans cookie (chargé au clic) et bandes-annonces MP4/WebM en HTTPS.
+    "frame-src https://www.youtube-nocookie.com",
+    "media-src https:",
+    // Recherche en direct sur Wikipédia (API publique, sans cookie).
+    "connect-src 'self' https://fr.wikipedia.org",
     "manifest-src 'self'",
     "base-uri 'none'",
     "form-action 'self'",

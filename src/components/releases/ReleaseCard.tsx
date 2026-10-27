@@ -2,6 +2,7 @@ import { ExternalLink } from "lucide-react";
 import { PlatformBadge } from "@/components/ui/Badge";
 import { Countdown } from "@/components/ui/Countdown";
 import { RemoteImage } from "@/components/ui/RemoteImage";
+import { TrailerButton } from "@/components/ui/TrailerButton";
 import { formatDate } from "@/lib/format";
 import { THEMES, themeFor, type ThemeId } from "@/lib/themes";
 import type { Release } from "@/types";
@@ -15,6 +16,11 @@ export function ReleaseCard({ release }: { release: Release & { at: string } }) 
         <div className="absolute inset-0">
           <RemoteImage src={release.image} alt={release.title} theme={theme} seed={release.id} className="h-full w-full" />
         </div>
+        {release.video && (
+          <div className="absolute right-3 top-3 z-10">
+            <TrailerButton video={release.video} title={release.title} />
+          </div>
+        )}
         <div className="relative flex h-full flex-col justify-end bg-gradient-to-t from-black/80 via-black/25 to-transparent p-4">
           <div className="flex flex-wrap gap-1.5">
             {release.platforms.map((p) => (

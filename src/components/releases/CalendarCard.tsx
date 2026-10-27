@@ -1,4 +1,5 @@
 import { RemoteImage } from "@/components/ui/RemoteImage";
+import { TrailerButton } from "@/components/ui/TrailerButton";
 import { themeFor } from "@/lib/themes";
 import type { CalendarGame } from "@/types";
 
@@ -19,6 +20,7 @@ export function CalendarCard({ game, isToday = false }: { game: CalendarGame; is
         >
           {isToday ? "Aujourd'hui" : dayLabel(game.date)}
         </span>
+        {game.video && <TrailerButton video={game.video} title={game.title} className="absolute bottom-2 right-2" />}
       </div>
       <div className="p-3">
         <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-heading">{game.title}</h3>

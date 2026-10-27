@@ -1,7 +1,9 @@
+import { Play } from "lucide-react";
 import Link from "next/link";
 import { CategoryBadge, PlatformBadge } from "@/components/ui/Badge";
 import { RemoteImage } from "@/components/ui/RemoteImage";
 import { formatDate } from "@/lib/format";
+import { FavoriteButton } from "./FavoriteButton";
 import { themeFor } from "@/lib/themes";
 import type { Article } from "@/types";
 
@@ -18,6 +20,16 @@ export function NewsCard({ article }: { article: Article }) {
         imgClassName="transition-transform duration-300 group-hover:scale-[1.03]"
         credit={article.image ? article.source.name : undefined}
       />
+      {article.score && (
+        <span className="pointer-events-none absolute right-2 top-2 rounded-lg bg-amber-400 px-2 py-1 text-sm font-extrabold text-black shadow">
+          {article.score}
+        </span>
+      )}
+      {article.video && (
+        <span className="pointer-events-none absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-black/70 px-2.5 py-1 text-xs font-semibold text-white">
+          <Play className="size-3" fill="currentColor" aria-hidden /> Vidéo
+        </span>
+      )}
       <div className="flex flex-1 flex-col p-4 sm:p-5">
         <div className="flex flex-wrap gap-1.5">
           <CategoryBadge category={article.category} />
@@ -35,6 +47,8 @@ export function NewsCard({ article }: { article: Article }) {
           <time dateTime={article.publishedAt}>{formatDate(article.publishedAt)}</time>
           <span aria-hidden>·</span>
           <span>Source : {article.source.name}</span>
+          {/* Au-dessus du lien qui couvre la carte, pour rester cliquable */}
+          <FavoriteButton article={article} className="relative z-10 -my-2 ml-auto p-2" />
         </div>
       </div>
     </article>

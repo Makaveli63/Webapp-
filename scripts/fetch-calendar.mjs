@@ -2,7 +2,8 @@
 // - Avec RAWG_API_KEY (gratuite sur rawg.io/apidocs) : toutes plateformes, images incluses.
 // - Sans clé : sorties PC à venir et récentes de Steam (données publiques de la boutique).
 // Visuel des grosses sorties (src/data/releases.json) : champ « image », sinon RAWG, sinon image de
-// partage officielle (og:image) de la page source. Ne bloque jamais la publication.
+// partage officielle (og:image) de la page source. Bandes-annonces : Steam, RAWG, et pour les grosses
+// sorties l'identifiant YouTube de releases.json, vérifié auprès de YouTube. Ne bloque jamais la publication.
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
@@ -88,7 +89,42 @@ async function fromRawg() {
     }
     if (!data?.next) break;
   }
+  // Bandes-annonces des 12 jeux les plus suivis (liste triée par popularité) : quota RAWG gratuit ménagé.
+  for (const g of games.slice(0, 12)) {
+    try {
+      g.video = await rawgVideo(g.id.replace("rawg-", ""));
+    } catch {
+      /* pas de vidéo */
+    }
+  }
   return games;
+}
+
+/** Première bande-annonce Steam lisible directement (MP4 ou WebM). */
+function steamVideo(movies) {
+  for (const m of Array.isArray(movies) ? movies : []) {
+    const mp4 = httpsUrl(m?.mp4?.max ?? m?.mp4?.["480"] ?? m?.webm?.max ?? m?.webm?.["480"]);
+    if (mp4) return { mp4, poster: httpsUrl(m.thumbnail) };
+  }
+  return undefined;
+}
+
+/** Bande-annonce RAWG d'un jeu (souvent issue de Steam), si elle existe. */
+async function rawgVideo(gameId) {
+  const data = await get(`${RAWG_BASE}/api/games/${gameId}/movies?key=${encodeURIComponent(RAWG_KEY)}`);
+  const m = data?.results?.[0];
+  const mp4 = httpsUrl(m?.data?.max ?? m?.data?.["480"]);
+  return mp4 ? { mp4, poster: httpsUrl(m.preview) } : undefined;
+}
+
+const norm = (t) => String(t ?? "").toLowerCase().normalize("NFD").replace(/[^a-z0-9]/g, "");
+
+/** Vérifie via YouTube (oEmbed, sans clé) qu'un identifiant correspond bien au jeu attendu. */
+async function checkedYoutube(id, names) {
+  if (!/^[A-Za-z0-9_-]{11}$/.test(id ?? "")) return undefined;
+  const data = await get(`https://www.youtube.com/oembed?format=json&url=${encodeURIComponent(`https://www.youtube.com/watch?v=${id}`)}`);
+  const title = norm(data?.title);
+  return names.some((n) => n && title.includes(norm(n))) ? { youtube: id } : undefined;
 }
 
 /** Date Steam en anglais (« Nov 5, 2026 », « 5 Nov, 2026 ») → AAAA-MM-JJ, sinon undefined. */
@@ -116,6 +152,7 @@ async function fromSteam() {
         platforms: ["PC"],
         image: httpsUrl(details.header_image ?? item.header_image),
         url: httpsUrl(`https://store.steampowered.com/app/${item.id}/`),
+        video: steamVideo(details.movies),
       });
     } catch {
       /* jeu ignoré */
@@ -134,25 +171,65 @@ async function ogImage(pageUrl) {
   return httpsUrl(m?.[1] ? new URL(m[1], pageUrl).href : undefined);
 }
 
-async function releaseImages() {
+async function releaseMedia() {
   const releases = JSON.parse(readFileSync("src/data/releases.json", "utf8"));
-  const out = {};
+  const images = {};
+  const videos = {};
   for (const r of releases) {
+    let rawgId;
     try {
       let image = httpsUrl(r.image);
-      if (!image && RAWG_KEY) {
+      if (RAWG_KEY) {
         const data = await get(
           `${RAWG_BASE}/api/games?key=${encodeURIComponent(RAWG_KEY)}&search=${encodeURIComponent(r.title)}&search_precise=true&page_size=1`,
         );
-        image = httpsUrl(data?.results?.[0]?.background_image);
+        const found = data?.results?.[0];
+        if (found && norm(found.name).includes(norm(r.title).slice(0, 12))) {
+          rawgId = found.id;
+          image ??= httpsUrl(found.background_image);
+        }
       }
       if (!image) image = await ogImage(r.source);
-      if (image) out[r.id] = image;
+      if (image) images[r.id] = image;
     } catch (err) {
       console.log(`[sorties] visuel introuvable pour ${r.title} (${err.message})`);
     }
+    // Vidéo : YouTube vérifié d'abord, puis bande-annonce RAWG ; chaque étape peut échouer sans bloquer l'autre.
+    let video;
+    if (r.youtube) {
+      video = await checkedYoutube(r.youtube, [r.title, r.short]).catch((err) => {
+        console.log(`[sorties] vérification YouTube impossible pour ${r.title} (${err.message})`);
+        return undefined;
+      });
+      if (!video) console.log(`[sorties] vidéo YouTube non retenue pour ${r.title}`);
+    }
+    if (!video && rawgId) video = await rawgVideo(rawgId).catch(() => undefined);
+    if (video) videos[r.id] = video;
   }
-  return out;
+  return { images, videos };
+}
+
+/** Base de jeux pour la recherche : les 200 jeux les plus populaires de RAWG. */
+async function gameDatabase() {
+  if (!RAWG_KEY) return [];
+  const games = [];
+  for (const page of [1, 2, 3, 4, 5]) {
+    const data = await get(`${RAWG_BASE}/api/games?key=${encodeURIComponent(RAWG_KEY)}&ordering=-added&page_size=40&page=${page}`);
+    for (const g of data?.results ?? []) {
+      if (!g?.name) continue;
+      games.push({
+        id: `rawg-${g.id}`,
+        title: clean(g.name, 120),
+        date: /^\d{4}-\d{2}-\d{2}$/.test(g.released ?? "") ? g.released : undefined,
+        platforms: platformLabels((g.platforms ?? []).map((p) => p?.platform?.name ?? "")),
+        image: httpsUrl(g.background_image),
+        url: httpsUrl(`https://rawg.io/games/${g.slug}`),
+        rating: typeof g.metacritic === "number" ? g.metacritic : undefined,
+      });
+    }
+    if (!data?.next) break;
+  }
+  return games;
 }
 
 async function main() {
@@ -168,8 +245,18 @@ async function main() {
   const games = [...rawg, ...steam.filter((g) => !known.has(key(g.title)))];
   const source = rawg.length ? "RAWG" : steam.length ? "Steam" : undefined;
   console.log(`[sorties] RAWG : ${rawg.length} jeux, Steam : ${steam.length} jeux, total : ${games.length}`);
-  const images = await releaseImages();
-  console.log(`[sorties] visuels des grosses sorties : ${Object.keys(images).length}`);
+  let database = [];
+  try {
+    database = await gameDatabase();
+    console.log(`[sorties] base de jeux pour la recherche : ${database.length}`);
+  } catch (err) {
+    console.log(`[sorties] base de jeux indisponible (${err.message})`);
+  }
+  const { images, videos } = await releaseMedia();
+  console.log(
+    `[sorties] grosses sorties : ${Object.keys(images).length} visuels, ${Object.keys(videos).length} vidéos ; ` +
+      `calendrier : ${games.filter((g) => g.video).length} bandes-annonces`,
+  );
 
   const seen = new Set();
   const result = {
@@ -177,6 +264,8 @@ async function main() {
     source,
     games: games.filter((g) => !seen.has(g.id) && seen.add(g.id)).sort((a, b) => a.date.localeCompare(b.date)),
     releaseImages: images,
+    releaseVideos: videos,
+    database,
   };
   writeFileSync(`${OUT_FILE}.tmp`, JSON.stringify(result));
   renameSync(`${OUT_FILE}.tmp`, OUT_FILE);

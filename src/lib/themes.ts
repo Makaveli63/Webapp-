@@ -41,7 +41,7 @@ export const THEMES = {
   darkfantasy: { id: "darkfantasy", scene: "darkfantasy", colors: ["#0d1b2a", "#415a77", "#f1e3c3", "#1b263b", "#06101c", "#e0b354"] },
   ps: { id: "ps", scene: "waves", colors: ["#081646", "#1f4fd1", "#4f8bff", "#9cc0ff", "#ffffff", "#2fd3a7"] },
   xbox: { id: "xbox", scene: "rings", colors: ["#041a0b", "#107c10", "#5ee36a", "#b8ffbf", "#ffffff", "#2ecc40"] },
-  switch: { id: "switch", scene: "split", colors: ["#00b8d9", "#ff4b55", "#ffffff", "#0b0d12", "#e6e8ee", "#ffd166"] },
+  switch: { id: "switch", scene: "split", colors: ["#07080c", "#1a1d24", "#00b8ff", "#ff3c5a", "#e6e8ee", "#ffd166"] },
   pc: { id: "pc", scene: "grid", colors: ["#07080d", "#1a1e29", "#ff4fd8", "#22d3ee", "#a3ff5c", "#7c5cff"] },
   multi: { id: "multi", scene: "abstract", colors: ["#1b1036", "#6246ea", "#22d3ee", "#ff6a88", "#ffd166", "#ffffff"] },
 } as const satisfies Record<string, Theme>;

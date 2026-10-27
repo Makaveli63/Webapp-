@@ -1,5 +1,12 @@
 // Modèles de données de l'application (typage strict).
 
+/** Vidéo (bande-annonce, extrait) : identifiant YouTube ou fichier MP4/WebM en HTTPS. */
+export interface Video {
+  youtube?: string;
+  mp4?: string;
+  poster?: string;
+}
+
 export type Platform = "PC" | "PS5" | "Switch 2" | "Xbox" | "Mobile" | "Multi";
 
 export const PLATFORMS: readonly Platform[] = ["PC", "PS5", "Switch 2", "Xbox", "Mobile", "Multi"] as const;
@@ -20,6 +27,8 @@ export interface Article {
   /** Markdown pour les articles locaux, texte brut (extrait de l'éditeur) pour les articles RSS */
   content: string;
   category: Category;
+  /** Note du test donnée par le média (ex. « 8/10 »), si elle est indiquée */
+  score?: string;
   platforms: Platform[];
   tags: string[];
   author: string;
@@ -28,6 +37,8 @@ export interface Article {
   source: { name: string; url?: string };
   /** Image d'illustration fournie par le média dans son flux RSS (affichée depuis son site, créditée) */
   image?: string;
+  /** Vidéo intégrée par le média dans l'article (YouTube) ou jointe au flux */
+  video?: Video;
   /** Résumé original rédigé automatiquement (IA) à partir de la source */
   aiSummary?: string;
   /** true si l'article provient d'un flux RSS externe */
@@ -74,6 +85,10 @@ export interface Release {
   source: string;
   /** Visuel officiel (facultatif) ; sinon récupéré sur la page source au build */
   image?: string;
+  /** Identifiant YouTube de la bande-annonce officielle (vérifié au build via YouTube) */
+  youtube?: string;
+  /** Bande-annonce retenue au build (YouTube vérifié, sinon RAWG) */
+  video?: Video;
 }
 
 /** Jeu du calendrier des sorties (semaine / mois). */
@@ -82,9 +97,13 @@ export interface CalendarGame {
   title: string;
   /** Date de sortie AAAA-MM-JJ */
   date: string;
+  /** Note Metacritic (base de jeux RAWG) */
+  rating?: number;
   platforms: string[];
   image?: string;
   url?: string;
+  /** Bande-annonce (Steam ou RAWG) */
+  video?: Video;
 }
 
 export interface CalendarData {
@@ -93,4 +112,27 @@ export interface CalendarData {
   games: CalendarGame[];
   /** Visuels des grosses sorties (id de releases.json → URL) */
   releaseImages: Record<string, string>;
+  /** Bandes-annonces des grosses sorties (id de releases.json → vidéo) */
+  releaseVideos: Record<string, Video>;
+  /** Jeux populaires (RAWG) pour la recherche ; date facultative */
+  database: (Omit<CalendarGame, "date"> & { date?: string })[];
+}
+
+/** Jeu affiché dans la recherche (base RAWG, calendrier, sorties, jeux gratuits). */
+export interface SearchGame {
+  id: string;
+  title: string;
+  date?: string;
+  platforms: string[];
+  image?: string;
+  /** Lien externe (fiche RAWG, Steam, boutique) ou page interne commençant par « / » */
+  url?: string;
+  rating?: number;
+  video?: Video;
+  note?: string;
+}
+
+export interface SearchIndex {
+  articles: Article[];
+  games: SearchGame[];
 }

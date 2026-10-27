@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Bookmark } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { Logo } from "@/components/ui/Logo";
 import { activeHref, NAV_LINKS, SEARCH_LINK } from "./nav-links";
@@ -18,7 +19,7 @@ export function Navbar() {
           <Logo id="gb-nav" className="text-lg" />
         </Link>
 
-        <ul className="ml-6 hidden items-center gap-1 md:flex">
+        <ul className="ml-4 hidden items-center gap-0.5 md:flex">
           {NAV_LINKS.map((l) => (
             <li key={l.href}>
               <Link
@@ -32,12 +33,20 @@ export function Navbar() {
           ))}
         </ul>
 
-        <SearchBar className="ml-auto hidden w-64 md:block" />
+        <SearchBar className="ml-auto hidden w-56 lg:block" />
+
+        <Link
+          href="/favoris"
+          aria-label="Mes favoris"
+          className="-mr-1 ml-auto flex size-11 items-center justify-center rounded-full text-muted hover:text-fg lg:ml-0"
+        >
+          <Bookmark className="size-5" aria-hidden />
+        </Link>
 
         <Link
           href={SEARCH_LINK.href}
           aria-label="Rechercher"
-          className="-mr-2 ml-auto flex size-11 items-center justify-center rounded-full text-muted hover:text-fg md:hidden"
+          className="-mr-2 flex size-11 items-center justify-center rounded-full text-muted hover:text-fg lg:hidden"
         >
           <SearchIcon className="size-5" aria-hidden />
         </Link>

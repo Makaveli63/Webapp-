@@ -48,5 +48,9 @@ src/
 - **Jeux gratuits** : `scripts/fetch-free-games.mjs` (lancé par `npm run news`) lit les données publiques de l'Epic Games Store (jeux de la semaine et de jeudi prochain) et l'API de GamerPower (Steam, GOG, Prime Gaming…). Page `/jeux-gratuits`, compte à rebours jusqu'au jeudi 17 h et rappel d'agenda `public/rappel-jeux-gratuits.ics`. Le site est aussi reconstruit le jeudi juste après le changement.
 - **Grosses sorties** : `src/data/releases.json` (titre, nom court, date AAAA-MM-JJ, plateformes, source). Compte à rebours dans le bandeau en tête de chaque page, sur l'accueil et sur `/sorties` ; une sortie disparaît le lendemain de sa date. Pour ajouter un jeu : une entrée de plus dans ce fichier, avec un lien vers l'annonce officielle.
 - **Calendrier des sorties** (`/sorties`) : `scripts/fetch-calendar.mjs` liste les jeux qui sortent cette semaine, ce mois-ci et le mois prochain. Avec une clé gratuite RAWG (secret `RAWG_API_KEY`, sur rawg.io/apidocs) : toutes plateformes ; sans clé : sorties PC de Steam.
+- **Vidéos** : YouTube intégrée par le média dans l'article (lecteur youtube-nocookie chargé au clic), bandes-annonces Steam/RAWG dans le calendrier, et pour les grosses sorties l'identifiant `youtube` de `releases.json` (vérifié auprès de YouTube au build).
+- **Recherche** : index statique `/recherche-index.json` (archive de 4 mois d'actus + jeux : base RAWG des 200 jeux les plus populaires, calendrier, sorties, jeux gratuits) et recherche en direct sur Wikipédia.
+- **Tests** : note du média (« 8/10 ») détectée dans le texte du flux ou relevée par l'IA, affichée sur la carte et dans le résumé.
+- **Favoris** : enregistrés sur l'appareil du visiteur (localStorage), page `/favoris`.
 
 Complétez les mentions légales (`src/app/mentions-legales/page.tsx`) avant de faire connaître le site.

@@ -36,10 +36,12 @@ jobs:
       - run: npm ci --ignore-scripts
       - name: Vérifier les signatures des paquets npm
         run: npm audit signatures
-      # Conserve les résumés déjà rédigés : seuls les nouveaux articles passent par l'IA.
+      # Conserve les résumés déjà rédigés et l'archive des actus d'un build à l'autre.
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: .cache/news/summaries.json
+          path: |
+            .cache/news/summaries.json
+            .cache/news/archive.json
           key: news-summaries-${{ github.run_id }}
           restore-keys: news-summaries-
       - name: Récupérer les actus et rédiger les résumés
