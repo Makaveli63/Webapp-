@@ -57,6 +57,10 @@ public class MainActivity extends Activity {
         s.setAllowFileAccess(false);
         s.setAllowContentAccess(false);
         s.setMediaPlaybackRequiresUserGesture(true);
+        // Pas de zoom dans l'app (comme une app native).
+        s.setSupportZoom(false);
+        s.setBuiltInZoomControls(false);
+        s.setDisplayZoomControls(false);
         s.setUserAgentString(s.getUserAgentString() + " GamingBaseApp/" + BuildConfig.VERSION_NAME);
         web.addJavascriptInterface(new AppBridge(this), "GamingBaseApp");
 

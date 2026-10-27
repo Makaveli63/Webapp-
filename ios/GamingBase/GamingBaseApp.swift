@@ -7,12 +7,18 @@ import WidgetKit
 @main
 struct GamingBaseApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some Scene {
         WindowGroup {
             WebContainer()
                 .ignoresSafeArea() // le site gère lui-même l'encoche et la barre du bas (viewport-fit=cover)
                 .onOpenURL { WebViewController.open($0) } // lien venant d'un widget
+                .onChange(of: scenePhase) { phase in
+                    // À chaque ouverture : nouvelles actus vérifiées, résumé du soir mis à jour.
+                    if phase == .active { Task { _ = await NewsAlerts.check(notify: true) } }
+                    if phase == .background { NewsAlerts.schedule() }
+                }
         }
     }
 }
@@ -50,6 +56,15 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         config.applicationNameForUserAgent = "Mobile/15E148 GamingBaseApp/iOS"
         // Le site transmet ses jeux épinglés (📌) pour le widget « Mon jeu épinglé ».
         config.userContentController.add(WeakHandler(self), name: "gamingbase")
+        // Pas de zoom (pincement ni double tap) dans l'app, comme une app native. Le site dans Safari garde le zoom.
+        let noZoom = """
+        (function () {
+          var m = document.querySelector('meta[name="viewport"]');
+          if (!m) { m = document.createElement('meta'); m.name = 'viewport'; document.head.appendChild(m); }
+          m.content = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover';
+        })();
+        """
+        config.userContentController.addUserScript(WKUserScript(source: noZoom, injectionTime: .atDocumentEnd, forMainFrameOnly: true))
 
         webView = WKWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = self
