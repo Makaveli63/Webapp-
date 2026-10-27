@@ -1,3 +1,4 @@
+import { scoreTier } from "@/components/ui/ScoreBadge";
 import { ArrowLeft, ExternalLink, Newspaper, Sparkles } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -77,8 +78,13 @@ export default async function ArticlePage({ params }: Props) {
           <div className="prose-article mt-8">
             {article.score && (
               <p className="flex items-center gap-3">
-                <span className="rounded-xl bg-amber-400 px-3 py-1.5 text-2xl font-extrabold text-black">{article.score}</span>
-                <span className="text-sm text-muted">Note attribuée par {article.source.name}</span>
+                <span className={`rounded-xl px-3 py-1.5 text-2xl font-extrabold ${scoreTier(article.score).className}`}>
+                  {article.score}
+                </span>
+                <span className="text-sm text-muted">
+                  <span className="font-semibold text-heading">{scoreTier(article.score).label}</span> · note attribuée par{" "}
+                  {article.source.name}
+                </span>
               </p>
             )}
             {article.aiSummary ? (
