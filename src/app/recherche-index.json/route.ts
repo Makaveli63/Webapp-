@@ -2,6 +2,7 @@ import { getCalendar } from "@/lib/calendar";
 import { getFreeGames } from "@/lib/free-games";
 import { getArticles } from "@/lib/news";
 import { getUpcomingReleases } from "@/lib/releases";
+import { normalize } from "@/lib/fuzzy";
 import type { SearchGame, SearchIndex } from "@/types";
 
 // Index de recherche généré au build (fichier statique), téléchargé seulement sur la page Recherche.
@@ -35,6 +36,15 @@ export async function GET() {
     add({ id: g.id, title: g.title, platforms: [g.store], image: g.image, url: g.url, note: "Gratuit en ce moment" });
   for (const g of calendar.database) add(g);
 
-  const index: SearchIndex = { articles, games };
+  // Vocabulaire du correcteur : mots des titres de jeux (poids fort), des actus et des tags, avec leur fréquence.
+  const vocab: Record<string, number> = {};
+  const addWords = (text: string, weight: number) => {
+    for (const w of normalize(text).split(" ")) if (w.length >= 2) vocab[w] = (vocab[w] ?? 0) + weight;
+  };
+  games.forEach((g) => addWords(g.title, 5));
+  articles.forEach((a) => addWords(`${a.title} ${a.tags.join(" ")}`, 1));
+  ["PS5", "PlayStation", "Xbox", "Switch 2", "Nintendo", "PC", "Steam", "test", "sortie", "gratuit"].forEach((w) => addWords(w, 10));
+
+  const index: SearchIndex = { articles, games, vocab };
   return Response.json(index);
 }

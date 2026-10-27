@@ -135,4 +135,6 @@ export interface SearchGame {
 export interface SearchIndex {
   articles: Article[];
   games: SearchGame[];
+  /** Mots connus et leur fréquence, pour corriger les fautes de frappe */
+  vocab: Record<string, number>;
 }
