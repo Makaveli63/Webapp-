@@ -8,7 +8,10 @@ export default function LegalPage() {
       <h1 className="text-2xl font-extrabold text-heading sm:text-3xl">Mentions légales</h1>
 
       <h2>Éditeur</h2>
-      <p>[À compléter : nom, adresse, contact, directeur de la publication, hébergeur.]</p>
+      <p>
+        Site édité par <strong>Makaveli63</strong>. Hébergement : GitHub Pages (GitHub, Inc., 88 Colin P. Kelly Jr.
+        Street, San Francisco, CA 94107, États-Unis).
+      </p>
 
       <h2 id="sources">Sources et résumés</h2>
       <p>

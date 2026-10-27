@@ -42,6 +42,9 @@ export function Footer() {
           <p className="mt-3 text-sm text-muted">
             L&apos;actualité du jeu vidéo en français : news, tests et nouvelles consoles.
           </p>
+          <p className="mt-2 text-sm text-muted">
+            Site créé par <span className="font-semibold text-accent">Makaveli63</span>
+          </p>
         </div>
         {SECTIONS.map((s) => (
           <div key={s.title}>
@@ -63,7 +66,7 @@ export function Footer() {
           Actualités mises à jour automatiquement — dernière mise à jour le{" "}
           {new Intl.DateTimeFormat("fr-FR", { dateStyle: "long", timeStyle: "short", timeZone: "Europe/Paris" }).format(new Date())}.
         </p>
-        © {new Date().getFullYear()} Pixel Underground — Les articles résumés restent la propriété de leurs
+        © {new Date().getFullYear()} Pixel Underground par Makaveli63 — Les articles résumés restent la propriété de leurs
         éditeurs. Les marques citées appartiennent à leurs propriétaires respectifs.
       </div>
     </footer>

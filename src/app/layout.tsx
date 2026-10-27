@@ -16,6 +16,8 @@ export const metadata: Metadata = {
   manifest: `${BASE_PATH}/manifest.webmanifest`,
   icons: { icon: `${BASE_PATH}/icon.svg`, apple: `${BASE_PATH}/apple-touch-icon.png` },
   appleWebApp: { capable: true, title: "Pixel Underground", statusBarStyle: "default" },
+  authors: [{ name: "Makaveli63" }],
+  creator: "Makaveli63",
   referrer: "strict-origin-when-cross-origin",
   formatDetection: { email: false, address: false, telephone: false },
 };
