@@ -1,11 +1,13 @@
-import { Gamepad2, Gift, House, Newspaper, Search, Star } from "lucide-react";
+import { CalendarDays, Gamepad2, Gift, House, Newspaper, Search, Star } from "lucide-react";
 
+/** mobile : présent dans la barre d'onglets (5 au maximum) ; Consoles reste accessible via les filtres d'Actus. */
 export const NAV_LINKS = [
-  { href: "/", label: "Accueil", icon: House },
-  { href: "/actualites", label: "Actus", icon: Newspaper },
-  { href: "/tests", label: "Tests", icon: Star },
-  { href: "/consoles", label: "Consoles", icon: Gamepad2 },
-  { href: "/jeux-gratuits", label: "Gratuits", icon: Gift },
+  { href: "/", label: "Accueil", icon: House, mobile: true },
+  { href: "/actualites", label: "Actus", icon: Newspaper, mobile: true },
+  { href: "/tests", label: "Tests", icon: Star, mobile: true },
+  { href: "/consoles", label: "Consoles", icon: Gamepad2, mobile: false },
+  { href: "/sorties", label: "Sorties", icon: CalendarDays, mobile: true },
+  { href: "/jeux-gratuits", label: "Gratuits", icon: Gift, mobile: true },
 ] as const;
 
 export const SEARCH_LINK = { href: "/recherche", label: "Recherche", icon: Search } as const;

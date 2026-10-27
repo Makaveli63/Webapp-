@@ -1,5 +1,6 @@
 import "server-only";
 import releases from "@/data/releases.json";
+import { getCalendar } from "@/lib/calendar";
 import type { Release } from "@/types";
 
 /** Minuit (heure de Paris) le jour de la sortie, en ISO UTC. */
@@ -21,8 +22,9 @@ export function releaseInstant(date: string): string {
  * Une sortie reste affichée le jour J (« Disponible ! »), puis disparaît au build suivant.
  */
 export function getUpcomingReleases(now = new Date()): (Release & { at: string })[] {
+  const images = getCalendar().releaseImages;
   return (releases as Release[])
-    .map((r) => ({ ...r, at: releaseInstant(r.date) }))
+    .map((r) => ({ ...r, image: r.image ?? images[r.id], at: releaseInstant(r.date) }))
     .filter((r) => Date.parse(r.at) + 86_400_000 > now.getTime())
     .sort((a, b) => a.at.localeCompare(b.at));
 }

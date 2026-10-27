@@ -29,7 +29,9 @@ Prérequis (une seule fois) : *Settings → Pages → Source : GitHub Actions*. 
 
 ```
 scripts/
-  fetch-news.mjs Récupération des flux RSS + résumés IA (avant le build)
+  fetch-news.mjs        Flux RSS + images + résumés IA (avant le build)
+  fetch-free-games.mjs  Jeux gratuits Epic / GamerPower
+  fetch-calendar.mjs    Calendrier des sorties + visuels des grosses sorties
   csp.mjs        Politique de sécurité ajoutée aux pages (après le build)
 src/
   app/           Routes (accueil, actualites, tests, consoles, recherche, mentions-legales)
@@ -42,8 +44,9 @@ src/
 ## Contenu
 
 - **Articles** : `npm run news` (`scripts/fetch-news.mjs`) récupère les flux RSS de la presse jeu vidéo francophone (`src/data/feeds.json`, ou variable `RSS_FEEDS`) et rédige pour chaque nouvel article un **résumé original par IA** (offre gratuite de Mistral ou de Google Gemini : secret `AI_API_KEY` et variable `AI_PROVIDER` dans *Settings → Secrets and variables → Actions* ; résumés conservés d'un build à l'autre grâce au cache). Résultat : `.cache/news/articles.json`, lu par le build. Plateformes et rubriques (Actu, Test, Console) sont détectées par mots-clés. Chaque article a sa page sur le site (titre, résumé réécrit, source citée, articles liés) avec un lien vers l'article original ; le texte intégral n'est pas repris (droit d'auteur / droit voisin). Le journal de build indique les flux qui ont répondu. Les articles de démo (`src/data/news.ts`) ne s'affichent que si aucun flux ne répond.
-- **Visuels** : chaque article, sortie et jeu gratuit a une illustration dessinée en SVG (`src/components/ui/Cover.tsx`) selon son thème (`src/lib/themes.ts`) : franchise reconnue dans le titre (Zelda → forêt et épée, GTA → coucher de soleil sur la ville, Final Fantasy → cité industrielle, etc.), sinon plateforme. Aucune image de presse n'est reproduite. Pour une sortie, le champ `theme` de `releases.json` choisit le décor.
+- **Visuels** : vraies images quand elles existent (image fournie par le média dans son flux RSS, visuels officiels Epic/GamerPower, images RAWG ou Steam pour le calendrier, image de partage officielle de la page source pour les grosses sorties), affichées depuis leur site d'origine et créditées. Si une image manque ou ne se charge pas, une illustration SVG thématique prend le relais (`src/components/ui/Cover.tsx`, `src/lib/themes.ts`).
 - **Jeux gratuits** : `scripts/fetch-free-games.mjs` (lancé par `npm run news`) lit les données publiques de l'Epic Games Store (jeux de la semaine et de jeudi prochain) et l'API de GamerPower (Steam, GOG, Prime Gaming…). Page `/jeux-gratuits`, compte à rebours jusqu'au jeudi 17 h et rappel d'agenda `public/rappel-jeux-gratuits.ics`. Le site est aussi reconstruit le jeudi juste après le changement.
 - **Grosses sorties** : `src/data/releases.json` (titre, nom court, date AAAA-MM-JJ, plateformes, source). Compte à rebours dans le bandeau en tête de chaque page, sur l'accueil et sur `/sorties` ; une sortie disparaît le lendemain de sa date. Pour ajouter un jeu : une entrée de plus dans ce fichier, avec un lien vers l'annonce officielle.
+- **Calendrier des sorties** (`/sorties`) : `scripts/fetch-calendar.mjs` liste les jeux qui sortent cette semaine, ce mois-ci et le mois prochain. Avec une clé gratuite RAWG (secret `RAWG_API_KEY`, sur rawg.io/apidocs) : toutes plateformes ; sans clé : sorties PC de Steam.
 
 Complétez les mentions légales (`src/app/mentions-legales/page.tsx`) avant de faire connaître le site.

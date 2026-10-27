@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { CategoryBadge, PlatformBadge } from "@/components/ui/Badge";
-import { Cover } from "@/components/ui/Cover";
+import { RemoteImage } from "@/components/ui/RemoteImage";
 import { formatDate } from "@/lib/format";
 import { themeFor } from "@/lib/themes";
 import type { Article } from "@/types";
@@ -9,7 +9,15 @@ export function NewsCard({ article }: { article: Article }) {
   const theme = themeFor(`${article.title} ${article.tags.join(" ")}`, article.platforms);
   return (
     <article className="group relative flex flex-col overflow-hidden rounded-xl border border-border bg-surface transition-colors hover:border-accent/60 active:bg-surface-2">
-      <Cover theme={theme} seed={article.slug} className="aspect-[2/1] w-full transition-transform duration-300 group-hover:scale-[1.03]" />
+      <RemoteImage
+        src={article.image}
+        alt=""
+        theme={theme}
+        seed={article.slug}
+        className="aspect-[2/1] w-full"
+        imgClassName="transition-transform duration-300 group-hover:scale-[1.03]"
+        credit={article.image ? article.source.name : undefined}
+      />
       <div className="flex flex-1 flex-col p-4 sm:p-5">
         <div className="flex flex-wrap gap-1.5">
           <CategoryBadge category={article.category} />

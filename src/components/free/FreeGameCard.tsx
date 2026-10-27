@@ -1,6 +1,6 @@
 import { ExternalLink, Gift } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
-import { Cover } from "@/components/ui/Cover";
+import { RemoteImage } from "@/components/ui/RemoteImage";
 import { formatDayTime } from "@/lib/format";
 import { themeFor } from "@/lib/themes";
 import type { FreeGame } from "@/types";
@@ -9,7 +9,13 @@ export function FreeGameCard({ game }: { game: FreeGame }) {
   const upcoming = game.status === "upcoming";
   return (
     <article className="flex flex-col overflow-hidden rounded-xl border border-border bg-surface">
-      <Cover theme={themeFor(game.title, ["PC"])} seed={game.id} className="aspect-[3/1] w-full" />
+      <RemoteImage
+        src={game.image}
+        alt={game.title}
+        theme={themeFor(game.title, ["PC"])}
+        seed={game.id}
+        className="aspect-[16/9] w-full"
+      />
       <div className="flex flex-1 flex-col p-4 sm:p-5">
         <div className="flex flex-wrap items-center gap-1.5">
           <Badge className="bg-surface-2 text-fg ring-border">{game.store}</Badge>

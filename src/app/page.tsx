@@ -1,6 +1,7 @@
 import { FreeGamesTeaser } from "@/components/free/FreeGamesTeaser";
 import { NewsSection } from "@/components/news/NewsSection";
 import { UpcomingReleases } from "@/components/releases/UpcomingReleases";
+import { WeekReleasesTeaser } from "@/components/releases/WeekReleasesTeaser";
 import { getArticles, getArticlesByCategory } from "@/lib/news";
 
 export default async function HomePage() {
@@ -23,6 +24,7 @@ export default async function HomePage() {
 
       <UpcomingReleases />
       <NewsSection id="latest-title" title="Dernières actualités" href="/actualites" articles={latest.slice(0, 6)} />
+      <WeekReleasesTeaser />
       <FreeGamesTeaser />
       <NewsSection id="tests-title" title="Derniers tests" href="/tests" articles={tests.slice(0, 3)} />
       <NewsSection id="consoles-title" title="Consoles & matériel" href="/consoles" articles={consoles.slice(0, 3)} />

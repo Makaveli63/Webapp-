@@ -101,6 +101,25 @@ function safeUrl(raw) {
   }
 }
 
+/** Image d'illustration fournie par le média dans son flux (pièce jointe, media:content, ou 1re image du contenu). */
+function articleImage(item) {
+  const fromMedia = (Array.isArray(item.mediaContent) ? item.mediaContent : [])
+    .map((m) => m?.$)
+    .find((m) => m?.url && (!m.medium || m.medium === "image") && !/video|audio/.test(m.type ?? ""));
+  const candidates = [
+    item.enclosure?.type?.startsWith("image") || /\.(jpe?g|png|webp|avif)(\?|$)/i.test(item.enclosure?.url ?? "") ? item.enclosure.url : undefined,
+    fromMedia?.url,
+    item.mediaThumbnail?.$?.url,
+    item.itunes?.image,
+    /<img[^>]+src=["']([^"']+)["']/i.exec(item["content:encoded"] ?? item.content ?? "")?.[1],
+  ];
+  for (const raw of candidates) {
+    const url = safeUrl(raw?.replace(/&amp;/g, "&").replace(/^http:\/\//, "https://"));
+    if (url && url.startsWith("https://")) return url;
+  }
+  return undefined;
+}
+
 /** Date ISO valide et jamais dans le futur (un flux ne doit pas pouvoir s'épingler en tête). */
 function validDate(iso) {
   const t = iso ? Date.parse(iso) : NaN;
@@ -125,7 +144,10 @@ async function fetchFeed(feed) {
     signal: AbortSignal.timeout(10_000),
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const parsed = await new Parser().parseString(await readLimited(res));
+  const parser = new Parser({
+    customFields: { item: [["media:content", "mediaContent", { keepArray: true }], ["media:thumbnail", "mediaThumbnail"]] },
+  });
+  const parsed = await parser.parseString(await readLimited(res));
   const minDate = Date.now() - MAX_AGE_DAYS * 86_400_000;
 
   return parsed.items
@@ -149,6 +171,7 @@ async function fetchFeed(feed) {
         author: clean(item.creator ?? feed.name, 80),
         publishedAt: validDate(item.isoDate),
         source: { name: feed.name, url: link },
+        image: articleImage(item),
         external: true,
       };
     })

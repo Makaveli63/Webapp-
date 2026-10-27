@@ -49,6 +49,16 @@ function freeOffers(groups) {
     .filter((o) => o?.discountSetting?.discountPercentage === 0);
 }
 
+/** Visuel officiel Epic, au format large de préférence. */
+function epicImage(el) {
+  const images = el.keyImages ?? [];
+  for (const type of ["OfferImageWide", "DieselStoreFrontWide", "featuredMedia", "Thumbnail", "OfferImageTall"]) {
+    const url = safeUrl(images.find((i) => i?.type === type)?.url);
+    if (url?.startsWith("https://")) return url;
+  }
+  return undefined;
+}
+
 function epicSlug(el) {
   return (
     el.catalogNs?.mappings?.find((m) => m?.pageType === "productHome")?.pageSlug ||
@@ -74,6 +84,7 @@ async function fetchEpic() {
       store: "Epic Games",
       url,
       worth: worth && worth !== "0" ? clean(worth, 20) : undefined,
+      image: epicImage(el),
     };
 
     const current = freeOffers(el.promotions?.promotionalOffers).find(
@@ -123,6 +134,7 @@ async function fetchGamerPower() {
         status: "now",
         endDate: end,
         platforms: clean(platforms, 80),
+        image: [g.image, g.thumbnail].map(safeUrl).find((u) => u?.startsWith("https://")),
       };
     })
     .filter((g) => g.title && g.url);

@@ -22,7 +22,13 @@ export default function LegalPage() {
         la source et un lien vers l&apos;article original. Les résumés automatiques peuvent contenir des imprécisions :
         l&apos;article original fait foi.
       </p>
-      <p>Un éditeur qui souhaite le retrait de ses contenus peut nous contacter.</p>
+      <p>
+        Images : les visuels des actualités sont ceux que chaque média diffuse avec l&apos;article dans son flux RSS ;
+        ils sont affichés depuis le site du média (sans copie sur ce site) et crédités. Les visuels des jeux
+        proviennent des boutiques et bases de données publiques (Epic Games, Steam, GamerPower, RAWG) ou des pages
+        officielles des éditeurs. Les marques et visuels appartiennent à leurs propriétaires respectifs.
+      </p>
+      <p>Un éditeur ou un ayant droit qui souhaite le retrait d&apos;un contenu ou d&apos;une image peut nous contacter : il sera retiré sans délai.</p>
       <p>
         Jeux gratuits : données publiques de l&apos;Epic Games Store et de{" "}
         <a href="https://www.gamerpower.com" target="_blank" rel="noopener noreferrer">GamerPower</a>. Les offres

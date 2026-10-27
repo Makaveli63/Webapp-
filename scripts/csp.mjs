@@ -23,7 +23,8 @@ function policy(scriptHashes, styleHashes) {
     "default-src 'none'",
     `script-src 'self' ${scriptHashes.join(" ")}`.trim(),
     `style-src 'self' ${styleHashes.join(" ")}`.trim(),
-    "img-src 'self' data:",
+    // Images des médias et des boutiques (flux RSS, Epic, Steam, RAWG…), chargées en HTTPS sans référent.
+    "img-src 'self' data: https:",
     "font-src 'self'",
     "connect-src 'self'",
     "manifest-src 'self'",

@@ -26,6 +26,8 @@ export interface Article {
   /** Date ISO 8601 */
   publishedAt: string;
   source: { name: string; url?: string };
+  /** Image d'illustration fournie par le média dans son flux RSS (affichée depuis son site, créditée) */
+  image?: string;
   /** Résumé original rédigé automatiquement (IA) à partir de la source */
   aiSummary?: string;
   /** true si l'article provient d'un flux RSS externe */
@@ -45,6 +47,8 @@ export interface FreeGame {
   /** Prix habituel, ex. "19,99 €" */
   worth?: string;
   platforms?: string;
+  /** Visuel officiel fourni par la boutique */
+  image?: string;
 }
 
 export interface FreeGamesData {
@@ -68,4 +72,25 @@ export interface Release {
   theme?: string;
   /** Annonce officielle ou article de presse confirmant la date */
   source: string;
+  /** Visuel officiel (facultatif) ; sinon récupéré sur la page source au build */
+  image?: string;
+}
+
+/** Jeu du calendrier des sorties (semaine / mois). */
+export interface CalendarGame {
+  id: string;
+  title: string;
+  /** Date de sortie AAAA-MM-JJ */
+  date: string;
+  platforms: string[];
+  image?: string;
+  url?: string;
+}
+
+export interface CalendarData {
+  updatedAt?: string;
+  source?: "RAWG" | "Steam";
+  games: CalendarGame[];
+  /** Visuels des grosses sorties (id de releases.json → URL) */
+  releaseImages: Record<string, string>;
 }

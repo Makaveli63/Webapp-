@@ -9,7 +9,7 @@ const SECTIONS = [
       { href: "/tests", label: "Tests" },
       { href: "/consoles", label: "Consoles & matériel" },
       { href: "/jeux-gratuits", label: "Jeux gratuits" },
-      { href: "/sorties", label: "Sorties à venir" },
+      { href: "/sorties", label: "Sorties de la semaine" },
       { href: "/recherche", label: "Recherche" },
     ],
   },

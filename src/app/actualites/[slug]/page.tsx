@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { NewsCard } from "@/components/news/NewsCard";
 import { CategoryBadge, PlatformBadge } from "@/components/ui/Badge";
-import { Cover } from "@/components/ui/Cover";
+import { RemoteImage } from "@/components/ui/RemoteImage";
 import { renderMarkdown } from "@/lib/markdown";
 import { formatDate } from "@/lib/format";
 import { getArticles } from "@/lib/news";
@@ -41,10 +41,13 @@ export default async function ArticlePage({ params }: Props) {
         <Link href="/actualites" className="inline-flex items-center gap-1 text-sm text-muted hover:text-fg">
           <ArrowLeft className="size-4" aria-hidden /> Toutes les actualités
         </Link>
-        <Cover
+        <RemoteImage
+          src={article.image}
+          alt={article.title}
           theme={themeFor(`${article.title} ${article.tags.join(" ")}`, article.platforms)}
           seed={article.slug}
           className="mt-4 aspect-[2/1] w-full rounded-2xl sm:mt-5"
+          credit={article.image ? `Image : ${article.source.name}` : undefined}
         />
         <div className="mt-5 flex flex-wrap gap-1.5 sm:mt-6">
           <CategoryBadge category={article.category} />
