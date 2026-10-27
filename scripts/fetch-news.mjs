@@ -137,7 +137,12 @@ async function summarizeBatch(articles, token) {
   const payload = articles.map((a) => ({ id: a.slug, titre: a.title, resume_editeur: a.content }));
   const res = await fetch(MODELS_ENDPOINT, {
     method: "POST",
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    headers: {
+      Accept: "application/vnd.github+json",
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      "X-GitHub-Api-Version": "2022-11-28",
+    },
     body: JSON.stringify({
       model: MODEL,
       temperature: 0.4,
@@ -149,8 +154,14 @@ async function summarizeBatch(articles, token) {
     }),
     signal: AbortSignal.timeout(90_000),
   });
-  if (!res.ok) throw new Error(`HTTP ${res.status} ${clean(await res.text(), 200)}`);
-  const data = await res.json();
+  const raw = await res.text();
+  if (!res.ok) throw new Error(`HTTP ${res.status} ${clean(raw, 200)}`);
+  let data;
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    throw new Error(`réponse inattendue (HTTP ${res.status}, ${res.headers.get("content-type")}) : ${clean(raw, 200)}`);
+  }
   const parsed = JSON.parse(data.choices?.[0]?.message?.content ?? "{}");
   const ids = new Set(articles.map((a) => a.slug));
   return (Array.isArray(parsed.resumes) ? parsed.resumes : [])
