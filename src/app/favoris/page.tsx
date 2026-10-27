@@ -2,24 +2,22 @@ import type { Metadata } from "next";
 import { AppNotificationsToggle } from "@/components/app/AppNotificationsToggle";
 import { SyncPanel } from "@/components/sync/SyncPanel";
 import { AccentPicker } from "@/components/settings/AccentPicker";
+import { LibraryShortcut } from "@/components/tracker/LibraryShortcut";
 import { MyBadges } from "@/components/settings/MyBadges";
 import { FavoritesList } from "@/components/news/FavoritesList";
 import { PinnedReleaseGrid } from "@/components/releases/PinnedReleaseGrid";
 import { getUpcomingReleases } from "@/lib/releases";
 
-export const metadata: Metadata = { title: "Mes favoris" };
+export const metadata: Metadata = { title: "Mon espace" };
 
 export default function FavoritesPage() {
   return (
     <div className="space-y-10">
       <header>
-        <h1 className="text-2xl font-extrabold text-heading sm:text-3xl">Mes favoris</h1>
-        <p className="mt-2 text-muted">Tes jeux épinglés, tes articles enregistrés et tes réglages. Pour tes jeux et tes animes, va dans Ma bibliothèque.</p>
+        <h1 className="text-2xl font-extrabold text-heading sm:text-3xl">Mon espace</h1>
+        <p className="mt-2 text-muted">Ta bibliothèque de jeux et d&apos;animes, tes jeux épinglés, tes articles enregistrés et tes réglages.</p>
       </header>
-      <AppNotificationsToggle />
-      <MyBadges />
-      <SyncPanel />
-      <AccentPicker />
+      <LibraryShortcut />
       <section aria-labelledby="pinned-title">
         <h2 id="pinned-title" className="mb-4 text-xl font-bold text-heading">Mes jeux épinglés</h2>
         <PinnedReleaseGrid releases={getUpcomingReleases()} onlyPinned className="grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3" />
@@ -28,6 +26,11 @@ export default function FavoritesPage() {
         <h2 id="saved-title" className="text-xl font-bold text-heading">Articles enregistrés</h2>
         <FavoritesList />
       </section>
+      <h2 className="border-t border-border pt-8 text-xl font-bold text-heading">⚙️ Réglages</h2>
+      <AppNotificationsToggle />
+      <MyBadges />
+      <SyncPanel />
+      <AccentPicker />
     </div>
   );
 }

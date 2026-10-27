@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Bookmark, LibraryBig } from "lucide-react";
+import { CircleUserRound } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Logo } from "@/components/ui/Logo";
@@ -14,6 +14,8 @@ export function Navbar() {
   const pathname = usePathname();
   const active = activeHref(pathname);
   const SearchIcon = SEARCH_LINK.icon;
+  // Mon espace : bibliothèque, favoris et réglages.
+  const mySpace = /^\/(favoris|collection)(\/|$)/.test(pathname);
 
   return (
     <header className="sticky top-0 z-40 glass-bar border-b pt-[env(safe-area-inset-top)]">
@@ -42,18 +44,13 @@ export function Navbar() {
           <AdminLink active={pathname.startsWith("/admin")} />
           <ThemeToggle className="-mr-1" />
           <Link
-            href="/collection"
-            aria-label="Ma bibliothèque"
-            className="-mr-1 flex size-11 items-center justify-center rounded-full text-muted hover:text-fg"
-          >
-            <LibraryBig className="size-5" aria-hidden />
-          </Link>
-          <Link
             href="/favoris"
-            aria-label="Mes favoris"
-            className="-mr-1 flex size-11 items-center justify-center rounded-full text-muted hover:text-fg"
+            aria-label="Mon espace"
+            aria-current={mySpace ? "page" : undefined}
+            className={`-mr-1 flex h-11 items-center justify-center gap-1.5 rounded-full px-2.5 hover:text-fg ${mySpace ? "text-accent" : "text-muted"}`}
           >
-            <Bookmark className="size-5" aria-hidden />
+            <CircleUserRound className="size-5" aria-hidden />
+            <span className="hidden whitespace-nowrap text-sm font-semibold sm:inline lg:hidden 2xl:inline">Mon espace</span>
           </Link>
 
           <Link

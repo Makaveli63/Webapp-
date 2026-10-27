@@ -53,7 +53,7 @@ export function SyncPanel() {
 
       {code ? (
         <div className="mt-4 space-y-3">
-          <p className="text-sm text-fg">Cet appareil est relié. Sur ton autre appareil, ouvre Mes favoris et saisis ce code :</p>
+          <p className="text-sm text-fg">Cet appareil est relié. Sur ton autre appareil, ouvre Mon espace et saisis ce code :</p>
           <div className="flex flex-wrap items-center gap-2">
             <code className="glass-pill rounded-lg px-3 py-2 font-mono text-base font-bold tracking-wider text-heading">{formatCode(code)}</code>
             <button type="button" onClick={copy} className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-sm text-muted ring-1 ring-inset ring-border hover:text-fg">
