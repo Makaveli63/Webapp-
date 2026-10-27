@@ -30,7 +30,9 @@ const PROVIDERS = {
   mistral: { url: "https://api.mistral.ai/v1/chat/completions", model: "mistral-small-latest", delayMs: 1500 },
   gemini: {
     url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
-    model: "gemini-flash-latest",
+    // Modèle léger d'abord (plus rapide, moins saturé), puis repli si indisponible.
+    model: "gemini-flash-lite-latest",
+    fallbackModels: ["gemini-2.5-flash-lite", "gemini-flash-latest"],
     delayMs: 6000,
   },
 };
@@ -38,7 +40,10 @@ const PROVIDERS = {
 // est refusée par le premier fournisseur essayé, on bascule automatiquement sur l'autre.
 const EXPLICIT_PROVIDER = process.env.AI_PROVIDER?.trim().toLowerCase();
 const GUESSED_PROVIDER = process.env.AI_API_KEY?.trim().startsWith("AIza") ? "gemini" : "mistral";
-const withName = (name) => ({ name, ...(PROVIDERS[name] ?? PROVIDERS.mistral) });
+const withName = (name) => {
+  const p = PROVIDERS[name] ?? PROVIDERS.mistral;
+  return { name, ...p, models: [process.env.AI_MODEL?.trim() || p.model, ...(p.fallbackModels ?? [])] };
+};
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const PLATFORM_KEYWORDS = [
@@ -172,7 +177,7 @@ async function summarizeBatch(articles, apiKey, provider, jsonMode = true) {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: process.env.AI_MODEL?.trim() || provider.model,
+      model: provider.models[0],
       temperature: 0.4,
       ...(jsonMode ? { response_format: { type: "json_object" } } : {}),
       messages: [
@@ -269,6 +274,13 @@ async function main() {
             attempt = 0;
             continue;
           }
+          // Modèle saturé, introuvable ou trop lent : on passe au modèle de repli suivant.
+          if (/HTTP (503|404)|timeout/i.test(err.message) && provider.models.length > 1) {
+            provider = { ...provider, models: provider.models.slice(1) };
+            console.log(`[ia] modèle indisponible, essai avec ${provider.models[0]}.`);
+            attempt = 0;
+            continue;
+          }
           if (/HTTP 400/.test(err.message) && jsonMode) {
             jsonMode = false; // certains modèles refusent le mode JSON strict : on le demande dans le texte
             attempt = 0;
@@ -282,7 +294,7 @@ async function main() {
       }
       if (stop) break;
     }
-    console.log(`[ia] ${done} nouveaux résumés (${provider.name}), ${todo.length - done} en attente.`);
+    console.log(`[ia] ${done} nouveaux résumés (${provider.name}/${provider.models[0]}), ${todo.length - done} en attente.`);
   }
 
   // Oublie les résumés des articles sortis de la fenêtre de publication.
