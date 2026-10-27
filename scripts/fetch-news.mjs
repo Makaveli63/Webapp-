@@ -11,6 +11,7 @@
 //   AI_API_URL   remplace l'adresse de l'API (tests, changement d'adresse du fournisseur)
 import { mkdirSync, readFileSync, renameSync, writeFileSync, existsSync } from "node:fs";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import Parser from "rss-parser";
 
 const CACHE_DIR = path.resolve(".cache/news");
@@ -22,6 +23,9 @@ const ARCHIVE_MAX = 1200;
 const SUMMARIES_FILE = path.join(CACHE_DIR, "summaries.json");
 // Titres relus par l'IA (fautes de frappe des sources) : { titre d'origine: titre corrigé }.
 const PROOFREAD_FILE = path.join(CACHE_DIR, "proofread.json");
+// Notes des tests lues sur la page de l'article : { slug: "8/10" | null }.
+const SCORES_FILE = path.join(CACHE_DIR, "scores.json");
+const MAX_SCORE_PAGES = 40; // pages de tests consultées par mise à jour
 
 const MAX_ITEMS_PER_FEED = 25;
 const MAX_FEED_BYTES = 5 * 1024 * 1024;
@@ -151,6 +155,74 @@ function extractScore(text) {
   const value = Number(m[1].replace(",", "."));
   const scale = Number(m[2]);
   return value >= 0 && value <= scale ? `${m[1].replace(".", ",")}/${scale}` : undefined;
+}
+
+/** Formate une note trouvée dans les données structurées (ratingValue / bestRating). */
+function formatRating(value, best) {
+  const v = Number(String(value ?? "").replace(",", "."));
+  const b = Number(String(best ?? "").replace(",", ".")) || (v <= 10 ? 10 : v <= 20 ? 20 : 100);
+  if (!Number.isFinite(v) || ![5, 10, 20, 100].includes(b) || v < 0 || v > b) return undefined;
+  return `${String(Math.round(v * 10) / 10).replace(".", ",")}/${b}`;
+}
+
+/** Cherche récursivement un objet « reviewRating » dans le JSON-LD (Review, VideoGame…). */
+function ratingFromJsonLd(node, depth = 0) {
+  if (!node || typeof node !== "object" || depth > 6) return undefined;
+  if (Array.isArray(node)) {
+    for (const n of node) {
+      const r = ratingFromJsonLd(n, depth + 1);
+      if (r) return r;
+    }
+    return undefined;
+  }
+  const rating = node.reviewRating;
+  if (rating && typeof rating === "object") {
+    const r = formatRating(rating.ratingValue, rating.bestRating);
+    if (r) return r;
+  }
+  for (const value of Object.values(node)) {
+    const r = ratingFromJsonLd(value, depth + 1);
+    if (r) return r;
+  }
+  return undefined;
+}
+
+/**
+ * Note d'un test lue sur la page de l'article : seulement la note (un fait), pas le texte.
+ * 1) données structurées schema.org « Review » (destinées aux moteurs de recherche) ;
+ * 2) microdonnées itemprop="ratingValue" ;
+ * 3) mention explicite « Note : 16/20 » dans la page.
+ */
+export function scoreFromHtml(html) {
+  for (const [, json] of html.matchAll(/<script[^>]+application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi)) {
+    try {
+      const r = ratingFromJsonLd(JSON.parse(json.trim()));
+      if (r) return r;
+    } catch {
+      // JSON-LD mal formé : on essaie les autres méthodes
+    }
+  }
+  const attr = (name) =>
+    new RegExp(`itemprop=["']${name}["'][^>]*content=["']([\\d.,]+)["']|content=["']([\\d.,]+)["'][^>]*itemprop=["']${name}["']`, "i").exec(html);
+  const value = attr("ratingValue");
+  if (value) {
+    const best = attr("bestRating");
+    const r = formatRating(value[1] ?? value[2], best?.[1] ?? best?.[2]);
+    if (r) return r;
+  }
+  const text = html.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/gi, " ").replace(/<[^>]+>/g, " ").replace(/&nbsp;|\s+/g, " ");
+  const m = /\bnote\s*(?:finale|globale|de la r[ée]daction|gamekult)?\s*:?\s*(\d{1,2}(?:[.,]\d)?)\s*\/\s*(5|10|20|100)\b(?!\s*\/\s*\d)/i.exec(text);
+  return m ? formatRating(m[1], m[2]) : undefined;
+}
+
+async function fetchScore(url) {
+  if (!/^https:\/\/|^http:\/\/127\.0\.0\.1[:/]/.test(url)) return undefined; // 127.0.0.1 : tests locaux
+  const res = await fetch(url, {
+    headers: { "User-Agent": "GamingBase/1.0 (agrégateur RSS)", Accept: "text/html" },
+    signal: AbortSignal.timeout(10_000),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return scoreFromHtml(await readLimited(res));
 }
 
 /** Date ISO valide et jamais dans le futur (un flux ne doit pas pouvoir s'épingler en tête). */
@@ -436,6 +508,30 @@ async function main() {
   for (const t of Object.keys(proofread)) if (!liveTitles.has(t)) delete proofread[t];
   writeJson(PROOFREAD_FILE, proofread);
 
+  // Notes des tests absentes du flux RSS : lues sur la page du test (une fois par article).
+  const scores = readJson(SCORES_FILE, {});
+  const archivedTests = readJson(ARCHIVE_FILE, []).filter((a) => a?.category === "Test");
+  const needScore = [...articles.filter((a) => a.category === "Test"), ...archivedTests]
+    .filter((a, i, all) => !a.score && !(a.slug in scores) && all.findIndex((b) => b.slug === a.slug) === i)
+    .slice(0, MAX_SCORE_PAGES);
+  let found = 0;
+  for (let i = 0; i < needScore.length; i += 4) {
+    await Promise.all(
+      needScore.slice(i, i + 4).map(async (a) => {
+        try {
+          scores[a.slug] = (await fetchScore(a.source.url)) ?? null;
+          if (scores[a.slug]) found++;
+        } catch (err) {
+          console.log(`[notes] ${a.source.name} : page indisponible (${err.message}).`);
+        }
+      }),
+    );
+  }
+  if (needScore.length) console.log(`[notes] ${found} note(s) trouvée(s) sur ${needScore.length} test(s) consulté(s).`);
+  const liveSlugs = new Set([...articles, ...readJson(ARCHIVE_FILE, [])].map((a) => a?.slug));
+  for (const slug of Object.keys(scores)) if (!liveSlugs.has(slug)) delete scores[slug];
+  writeJson(SCORES_FILE, scores);
+
   // Oublie les résumés des articles sortis de la fenêtre de publication.
   const keep = Date.now() - (MAX_AGE_DAYS + 15) * 86_400_000;
   for (const [slug, entry] of Object.entries(cache)) if (Date.parse(entry.at) < keep) delete cache[slug];
@@ -443,7 +539,7 @@ async function main() {
 
   const final = articles.map((a) => {
     const summary = cache[a.slug]?.text;
-    const score = a.score ?? (a.category === "Test" ? cache[a.slug]?.note : undefined);
+    const score = a.score ?? (a.category === "Test" ? (scores[a.slug] ?? cache[a.slug]?.note) : undefined);
     const title = proofread[a.title] ?? a.title;
     const withScore = { ...a, title, ...(score ? { score } : {}) };
     return summary ? { ...withScore, aiSummary: summary, excerpt: clean(summary, 220) } : withScore;
@@ -453,14 +549,16 @@ async function main() {
   const fresh = new Set(final.map((a) => a.slug));
   const archived = readJson(ARCHIVE_FILE, [])
     .filter((a) => a?.slug && !fresh.has(a.slug) && Date.parse(a.publishedAt) >= minArchive)
-    .map((a) => (proofread[a.title] && proofread[a.title] !== a.title ? { ...a, title: proofread[a.title] } : a));
+    .map((a) => (proofread[a.title] && proofread[a.title] !== a.title ? { ...a, title: proofread[a.title] } : a))
+    .map((a) => (a.category === "Test" && !a.score && scores[a.slug] ? { ...a, score: scores[a.slug] } : a));
   const all = [...final, ...archived].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt)).slice(0, ARCHIVE_MAX);
   writeJson(ARCHIVE_FILE, all);
   writeJson(ARTICLES_FILE, all);
   console.log(`[rss] ${final.length} articles du jour, ${all.length} avec l'archive (${ARCHIVE_DAYS} jours).`);
 }
 
-main().catch((err) => {
+// Lancé directement (npm run news) ; importé, il expose seulement ses fonctions (tests).
+if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) main().catch((err) => {
   // Ne jamais bloquer la publication : le site retombe sur les articles de démonstration.
   console.error(`[rss] erreur inattendue : ${err.message}`);
 });
