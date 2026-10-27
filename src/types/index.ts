@@ -138,6 +138,8 @@ export interface SearchGame {
   /** Temps de jeu moyen (heures, joueurs RAWG) */
   playtime?: number;
   genres?: string[];
+  /** Autre titre (ex. titre japonais d'un anime), aussi cherché */
+  aka?: string;
 }
 
 export interface SearchIndex {

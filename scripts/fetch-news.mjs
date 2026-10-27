@@ -27,6 +27,9 @@ const PROOFREAD_FILE = path.join(CACHE_DIR, "proofread.json");
 // v2 : détection améliorée, on reconsulte les tests restés sans note avec la v1.
 const SCORES_FILE = path.join(CACHE_DIR, "scores-v2.json");
 const MAX_SCORE_PAGES = 40; // pages de tests consultées par mise à jour
+// Image d'aperçu officielle (og:image) des articles dont le flux n'a pas d'image : { slug: url | null }.
+const IMAGES_FILE = path.join(CACHE_DIR, "images.json");
+const MAX_IMAGE_PAGES = 40;
 
 const MAX_ITEMS_PER_FEED = 25;
 const MAX_FEED_BYTES = 5 * 1024 * 1024;
@@ -237,6 +240,35 @@ export function scoreHints(html) {
   const text = pageText(html);
   const hits = [...text.matchAll(new RegExp(`\\b(?:note|verdict)\\b|${FRACTION}`, "gi"))].slice(-6);
   return hits.map((h) => text.slice(Math.max(0, h.index - 120), h.index + 80).trim());
+}
+
+/** Image d'aperçu déclarée par la page (og:image, sinon twitter:image), en https. */
+export function previewImage(html, pageUrl) {
+  const head = html.slice(0, 300_000);
+  for (const name of ["og:image:secure_url", "og:image", "twitter:image", "twitter:image:src"]) {
+    for (const tag of head.match(/<meta\b[^>]*>/gi) ?? []) {
+      const key = /\b(?:property|name)\s*=\s*["']([^"']+)["']/i.exec(tag)?.[1]?.toLowerCase();
+      const content = /\bcontent\s*=\s*["']([^"']+)["']/i.exec(tag)?.[1];
+      if (key !== name || !content) continue;
+      try {
+        const url = safeUrl(new URL(content.replace(/&amp;/g, "&"), pageUrl).href.replace(/^http:\/\//, "https://"));
+        if (url?.startsWith("https://")) return url;
+      } catch {
+        // adresse invalide : on essaie la balise suivante
+      }
+    }
+  }
+  return undefined;
+}
+
+async function fetchPreviewImage(url) {
+  if (!/^https:\/\/|^http:\/\/127\.0\.0\.1[:/]/.test(url)) return undefined; // 127.0.0.1 : tests locaux
+  const res = await fetch(url, {
+    headers: { "User-Agent": "GamingBase/1.0 (agrégateur RSS)", Accept: "text/html" },
+    signal: AbortSignal.timeout(8_000),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return previewImage(await readLimited(res), url);
 }
 
 async function fetchScore(url) {
@@ -600,6 +632,29 @@ async function main() {
   for (const slug of Object.keys(scores)) if (!liveSlugs.has(slug)) delete scores[slug];
   writeJson(SCORES_FILE, scores);
 
+  // Articles sans image dans le flux (fréquent pour l'anime) : image d'aperçu de la page de l'article.
+  const images = readJson(IMAGES_FILE, {});
+  const needImage = [...articles, ...readJson(ARCHIVE_FILE, [])]
+    .filter((a, i, all) => a?.slug && !a.image && !(a.slug in images) && all.findIndex((b) => b?.slug === a.slug) === i)
+    .slice(0, MAX_IMAGE_PAGES);
+  let imaged = 0;
+  for (let i = 0; i < needImage.length; i += 4) {
+    await Promise.all(
+      needImage.slice(i, i + 4).map(async (a) => {
+        try {
+          images[a.slug] = (await fetchPreviewImage(a.source.url)) ?? null;
+          if (images[a.slug]) imaged++;
+        } catch (err) {
+          console.log(`[images] ${a.source.name} : page indisponible (${err.message}).`);
+        }
+      }),
+    );
+  }
+  if (needImage.length) console.log(`[images] ${imaged} image(s) trouvée(s) sur ${needImage.length} article(s) sans image.`);
+  for (const slug of Object.keys(images)) if (!liveSlugs.has(slug)) delete images[slug];
+  writeJson(IMAGES_FILE, images);
+  const withImage = (a) => (!a.image && images[a.slug] ? { ...a, image: images[a.slug] } : a);
+
   // Oublie les résumés des articles sortis de la fenêtre de publication.
   const keep = Date.now() - (MAX_AGE_DAYS + 15) * 86_400_000;
   for (const [slug, entry] of Object.entries(cache)) if (Date.parse(entry.at) < keep) delete cache[slug];
@@ -609,7 +664,7 @@ async function main() {
     const summary = cache[a.slug]?.text;
     const score = a.score ?? (a.category === "Test" ? (scores[a.slug] ?? cache[a.slug]?.note) : undefined);
     const title = proofread[a.title] ?? a.title;
-    const withScore = { ...a, title, ...(score ? { score } : {}) };
+    const withScore = withImage({ ...a, title, ...(score ? { score } : {}) });
     return summary ? { ...withScore, aiSummary: summary, excerpt: clean(summary, 220) } : withScore;
   });
   // Fusion avec l'archive : les articles du jour remplacent leurs anciennes versions.
@@ -618,7 +673,8 @@ async function main() {
   const archived = readJson(ARCHIVE_FILE, [])
     .filter((a) => a?.slug && !fresh.has(a.slug) && Date.parse(a.publishedAt) >= minArchive)
     .map((a) => (proofread[a.title] && proofread[a.title] !== a.title ? { ...a, title: proofread[a.title] } : a))
-    .map((a) => (a.category === "Test" && !a.score && scores[a.slug] ? { ...a, score: scores[a.slug] } : a));
+    .map((a) => (a.category === "Test" && !a.score && scores[a.slug] ? { ...a, score: scores[a.slug] } : a))
+    .map(withImage);
   const all = [...final, ...archived].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt)).slice(0, ARCHIVE_MAX);
   writeJson(ARCHIVE_FILE, all);
   writeJson(ARTICLES_FILE, all);

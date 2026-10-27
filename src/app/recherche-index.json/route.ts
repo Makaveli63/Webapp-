@@ -1,3 +1,4 @@
+import { getAnime } from "@/lib/anime";
 import { getCalendar } from "@/lib/calendar";
 import { getFreeGames } from "@/lib/free-games";
 import { gameSlug, getGames } from "@/lib/games";
@@ -36,15 +37,19 @@ export async function GET() {
   for (const g of getFreeGames().games)
     add({ id: g.id, title: g.title, platforms: [g.store], image: g.image, url: g.url, note: "Gratuit en ce moment" });
   for (const g of calendar.database) add(g);
+  // Animes de la saison et à venir (AniList) : « solo leveling » trouve l'anime même sans actu.
+  const anime = getAnime();
+  for (const a of [...anime.airing, ...anime.upcoming])
+    add({ id: a.id, title: a.title, aka: a.original, image: a.image, date: a.start?.length === 10 ? a.start : undefined, platforms: [], url: "/anime", note: a.format ? `Anime · ${a.format}` : "Anime" });
 
   // Vocabulaire du correcteur : mots des titres de jeux (poids fort), des actus et des tags, avec leur fréquence.
   const vocab: Record<string, number> = {};
   const addWords = (text: string, weight: number) => {
     for (const w of normalize(text).split(" ")) if (w.length >= 2) vocab[w] = (vocab[w] ?? 0) + weight;
   };
-  games.forEach((g) => addWords(g.title, 5));
+  games.forEach((g) => addWords(`${g.title} ${g.aka ?? ""}`, 5));
   articles.forEach((a) => addWords(`${a.title} ${a.tags.join(" ")}`, 1));
-  ["PS5", "PlayStation", "Xbox", "Switch 2", "Nintendo", "PC", "Steam", "test", "sortie", "gratuit"].forEach((w) => addWords(w, 10));
+  ["PS5", "PlayStation", "Xbox", "Switch 2", "Nintendo", "PC", "Steam", "test", "sortie", "gratuit", "anime"].forEach((w) => addWords(w, 10));
 
   // Jeux qui ont une fiche sur le site : lien vers la fiche plutôt que vers la boutique.
   const pages = new Set((await getGames()).map((g) => g.slug));

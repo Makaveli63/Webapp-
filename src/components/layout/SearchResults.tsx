@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { NewsCard } from "@/components/news/NewsCard";
 import { GameCard } from "@/components/search/GameCard";
+import { AniListResults } from "@/components/search/AniListResults";
 import { WikipediaResults } from "@/components/search/WikipediaResults";
 import { correctQuery, normalize } from "@/lib/fuzzy";
 import { loadSearchIndex } from "@/lib/search-index";
@@ -21,7 +22,7 @@ function runSearch(index: SearchIndex | null, query: string) {
   if (!index || !words.length) return { articles: [], games: [] };
   return {
     articles: index.articles.filter((a) => matches(words, a.title, a.excerpt, a.source.name, ...a.tags, ...a.platforms)),
-    games: index.games.filter((g) => matches(words, g.title)),
+    games: index.games.filter((g) => matches(words, g.title, g.aka)),
   };
 }
 
@@ -66,7 +67,7 @@ export function SearchResults() {
 
       {games.length > 0 && (
         <section className="mt-8">
-          <h2 className="text-lg font-bold text-heading">Jeux</h2>
+          <h2 className="text-lg font-bold text-heading">{games.some((g) => g.id.startsWith("anilist-")) ? "Jeux et animes" : "Jeux"}</h2>
           <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
             {games.slice(0, 12).map((g) => (
               <GameCard key={g.id} game={g} />
@@ -86,6 +87,7 @@ export function SearchResults() {
         </section>
       )}
 
+      <AniListResults query={shownQuery} />
       <WikipediaResults query={shownQuery} />
     </>
   );

@@ -23,10 +23,11 @@ export default function LegalPage() {
         l&apos;article original fait foi.
       </p>
       <p>
-        Images : les visuels des actualités sont ceux que chaque média diffuse avec l&apos;article dans son flux RSS ;
+        Images : les visuels des actualités sont ceux que chaque média diffuse avec l&apos;article dans son flux RSS
+        (ou, à défaut, l&apos;image d&apos;aperçu que la page de l&apos;article déclare pour le partage) ;
         ils sont affichés depuis le site du média (sans copie sur ce site) et crédités. Les visuels des jeux
         proviennent des boutiques et bases de données publiques (Epic Games, Steam, GamerPower, RAWG) ou des pages
-        officielles des éditeurs. Les marques et visuels appartiennent à leurs propriétaires respectifs.
+        officielles des éditeurs ; ceux des animes, d&apos;AniList. Les marques et visuels appartiennent à leurs propriétaires respectifs.
       </p>
       <p>Un éditeur ou un ayant droit qui souhaite le retrait d&apos;un contenu ou d&apos;une image peut nous contacter : il sera retiré sans délai.</p>
       <p>
