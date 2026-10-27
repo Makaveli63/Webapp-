@@ -50,6 +50,10 @@ export function getGlossary(): GlossaryTerm[] {
     .sort((a, b) => a.term.localeCompare(b.term, "fr"));
 }
 
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
+/** Rend le Markdown en HTML en préfixant les liens internes (/…) par le basePath. */
 export function renderMarkdown(md: string): string {
-  return marked.parse(md, { async: false });
+  const html = marked.parse(md, { async: false });
+  return BASE_PATH ? html.replace(/href="\/(?!\/)/g, `href="${BASE_PATH}/`) : html;
 }

@@ -12,7 +12,18 @@ cp .env.example .env.local   # optionnel : configurer les flux RSS
 npm run dev                  # http://localhost:3000
 ```
 
-Scripts : `npm run build`, `npm start`, `npm run lint`.
+Scripts : `npm run build` (génère le site statique dans `out/`), `npm run lint`.
+
+## Mise en ligne automatique
+
+Le site est un **export statique** : `npm run build` produit un dossier `out/` hébergeable gratuitement n'importe où.
+
+Le workflow `.github/workflows/deploy.yml` le publie sur **GitHub Pages** :
+- à chaque push sur `main` ;
+- **toutes les 2 heures**, pour récupérer les nouveaux articles des flux RSS ;
+- à la demande (onglet *Actions* → *Publier le site* → *Run workflow*).
+
+Prérequis (une seule fois) : *Settings → Pages → Source : GitHub Actions*. GitHub Pages est gratuit pour les dépôts publics.
 
 ## Arborescence
 
@@ -30,7 +41,7 @@ src/
 
 ## Contenu
 
-- **Articles** : `src/data/news.ts` (démo) + flux RSS optionnels via `RSS_FEEDS`, revalidés toutes les 15 min. Les articles RSS renvoient vers leur source.
+- **Articles** : agrégés automatiquement depuis les flux RSS de la presse jeu vidéo francophone (`src/data/feeds.ts`, ou variable `RSS_FEEDS`). Plateformes et sujets « Scène » (hack, homebrew, failles…) sont détectés par mots-clés. Chaque article renvoie vers sa source. Le journal de build indique les flux qui ont répondu. Les articles de démo (`src/data/news.ts`) ne s'affichent que si aucun flux ne répond.
 - **Statut de la scène** : `src/data/scene-status.ts`. ⚠️ Les valeurs actuelles sont des **exemples** à remplacer par des informations vérifiées et sourcées.
 - **Guides / glossaire** : fichiers `.md` dans `content/`.
 

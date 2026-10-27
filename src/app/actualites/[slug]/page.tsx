@@ -6,7 +6,6 @@ import { PlatformBadge } from "@/components/ui/Badge";
 import { mockArticles } from "@/data/news";
 import { renderMarkdown } from "@/lib/content";
 import { formatDate } from "@/lib/format";
-import { getArticle } from "@/lib/news";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -14,14 +13,17 @@ export function generateStaticParams() {
   return mockArticles.map((a) => ({ slug: a.slug }));
 }
 
+// Seuls les articles locaux ont une page de lecture ; ceux des flux RSS renvoient vers leur source.
+const getArticle = (slug: string) => mockArticles.find((a) => a.slug === slug);
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const article = await getArticle((await params).slug);
+  const article = getArticle((await params).slug);
   return article ? { title: article.title, description: article.excerpt } : {};
 }
 
 export default async function ArticlePage({ params }: Props) {
-  const article = await getArticle((await params).slug);
-  if (!article || article.external) notFound();
+  const article = getArticle((await params).slug);
+  if (!article) notFound();
 
   return (
     <article className="mx-auto max-w-2xl">

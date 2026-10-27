@@ -1,16 +1,21 @@
-import { BookOpen, GraduationCap } from "lucide-react";
+import { BookOpen, GraduationCap, Radio } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { NewsCard } from "@/components/news/NewsCard";
 import { StatusMatrix } from "@/components/scene/StatusMatrix";
 import { StatusWidget } from "@/components/scene/StatusWidget";
 import { LegalNotice } from "@/components/ui/LegalNotice";
 import { firmwareMatrix, STATUS_META } from "@/data/scene-status";
 import { getGuides } from "@/lib/content";
+import { getArticles, SCENE_TAG } from "@/lib/news";
 
 export const metadata: Metadata = { title: "Scène & Jailbreak" };
 
-export default function ScenePage() {
+export default async function ScenePage() {
   const guides = getGuides();
+  const sceneNews = (await getArticles())
+    .filter((a) => a.tags.includes(SCENE_TAG) && (a.platforms.includes("PS5") || a.platforms.includes("Switch 2")))
+    .slice(0, 9);
   return (
     <div className="space-y-12">
       <header>
@@ -31,6 +36,22 @@ export default function ScenePage() {
           ))}
         </dl>
         <div className="mt-5"><StatusMatrix rows={firmwareMatrix} /></div>
+      </section>
+
+      <section aria-labelledby="scene-news-title">
+        <h2 id="scene-news-title" className="flex items-center gap-2 text-xl font-bold text-white">
+          <Radio className="size-5 text-accent-2" aria-hidden /> Dernières infos de la scène
+        </h2>
+        <p className="mt-1 text-sm text-muted">
+          Sélection automatique des articles de la presse francophone qui parlent de hack, homebrew ou failles sur PS5 et Switch 2.
+        </p>
+        {sceneNews.length ? (
+          <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {sceneNews.map((a) => <NewsCard key={a.slug} article={a} />)}
+          </div>
+        ) : (
+          <p className="mt-5 text-sm text-muted">Aucun article récent sur le sujet.</p>
+        )}
       </section>
 
       <section aria-labelledby="guides-title">

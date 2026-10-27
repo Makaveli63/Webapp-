@@ -5,8 +5,6 @@ import { StatusWidget } from "@/components/scene/StatusWidget";
 import { getGuides } from "@/lib/content";
 import { getArticles } from "@/lib/news";
 
-export const revalidate = 900;
-
 export default async function HomePage() {
   const articles = (await getArticles()).slice(0, 6);
   const guides = getGuides().slice(0, 3);

@@ -59,6 +59,10 @@ export function Footer() {
         ))}
       </div>
       <div className="border-t border-border py-6 text-center text-xs text-muted">
+        <p className="mb-2">
+          Actualités mises à jour automatiquement — dernière mise à jour le{" "}
+          {new Intl.DateTimeFormat("fr-FR", { dateStyle: "long", timeStyle: "short", timeZone: "Europe/Paris" }).format(new Date())}.
+        </p>
         © {new Date().getFullYear()} Pixel Underground — Aucun fichier protégé n&apos;est hébergé ni
         référencé. Les marques citées appartiennent à leurs propriétaires respectifs.
       </div>

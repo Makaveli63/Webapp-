@@ -1,22 +1,20 @@
 import "server-only";
 import Parser from "rss-parser";
+import { DEFAULT_FEEDS, type Feed } from "@/data/feeds";
 import { mockArticles } from "@/data/news";
 import type { Article, Platform } from "@/types";
 
-/**
- * Flux RSS francophones à agréger, configurables via la variable
- * d'environnement RSS_FEEDS (format : "Nom|URL,Nom|URL").
- * Sans configuration, seuls les articles locaux sont affichés.
- */
-function getFeeds(): { name: string; url: string }[] {
-  return (process.env.RSS_FEEDS ?? "")
+const MAX_ITEMS_PER_FEED = 25;
+const MAX_AGE_DAYS = 30;
+
+function getFeeds(): Feed[] {
+  const env = (process.env.RSS_FEEDS ?? "").trim();
+  if (!env) return DEFAULT_FEEDS;
+  return env
     .split(",")
-    .map((entry) => entry.trim())
-    .filter(Boolean)
-    .map((entry) => {
-      const [name, url] = entry.split("|");
-      return { name: name.trim(), url: url.trim() };
-    });
+    .map((entry) => entry.split("|").map((s) => s.trim()))
+    .filter(([name, url]) => name && url)
+    .map(([name, url]) => ({ name, url }));
 }
 
 const PLATFORM_KEYWORDS: [Platform, RegExp][] = [
@@ -26,6 +24,11 @@ const PLATFORM_KEYWORDS: [Platform, RegExp][] = [
   ["PC", /\b(pc|steam|epic games)\b/i],
   ["Mobile", /\b(ios|android|mobile)\b/i],
 ];
+
+/** Articles qui concernent la scène homebrew / sécurité. */
+export const SCENE_TAG = "Scène";
+const SCENE_KEYWORDS =
+  /\b(hack|hacks|hacker|jailbreak|homebrew|exploit|exploits|faille|failles|cfw|custom firmware|modchip|kernel|vulnérabilité|bug bounty)\b/i;
 
 function detectPlatforms(text: string): Platform[] {
   const found = PLATFORM_KEYWORDS.filter(([, re]) => re.test(text)).map(([p]) => p);
@@ -42,37 +45,66 @@ function slugify(s: string) {
     .slice(0, 80);
 }
 
-async function fetchFeed(feed: { name: string; url: string }): Promise<Article[]> {
-  const parser = new Parser({ timeout: 5000 });
-  const res = await fetch(feed.url, { next: { revalidate: 900 } });
-  if (!res.ok) throw new Error(`${feed.name}: HTTP ${res.status}`);
-  const parsed = await parser.parseString(await res.text());
-  return parsed.items.slice(0, 20).map((item) => {
-    const title = item.title ?? "Sans titre";
-    const excerpt = (item.contentSnippet ?? "").slice(0, 220);
-    return {
-      slug: `rss-${slugify(feed.name)}-${slugify(title)}`,
-      title,
-      excerpt,
-      content: excerpt,
-      platforms: detectPlatforms(`${title} ${excerpt}`),
-      tags: (item.categories ?? []).slice(0, 3),
-      author: item.creator ?? feed.name,
-      publishedAt: item.isoDate ?? new Date().toISOString(),
-      source: { name: feed.name, url: item.link },
-      external: true,
-    };
+function clean(text: string, max: number) {
+  const t = text.replace(/\s+/g, " ").trim();
+  return t.length > max ? `${t.slice(0, max - 1).trimEnd()}…` : t;
+}
+
+async function fetchFeed(feed: Feed): Promise<Article[]> {
+  const res = await fetch(feed.url, {
+    headers: { "User-Agent": "PixelUnderground/1.0 (agrégateur RSS)" },
+    signal: AbortSignal.timeout(10_000),
   });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const parsed = await new Parser().parseString(await res.text());
+  const minDate = Date.now() - MAX_AGE_DAYS * 86_400_000;
+
+  return parsed.items
+    .filter((item) => item.title && item.link)
+    .slice(0, MAX_ITEMS_PER_FEED)
+    .map((item): Article => {
+      const title = clean(item.title!, 200);
+      const excerpt = clean(item.contentSnippet ?? "", 220);
+      const text = `${title} ${excerpt}`;
+      const categories = (item.categories ?? []).filter((c): c is string => typeof c === "string");
+      const tags = categories.slice(0, 3);
+      if (SCENE_KEYWORDS.test(text)) tags.unshift(SCENE_TAG);
+      return {
+        slug: `rss-${slugify(feed.name)}-${slugify(title)}`,
+        title,
+        excerpt,
+        content: excerpt,
+        platforms: detectPlatforms(text),
+        tags,
+        author: item.creator ?? feed.name,
+        publishedAt: item.isoDate ?? new Date().toISOString(),
+        source: { name: feed.name, url: item.link },
+        external: true,
+      };
+    })
+    .filter((a) => Date.parse(a.publishedAt) >= minDate);
 }
 
-export async function getArticles(): Promise<Article[]> {
-  const results = await Promise.allSettled(getFeeds().map(fetchFeed));
-  const external = results.flatMap((r) => (r.status === "fulfilled" ? r.value : []));
-  return [...mockArticles, ...external].sort((a, b) =>
-    b.publishedAt.localeCompare(a.publishedAt),
-  );
-}
+let cache: Promise<Article[]> | undefined;
 
-export async function getArticle(slug: string): Promise<Article | undefined> {
-  return (await getArticles()).find((a) => a.slug === slug);
+/**
+ * Articles des flux RSS, triés du plus récent au plus ancien (récupérés une fois par build).
+ * Les articles de démonstration ne servent que si aucun flux n'a répondu.
+ */
+export function getArticles(): Promise<Article[]> {
+  cache ??= (async () => {
+    const feeds = getFeeds();
+    const results = await Promise.allSettled(feeds.map(fetchFeed));
+    results.forEach((r, i) =>
+      console.log(
+        `[rss] ${feeds[i].name}: ${r.status === "fulfilled" ? `${r.value.length} articles` : `échec (${(r.reason as Error).message})`}`,
+      ),
+    );
+    const external = results.flatMap((r) => (r.status === "fulfilled" ? r.value : []));
+    const seen = new Set<string>();
+    return (external.length ? external : mockArticles)
+      .filter((a) => !seen.has(a.slug) && seen.add(a.slug))
+      .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
+  })();
+  return cache;
 }
