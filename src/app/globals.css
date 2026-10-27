@@ -39,6 +39,15 @@
   }
 }
 
+/* Tableau de bord ouvert (data-admin, posé par AdminDashboard) : couleur d'accent émeraude
+   et liseré en haut de l'écran, pour ne pas confondre ses statistiques avec le site public. */
+:root[data-admin] { --accent: #047857; --accent-2: #0f766e; }
+:root[data-admin][data-theme="dark"] { --accent: #059669; --accent-2: #2dd4bf; }
+@media (prefers-color-scheme: dark) {
+  :root[data-admin]:not([data-theme]) { --accent: #059669; --accent-2: #2dd4bf; }
+}
+:root[data-admin] body { box-shadow: inset 0 4px 0 var(--accent); }
+
 /* Les classes Tailwind « dark: » suivent le thème choisi, pas seulement celui de l'appareil. */
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 

@@ -1,10 +1,11 @@
 "use client";
 
-import { ArrowDownRight, ArrowUpRight, Eye, EyeOff, Flag, Heart, LogOut, MessageCircle, Trash2, Users } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Eye, EyeOff, Flag, Heart, LogOut, MessageCircle, ShieldCheck, Trash2, Users } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { loadSearchIndex } from "@/lib/search-index";
-import { rpc, socialEnabled, timeAgo } from "@/lib/social";
+import { setPageGlow } from "@/lib/background";
+import { ADMIN_ERRORS, ADMIN_SESSION_KEY, rpc, socialEnabled, timeAgo } from "@/lib/social";
 import { BarList, DailyChart, type DailyPoint } from "./charts";
 
 interface Stats {
@@ -20,12 +21,11 @@ interface Stats {
   comments: { id: string; slug: string; author: string; body: string; created_at: string; hidden: boolean; reports: number }[];
 }
 
-const ERRORS: Record<string, string> = {
-  ACCES_REFUSE: "Mot de passe incorrect.",
-  TROP_DE_TENTATIVES: "Trop de tentatives : réessayez dans 15 minutes.",
-};
+const ERRORS = ADMIN_ERRORS;
 const PERIODS = [7, 30, 90] as const;
-const SESSION_KEY = "gb-admin";
+const SESSION_KEY = ADMIN_SESSION_KEY;
+// Couleurs du fond en mode administrateur (vert émeraude) : on voit tout de suite qu'on est sur ses stats.
+const ADMIN_GLOW = ["#10b981", "#0d9488", "#34d399"] as const;
 
 function StatTile({ icon, label, value, delta, note }: { icon: ReactNode; label: string; value: number; delta?: number | null; note?: string }) {
   return (
@@ -91,6 +91,18 @@ export function AdminDashboard() {
       .catch(() => {});
   }, [load]);
 
+  // Mode administrateur : couleurs émeraude sur tout le site tant que les stats sont affichées.
+  const signedIn = !!password && !!stats;
+  useEffect(() => {
+    if (!signedIn) return;
+    document.documentElement.dataset.admin = "1";
+    setPageGlow(ADMIN_GLOW);
+    return () => {
+      delete document.documentElement.dataset.admin;
+      setPageGlow(null);
+    };
+  }, [signedIn]);
+
   if (!socialEnabled) {
     return <p className="mt-6 text-muted">Supabase n&apos;est pas configuré : le tableau de bord est indisponible.</p>;
   }
@@ -131,6 +143,9 @@ export function AdminDashboard() {
   const t = stats.totals;
   return (
     <div className={`mt-6 space-y-8 transition-opacity ${loading ? "opacity-60" : ""}`}>
+      <p className="inline-flex items-center gap-2 rounded-full bg-accent px-3 py-1 text-xs font-bold uppercase tracking-wide text-white">
+        <ShieldCheck className="size-4" aria-hidden /> Mode administrateur · tes statistiques
+      </p>
       {/* Filtres : une seule rangée, au-dessus de tout */}
       <div className="flex flex-wrap items-center gap-2">
         {PERIODS.map((p) => (

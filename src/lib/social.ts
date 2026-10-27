@@ -72,3 +72,30 @@ export function timeAgo(iso: string): string {
   if (min < 1440) return `il y a ${Math.floor(min / 60)} h`;
   return new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short" }).format(new Date(iso));
 }
+
+/**
+ * Session administrateur : le mot de passe saisi sur /admin/ reste dans l'onglet (sessionStorage),
+ * jamais sur le disque ; il permet aussi de modérer directement sous les articles.
+ */
+export const ADMIN_SESSION_KEY = "gb-admin";
+
+export function adminPassword(): string {
+  try {
+    return sessionStorage.getItem(ADMIN_SESSION_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+export function clearAdminSession() {
+  try {
+    sessionStorage.removeItem(ADMIN_SESSION_KEY);
+  } catch {
+    // stockage indisponible : rien à effacer
+  }
+}
+
+export const ADMIN_ERRORS: Record<string, string> = {
+  ACCES_REFUSE: "Mot de passe incorrect.",
+  TROP_DE_TENTATIVES: "Trop de tentatives : réessayez dans 15 minutes.",
+};

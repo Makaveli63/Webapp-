@@ -1,8 +1,18 @@
 "use client";
 
-import { Flag, MessageCircle } from "lucide-react";
+import { Flag, MessageCircle, ShieldCheck, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { rpc, savedPseudo, savePseudo, socialEnabled, timeAgo, voterId } from "@/lib/social";
+import {
+  ADMIN_ERRORS,
+  adminPassword,
+  clearAdminSession,
+  rpc,
+  savedPseudo,
+  savePseudo,
+  socialEnabled,
+  timeAgo,
+  voterId,
+} from "@/lib/social";
 import { LikeButton } from "./LikeButton";
 
 interface Comment {
@@ -22,6 +32,8 @@ export function Comments({ slug }: { slug: string }) {
   const [error, setError] = useState("");
   const [sending, setSending] = useState(false);
   const [reported, setReported] = useState<Set<string>>(new Set());
+  // Mot de passe du tableau de bord, si l'administrateur s'est connecté sur /admin/ dans cet onglet.
+  const [admin, setAdmin] = useState("");
 
   const load = useCallback(() => {
     rpc<Comment[]>("get_comments", { p_slug: slug, p_voter: voterId() })
@@ -32,6 +44,7 @@ export function Comments({ slug }: { slug: string }) {
   useEffect(() => {
     if (!socialEnabled) return;
     setPseudo(savedPseudo());
+    setAdmin(adminPassword());
     load();
   }, [load]);
 
@@ -59,11 +72,31 @@ export function Comments({ slug }: { slug: string }) {
     setReported((r) => new Set(r).add(id));
   };
 
+  const remove = async (c: Comment) => {
+    if (!confirm(`Supprimer définitivement le commentaire de ${c.author} ?`)) return;
+    const res = await rpc<string>("admin_moderate", { p_password: admin, p_id: c.id, p_action: "delete" }).catch(() => "erreur");
+    if (res === "ok") {
+      setError("");
+      load();
+      return;
+    }
+    if (res === "ACCES_REFUSE") {
+      clearAdminSession();
+      setAdmin("");
+    }
+    setError(ADMIN_ERRORS[res] ?? "Suppression impossible.");
+  };
+
   return (
     <section aria-labelledby="comments-title" className="mt-12 border-t border-border pt-8">
       <h2 id="comments-title" className="flex items-center gap-2 text-lg font-bold text-heading">
         <MessageCircle className="size-5 text-accent" aria-hidden /> Commentaires {comments && comments.length > 0 && `(${comments.length})`}
       </h2>
+      {admin && (
+        <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-3 py-1 text-xs font-semibold text-white">
+          <ShieldCheck className="size-3.5" aria-hidden /> Mode administrateur : tu peux supprimer les commentaires
+        </p>
+      )}
 
       <form onSubmit={submit} className="mt-4 space-y-2 rounded-xl border border-border bg-surface p-3">
         <input
@@ -127,6 +160,15 @@ export function Comments({ slug }: { slug: string }) {
                   >
                     <Flag className="size-3.5" aria-hidden /> {reported.has(c.id) ? "Signalé" : "Signaler"}
                   </button>
+                  {admin && (
+                    <button
+                      type="button"
+                      onClick={() => remove(c)}
+                      className="ml-auto inline-flex items-center gap-1 rounded-full bg-red-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-red-700"
+                    >
+                      <Trash2 className="size-3.5" aria-hidden /> Supprimer
+                    </button>
+                  )}
                 </div>
               </div>
             </li>
