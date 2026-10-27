@@ -6,7 +6,7 @@
 // Variables d'environnement :
 //   RSS_FEEDS    "Nom|URL,Nom|URL" — remplace src/data/feeds.json
 //   AI_API_KEY   clé d'API ; sans elle, l'extrait de l'éditeur est conservé
-//   AI_PROVIDER  "mistral" ou "gemini" (par défaut : déduit de la clé)
+//   AI_PROVIDER  "mistral" ou "gemini" (par défaut : deviné, avec bascule si la clé est refusée)
 //   AI_MODEL     remplace le modèle par défaut du fournisseur
 //   AI_API_URL   remplace l'adresse de l'API (tests, changement d'adresse du fournisseur)
 import { mkdirSync, readFileSync, renameSync, writeFileSync, existsSync } from "node:fs";
@@ -32,12 +32,11 @@ const PROVIDERS = {
     delayMs: 6000,
   },
 };
-// Fournisseur : variable AI_PROVIDER, sinon déduit de la clé (les clés Google commencent par « AIza »).
-const PROVIDER_NAME = (
-  process.env.AI_PROVIDER?.trim() || (process.env.AI_API_KEY?.trim().startsWith("AIza") ? "gemini" : "mistral")
-).toLowerCase();
-const PROVIDER = PROVIDERS[PROVIDER_NAME] ?? PROVIDERS.mistral;
-const MODEL = process.env.AI_MODEL?.trim() || PROVIDER.model;
+// Fournisseur : variable AI_PROVIDER, sinon deviné d'après la clé (« AIza… » = Google), et si la clé
+// est refusée par le premier fournisseur essayé, on bascule automatiquement sur l'autre.
+const EXPLICIT_PROVIDER = process.env.AI_PROVIDER?.trim().toLowerCase();
+const GUESSED_PROVIDER = process.env.AI_API_KEY?.trim().startsWith("AIza") ? "gemini" : "mistral";
+const withName = (name) => ({ name, ...(PROVIDERS[name] ?? PROVIDERS.mistral) });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const PLATFORM_KEYWORDS = [
@@ -165,15 +164,15 @@ function parseJsonObject(text) {
   return JSON.parse(text.slice(start, end + 1));
 }
 
-async function summarizeBatch(articles, apiKey) {
+async function summarizeBatch(articles, apiKey, provider, jsonMode = true) {
   const payload = articles.map((a) => ({ id: a.slug, titre: a.title, resume_editeur: a.content }));
-  const res = await fetch(process.env.AI_API_URL?.trim() || PROVIDER.url, {
+  const res = await fetch(process.env.AI_API_URL?.trim() || provider.url, {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: MODEL,
+      model: process.env.AI_MODEL?.trim() || provider.model,
       temperature: 0.4,
-      response_format: { type: "json_object" },
+      ...(jsonMode ? { response_format: { type: "json_object" } } : {}),
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
         { role: "user", content: JSON.stringify(payload) },
@@ -236,12 +235,15 @@ async function main() {
     console.log("[ia] AI_API_KEY absente : résumés IA désactivés, extraits de l'éditeur conservés.");
   } else {
     let done = 0;
+    let provider = withName(EXPLICIT_PROVIDER || GUESSED_PROVIDER);
+    let switched = !!EXPLICIT_PROVIDER;
+    let jsonMode = true;
     for (let i = 0; i < todo.length; i += BATCH_SIZE) {
-      if (i > 0) await sleep(PROVIDER.delayMs); // limites de débit des offres gratuites
+      if (i > 0) await sleep(provider.delayMs); // limites de débit des offres gratuites
       let stop = false;
       for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
         try {
-          for (const [slug, text] of await summarizeBatch(todo.slice(i, i + BATCH_SIZE), apiKey)) {
+          for (const [slug, text] of await summarizeBatch(todo.slice(i, i + BATCH_SIZE), apiKey, provider, jsonMode)) {
             cache[slug] = { text, at: new Date().toISOString() };
             done++;
           }
@@ -253,6 +255,18 @@ async function main() {
             await sleep(err.retryAfterMs);
             continue;
           }
+          if (/HTTP (401|403)/.test(err.message) && !switched) {
+            switched = true;
+            provider = withName(provider.name === "gemini" ? "mistral" : "gemini");
+            console.log(`[ia] clé refusée, essai avec ${provider.name}.`);
+            attempt = 0;
+            continue;
+          }
+          if (/HTTP 400/.test(err.message) && jsonMode) {
+            jsonMode = false; // certains modèles refusent le mode JSON strict : on le demande dans le texte
+            attempt = 0;
+            continue;
+          }
           console.log(`[ia] échec d'un lot (${err.message}) : on garde l'extrait de l'éditeur.`);
           // Clé refusée ou quota épuisé : inutile d'insister, la prochaine mise à jour reprendra.
           stop = rateLimited || /HTTP (401|403)/.test(err.message);
@@ -261,7 +275,7 @@ async function main() {
       }
       if (stop) break;
     }
-    console.log(`[ia] ${done} nouveaux résumés (${PROVIDER_NAME}/${MODEL}), ${todo.length - done} en attente.`);
+    console.log(`[ia] ${done} nouveaux résumés (${provider.name}), ${todo.length - done} en attente.`);
   }
 
   // Oublie les résumés des articles sortis de la fenêtre de publication.

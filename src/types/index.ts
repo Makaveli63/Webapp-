@@ -64,6 +64,8 @@ export interface Release {
   /** Date de sortie (AAAA-MM-JJ), à minuit heure de Paris */
   date: string;
   platforms: Platform[];
+  /** Décor du jeu (clé de THEMES dans lib/themes.ts) ; à défaut, déduit du titre */
+  theme?: string;
   /** Annonce officielle ou article de presse confirmant la date */
   source: string;
 }
