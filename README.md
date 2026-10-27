@@ -1,4 +1,4 @@
-# Pixel Underground
+# GamingBase
 
 Webapp francophone d'actualité jeu vidéo : news, tests et nouvelles consoles, mise à jour automatiquement toutes les 2 heures. Mode clair/sombre selon l'appareil, navigation mobile par onglets, installable sur l'écran d'accueil.
 

@@ -13,11 +13,11 @@ const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-jetbrains" }
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 export const metadata: Metadata = {
-  title: { default: "Pixel Underground", template: "%s · Pixel Underground" },
+  title: { default: "GamingBase", template: "%s · GamingBase" },
   description: "L'actualité du jeu vidéo en français : news, tests et nouvelles consoles, mis à jour toutes les 2 heures.",
   manifest: `${BASE_PATH}/manifest.webmanifest`,
   icons: { icon: `${BASE_PATH}/icon.svg`, apple: `${BASE_PATH}/apple-touch-icon.png` },
-  appleWebApp: { capable: true, title: "Pixel Underground", statusBarStyle: "default" },
+  appleWebApp: { capable: true, title: "GamingBase", statusBarStyle: "default" },
   authors: [{ name: "Makaveli63" }],
   creator: "Makaveli63",
   referrer: "strict-origin-when-cross-origin",

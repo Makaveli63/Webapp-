@@ -28,7 +28,7 @@ Le rythme de sorties reste soutenu. Reste à voir comment les portages tireront 
     tags: ["Nintendo", "Showcase", "Annonces"],
     author: "Rédaction",
     publishedAt: "2026-10-26T09:00:00Z",
-    source: { name: "Pixel Underground" },
+    source: { name: "GamingBase" },
   },
   {
     slug: "ps5-mise-a-jour-systeme-octobre",
@@ -49,7 +49,7 @@ Le rythme de sorties reste soutenu. Reste à voir comment les portages tireront 
     tags: ["Sony", "Mise à jour"],
     author: "Rédaction",
     publishedAt: "2026-10-25T15:30:00Z",
-    source: { name: "Pixel Underground" },
+    source: { name: "GamingBase" },
   },
   {
     slug: "steam-soldes-automne-selection",
@@ -73,7 +73,7 @@ Le rythme de sorties reste soutenu. Reste à voir comment les portages tireront 
     tags: ["Bons plans", "Soldes"],
     author: "Rédaction",
     publishedAt: "2026-10-24T11:00:00Z",
-    source: { name: "Pixel Underground" },
+    source: { name: "GamingBase" },
   },
   {
     slug: "xbox-game-pass-novembre",
@@ -87,7 +87,7 @@ Le rythme de sorties reste soutenu. Reste à voir comment les portages tireront 
     tags: ["Microsoft", "Abonnement"],
     author: "Rédaction",
     publishedAt: "2026-10-23T18:00:00Z",
-    source: { name: "Pixel Underground" },
+    source: { name: "GamingBase" },
   },
   {
     slug: "multi-sortie-jeu-action-attendu",
@@ -101,6 +101,6 @@ Le rythme de sorties reste soutenu. Reste à voir comment les portages tireront 
     tags: ["Sortie", "Action"],
     author: "Rédaction",
     publishedAt: "2026-10-21T10:00:00Z",
-    source: { name: "Pixel Underground" },
+    source: { name: "GamingBase" },
   },
 ];

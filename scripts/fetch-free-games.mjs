@@ -33,7 +33,7 @@ function isoOrUndefined(value) {
 
 async function getJson(url) {
   const res = await fetch(url, {
-    headers: { "User-Agent": "PixelUnderground/1.0 (jeux gratuits)", Accept: "application/json" },
+    headers: { "User-Agent": "GamingBase/1.0 (jeux gratuits)", Accept: "application/json" },
     signal: AbortSignal.timeout(15_000),
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);

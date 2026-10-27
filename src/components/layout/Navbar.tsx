@@ -17,7 +17,7 @@ export function Navbar() {
         <Link href="/" className="flex items-center gap-2 font-bold tracking-tight text-heading">
           <Gamepad2 className="size-6 text-accent" aria-hidden />
           <span>
-            Pixel<span className="text-accent-2">Underground</span>
+            Gaming<span className="text-accent-2">Base</span>
           </span>
         </Link>
 

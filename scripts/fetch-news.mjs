@@ -121,7 +121,7 @@ async function readLimited(res) {
 
 async function fetchFeed(feed) {
   const res = await fetch(feed.url, {
-    headers: { "User-Agent": "PixelUnderground/1.0 (agrégateur RSS)" },
+    headers: { "User-Agent": "GamingBase/1.0 (agrégateur RSS)" },
     signal: AbortSignal.timeout(10_000),
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);

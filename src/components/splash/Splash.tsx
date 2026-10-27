@@ -73,7 +73,7 @@ export function Splash() {
           />
         </svg>
         <p className="splash-title">
-          Pixel<span>Underground</span>
+          Gaming<span>Base</span>
         </p>
         <p className="splash-tagline">Toutes les plateformes, un seul endroit</p>
       </div>

@@ -39,7 +39,7 @@ export function Footer() {
         <div className="col-span-2 lg:col-span-1">
           <Link href="/" className="flex items-center gap-2 font-bold text-heading">
             <Gamepad2 className="size-5 text-accent" aria-hidden />
-            Pixel<span className="-ml-2 text-accent-2">Underground</span>
+            Gaming<span className="-ml-2 text-accent-2">Base</span>
           </Link>
           <p className="mt-3 text-sm text-muted">
             L&apos;actualité du jeu vidéo en français : news, tests et nouvelles consoles.
@@ -68,7 +68,7 @@ export function Footer() {
           Actualités mises à jour automatiquement — dernière mise à jour le{" "}
           {new Intl.DateTimeFormat("fr-FR", { dateStyle: "long", timeStyle: "short", timeZone: "Europe/Paris" }).format(new Date())}.
         </p>
-        © {new Date().getFullYear()} Pixel Underground par Makaveli63 — Les articles résumés restent la propriété de leurs
+        © {new Date().getFullYear()} GamingBase par Makaveli63 — Les articles résumés restent la propriété de leurs
         éditeurs. Les marques citées appartiennent à leurs propriétaires respectifs.
       </div>
     </footer>
