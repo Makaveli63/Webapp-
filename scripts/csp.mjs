@@ -1,0 +1,53 @@
+// Ajoute une Content-Security-Policy stricte à chaque page de l'export statique.
+// GitHub Pages ne permet pas d'envoyer d'en-têtes HTTP : la politique est donc
+// injectée en <meta>, avec l'empreinte SHA-256 de chaque script inline généré
+// par Next.js. Tout autre script (injection XSS) est bloqué par le navigateur.
+import { createHash } from "node:crypto";
+import { readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import path from "node:path";
+
+const OUT_DIR = path.resolve("out");
+
+function htmlFiles(dir) {
+  return readdirSync(dir).flatMap((name) => {
+    const full = path.join(dir, name);
+    if (statSync(full).isDirectory()) return htmlFiles(full);
+    return name.endsWith(".html") ? [full] : [];
+  });
+}
+
+const sha256 = (s) => `'sha256-${createHash("sha256").update(s, "utf8").digest("base64")}'`;
+
+function policy(scriptHashes, styleHashes) {
+  return [
+    "default-src 'none'",
+    `script-src 'self' ${scriptHashes.join(" ")}`.trim(),
+    `style-src 'self' ${styleHashes.join(" ")}`.trim(),
+    "img-src 'self' data:",
+    "font-src 'self'",
+    "connect-src 'self'",
+    "manifest-src 'self'",
+    "base-uri 'none'",
+    "form-action 'self'",
+    "object-src 'none'",
+    "upgrade-insecure-requests",
+  ].join("; ");
+}
+
+let count = 0;
+for (const file of htmlFiles(OUT_DIR)) {
+  const html = readFileSync(file, "utf8");
+  if (html.includes('http-equiv="Content-Security-Policy"')) continue;
+
+  const scripts = [...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
+  const styles = [...html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((m) => m[1]);
+  const csp = policy([...new Set(scripts.map(sha256))], [...new Set(styles.map(sha256))]);
+
+  const meta = `<meta http-equiv="Content-Security-Policy" content="${csp}"/>`;
+  // Juste après <meta charset> : celui-ci doit rester dans les 1024 premiers octets.
+  const updated = html.replace(/<meta charSet="utf-8"\/>/i, (m) => `${m}${meta}`);
+  if (updated === html) throw new Error(`Balise <meta charset> introuvable dans ${file}`);
+  writeFileSync(file, updated);
+  count++;
+}
+console.log(`[csp] Politique de sécurité ajoutée à ${count} pages.`);
