@@ -43,7 +43,7 @@ export default async function ArticlePage({ params }: Props) {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <PageTheme themeId={themeFor(`${article.title} ${article.tags.join(" ")}`, article.platforms).id} />
+      <PageTheme themeId={themeFor(`${article.title} ${article.tags.join(" ")}`, article.platforms).id} image={article.image} />
       <article>
         <Link href="/actualites" className="inline-flex items-center gap-1 text-sm text-muted hover:text-fg">
           <ArrowLeft className="size-4" aria-hidden /> Toutes les actualités

@@ -1,8 +1,8 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useEffect } from "react";
-import { favoriteTopicsGlow, usePageGlow } from "@/lib/background";
+import { useEffect, useState } from "react";
+import { favoriteTopicsGlow, usePageGlow, usePageImage } from "@/lib/background";
 
 /** Couleurs propres à chaque onglet / catégorie. */
 const SECTION_GLOW: [string, readonly [string, string, string]][] = [
@@ -23,6 +23,9 @@ const DEFAULT_GLOW = ["#6246ea", "#22d3ee", "#ff6a88"] as const;
 export function DynamicBackground() {
   const pathname = usePathname();
   const pageGlow = usePageGlow();
+  const image = usePageImage();
+  // Image affichée seulement une fois chargée (fondu), oubliée si elle ne se charge pas.
+  const [loaded, setLoaded] = useState<string | null>(null);
 
   useEffect(() => {
     const glow =
@@ -41,6 +44,20 @@ export function DynamicBackground() {
       <div className="dyn-blob dyn-blob-a" />
       <div className="dyn-blob dyn-blob-b" />
       <div className="dyn-blob dyn-blob-c" />
+      {image && (
+        // Image du jeu de l'article, très floutée, sous les cartes en verre.
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          key={image}
+          src={image}
+          alt=""
+          decoding="async"
+          referrerPolicy="no-referrer"
+          onLoad={() => setLoaded(image)}
+          onError={() => setLoaded(null)}
+          className={`dyn-photo ${loaded === image ? "dyn-photo-on" : ""}`}
+        />
+      )}
     </div>
   );
 }

@@ -25,6 +25,26 @@ export function usePageGlow(): Glow | null {
   );
 }
 
+/** Image de la page (article ou test) affichée floutée en fond d'écran. */
+let pageImage: string | null = null;
+const imageListeners = new Set<() => void>();
+
+export function setPageImage(url: string | null) {
+  pageImage = url;
+  imageListeners.forEach((l) => l());
+}
+
+export function usePageImage(): string | null {
+  return useSyncExternalStore(
+    (l) => {
+      imageListeners.add(l);
+      return () => imageListeners.delete(l);
+    },
+    () => pageImage,
+    () => null,
+  );
+}
+
 /** Historique des sujets consultés (sur l'appareil) : nombre de lectures par thème. */
 const HISTORY_KEY = "gb-sujets";
 

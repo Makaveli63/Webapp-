@@ -232,6 +232,27 @@ html[data-splash="off"] .splash { display: none; }
 @keyframes dyn-drift-b { to { transform: translate(-16vw, -12vh) scale(.9); } }
 @keyframes dyn-drift-c { to { transform: translate(-10vw, -20vh) scale(1.2); } }
 @media (prefers-reduced-motion: reduce) { .dyn-blob { animation: none; } }
+/* Image du jeu (article, test) : plein écran, très floutée, en fondu par-dessus les halos.
+   Le conteneur .dyn-bg est déjà atténué ; l'image compense pour rester bien visible. */
+.dyn-photo {
+  position: absolute;
+  inset: -10%;
+  width: 120%;
+  height: 120%;
+  object-fit: cover;
+  filter: blur(42px) saturate(1.5);
+  opacity: 0;
+  transition: opacity .9s ease;
+}
+.dyn-photo-on { opacity: 1; }
+:root .dyn-bg:has(.dyn-photo-on) { opacity: .5; }
+/* Mode sombre : image assombrie pour que les textes gris restent lisibles. */
+:root[data-theme="dark"] .dyn-bg:has(.dyn-photo-on) { opacity: .45; }
+:root[data-theme="dark"] .dyn-photo { filter: blur(42px) saturate(1.4) brightness(.6); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) .dyn-bg:has(.dyn-photo-on) { opacity: .45; }
+  :root:not([data-theme]) .dyn-photo { filter: blur(42px) saturate(1.4) brightness(.6); }
+}
 
 /* ---------- Graphiques du tableau de bord (palette catégorielle validée, clair / sombre) ---------- */
 .viz-root {
