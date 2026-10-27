@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { DealCard } from "@/components/deals/DealCard";
 import { NewsCard } from "@/components/news/NewsCard";
 import { getDeals, promoArticles } from "@/lib/deals";
-import { getArticles } from "@/lib/news";
+import { getGamingArticles } from "@/lib/news";
 
 export const metadata: Metadata = {
   title: "Promos jeux vidéo",
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default async function PromosPage() {
   const { steam, updatedAt } = getDeals();
-  const consoles = promoArticles(await getArticles()).slice(0, 9);
+  const consoles = promoArticles(await getGamingArticles()).slice(0, 9);
   return (
     <div className="space-y-10">
       <header>

@@ -244,7 +244,7 @@ struct NewsView: View {
     @Environment(\.widgetFamily) private var family
 
     var body: some View {
-        let items = Array((entry.feed?.news ?? []).prefix(family == .systemLarge ? 6 : 3))
+        let items = Array((entry.feed?.news ?? []).filter { $0.category != "Anime" }.prefix(family == .systemLarge ? 6 : 3))
         VStack(alignment: .leading, spacing: 6) {
             HStack {
                 Text("📰 Dernières actus").font(.caption.bold()).foregroundStyle(accent)

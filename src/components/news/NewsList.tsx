@@ -61,7 +61,7 @@ function FilterableNewsList({ articles, showCategories, initialPlatform }: Props
     <div>
       {showCategories && (
         <div className="mb-2 scroll-row -mx-4 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0" role="group" aria-label="Filtrer par rubrique">
-          {(["Toutes", ...(Object.keys(CATEGORIES) as Category[])] as const).map((c) => (
+          {(["Toutes", ...(Object.keys(CATEGORIES) as Category[]).filter((c) => c !== "Anime")] as const).map((c) => (
             <button
               key={c}
               type="button"

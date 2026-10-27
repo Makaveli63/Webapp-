@@ -40,6 +40,11 @@ export async function getArticles(): Promise<Article[]> {
   return cache;
 }
 
+/** Actu jeu vidéo seulement : l'anime a sa propre rubrique et n'est pas mélangé au reste. */
+export async function getGamingArticles(): Promise<Article[]> {
+  return (await getArticles()).filter((a) => a.category !== "Anime");
+}
+
 export async function getArticlesByCategory(category: Category): Promise<Article[]> {
   return (await getArticles()).filter((a) => a.category === category);
 }

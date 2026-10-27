@@ -16,8 +16,14 @@ public class NewsWidget extends GamingWidget {
         RemoteViews v = new RemoteViews(ctx.getPackageName(), R.layout.widget_news);
         JSONArray news = data != null ? data.optJSONArray("news") : null;
         int shown = 0;
+        int next = 0;
         for (int i = 0; i < LINES.length; i++) {
-            JSONObject a = news != null ? news.optJSONObject(i) : null;
+            JSONObject a = null;
+            // L'anime a sa propre rubrique : le widget ne montre que l'actu jeu vidéo.
+            while (news != null && next < news.length() && a == null) {
+                JSONObject n = news.optJSONObject(next++);
+                if (n != null && !"Anime".equals(n.optString("category"))) a = n;
+            }
             if (a == null) {
                 v.setViewVisibility(LINES[i], View.GONE);
                 continue;

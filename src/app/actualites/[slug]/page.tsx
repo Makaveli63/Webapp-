@@ -60,8 +60,11 @@ export default async function ArticlePage({ params }: Props) {
   const games = await getGames();
   const tested = article.category === "Test" ? testedGame(article.title) : "";
   const gamePage = (games.find((g) => g.key === tested) ?? games.find((g) => g.key.length >= 4 && aboutGame(article.title, g)))?.slug;
+  // Actu anime : d'autres actus anime ; actu jeu vidéo : même plateforme, jamais d'anime.
+  const isAnime = article.category === "Anime";
   const related = all
-    .filter((a) => a.slug !== article.slug && a.platforms.some((p) => article.platforms.includes(p)))
+    .filter((a) => a.slug !== article.slug && (a.category === "Anime") === isAnime)
+    .filter((a) => isAnime || a.platforms.some((p) => article.platforms.includes(p)))
     .sort((a, b) => Number(b.category === article.category) - Number(a.category === article.category))
     .slice(0, 3);
 
@@ -69,8 +72,8 @@ export default async function ArticlePage({ params }: Props) {
     <div className="mx-auto max-w-2xl">
       <PageTheme themeId={themeFor(`${article.title} ${article.tags.join(" ")}`, article.platforms).id} image={article.image} />
       <article>
-        <Link href="/actualites" className="inline-flex items-center gap-1 text-sm text-muted hover:text-fg">
-          <ArrowLeft className="size-4" aria-hidden /> Toutes les actualités
+        <Link href={isAnime ? "/anime" : "/actualites"} className="inline-flex items-center gap-1 text-sm text-muted hover:text-fg">
+          <ArrowLeft className="size-4" aria-hidden /> {isAnime ? "Toute l'actu anime" : "Toutes les actualités"}
         </Link>
         <RemoteImage
           src={article.image}

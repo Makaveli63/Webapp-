@@ -1,6 +1,6 @@
 import "server-only";
 import { getCalendar } from "@/lib/calendar";
-import { getArticles } from "@/lib/news";
+import { getGamingArticles } from "@/lib/news";
 import { getUpcomingReleases } from "@/lib/releases";
 import type { Video } from "@/types";
 
@@ -33,7 +33,7 @@ export async function getVideos() {
       .map((g) => ({ id: `c-${g.id}`, title: g.title, video: g.video!, subtitle: `Sortie : ${g.date.split("-").reverse().join("/")}` })),
   );
   const news = unique(
-    (await getArticles())
+    (await getGamingArticles())
       .filter((a) => a.video)
       .slice(0, 24)
       .map((a) => ({ id: `a-${a.slug}`, title: a.title, video: a.video!, subtitle: a.source.name, path: `/actualites/${a.slug}` })),

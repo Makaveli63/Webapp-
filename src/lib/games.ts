@@ -2,7 +2,7 @@ import "server-only";
 import { getCalendar } from "@/lib/calendar";
 import { testedGame } from "@/lib/compare";
 import { titleKey } from "@/lib/text";
-import { getArticles } from "@/lib/news";
+import { getArticles, getGamingArticles } from "@/lib/news";
 import { getUpcomingReleases } from "@/lib/releases";
 import type { Article, Video } from "@/types";
 
@@ -148,7 +148,7 @@ export async function rankedGames(): Promise<RankedGame[]> {
 /** Tendances : jeux dont on parle le plus sur les 7 derniers jours (nombre d'articles). */
 export async function trendingGames(limit = 8): Promise<(GameEntry & { mentions: number })[]> {
   const since = Date.now() - 7 * 86_400_000;
-  const recent = (await getArticles()).filter((a) => Date.parse(a.publishedAt) >= since);
+  const recent = (await getGamingArticles()).filter((a) => Date.parse(a.publishedAt) >= since);
   return (await getGames())
     .filter((g) => g.key.length >= 4)
     .map((g) => ({ ...g, mentions: recent.filter((a) => aboutGame(`${a.title} ${a.tags.join(" ")}`, g)).length }))
