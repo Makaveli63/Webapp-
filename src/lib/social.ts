@@ -23,6 +23,16 @@ const ERRORS: Record<string, string> = {
   DONNEES_INVALIDES: "Données trop volumineuses pour être synchronisées.",
 };
 
+/** Fichier SQL qui crée chaque fonction : le message d'erreur indique le bon fichier à exécuter. */
+const SQL_FILES: Record<string, string> = {
+  track_view: "stats.sql", admin_set_password: "stats.sql", admin_stats: "stats.sql", admin_moderate: "stats.sql",
+  admin_set_notifications: "notifications.sql",
+  vote_poll: "extras.sql", get_poll: "extras.sql", sync_save: "extras.sql", sync_load: "extras.sql",
+  rate_game: "community.sql", get_game_rating: "community.sql", predict_game: "community.sql", get_predictions: "community.sql",
+  get_my_activity: "community.sql", get_author_badges: "community.sql", admin_publish_article: "community.sql",
+  admin_delete_article: "community.sql", get_published_articles: "community.sql",
+};
+
 export async function rpc<T>(fn: string, args: Record<string, unknown>): Promise<T> {
   const res = await fetch(`${URL}/rest/v1/rpc/${fn}`, {
     method: "POST",
@@ -36,9 +46,8 @@ export async function rpc<T>(fn: string, args: Record<string, unknown>): Promise
     if (code) throw new Error(ERRORS[code]);
     // Fonction absente de la base : le fichier SQL correspondant n'a pas été exécuté dans Supabase.
     if (body?.code === "PGRST202" || body?.code === "42883") {
-      throw new Error(fn.startsWith("admin_")
-        ? "Tableau de bord pas encore installé : exécute supabase/stats.sql dans Supabase (SQL Editor)."
-        : "Service pas encore installé : exécute supabase/schema.sql dans Supabase (SQL Editor).");
+      const file = SQL_FILES[fn] ?? "schema.sql";
+      throw new Error(`Service pas encore installé : exécute supabase/${file} dans Supabase (SQL Editor).`);
     }
     throw new Error("Service momentanément indisponible, réessayez plus tard.");
   }
