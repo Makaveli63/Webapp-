@@ -6,7 +6,7 @@
 // Variables d'environnement :
 //   RSS_FEEDS    "Nom|URL,Nom|URL" — remplace src/data/feeds.json
 //   AI_API_KEY   clé d'API ; sans elle, l'extrait de l'éditeur est conservé
-//   AI_PROVIDER  "mistral" (défaut) ou "gemini"
+//   AI_PROVIDER  "mistral" ou "gemini" (par défaut : déduit de la clé)
 //   AI_MODEL     remplace le modèle par défaut du fournisseur
 //   AI_API_URL   remplace l'adresse de l'API (tests, changement d'adresse du fournisseur)
 import { mkdirSync, readFileSync, renameSync, writeFileSync, existsSync } from "node:fs";
@@ -32,7 +32,10 @@ const PROVIDERS = {
     delayMs: 6000,
   },
 };
-const PROVIDER_NAME = (process.env.AI_PROVIDER || "mistral").trim().toLowerCase();
+// Fournisseur : variable AI_PROVIDER, sinon déduit de la clé (les clés Google commencent par « AIza »).
+const PROVIDER_NAME = (
+  process.env.AI_PROVIDER?.trim() || (process.env.AI_API_KEY?.trim().startsWith("AIza") ? "gemini" : "mistral")
+).toLowerCase();
 const PROVIDER = PROVIDERS[PROVIDER_NAME] ?? PROVIDERS.mistral;
 const MODEL = process.env.AI_MODEL?.trim() || PROVIDER.model;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

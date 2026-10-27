@@ -31,3 +31,39 @@ export interface Article {
   /** true si l'article provient d'un flux RSS externe */
   external?: boolean;
 }
+
+/** Jeu offert sur une boutique (Epic Games, Steam, GOG…). */
+export interface FreeGame {
+  id: string;
+  title: string;
+  store: string;
+  url?: string;
+  /** "now" : gratuit en ce moment ; "upcoming" : gratuit à partir de startDate */
+  status: "now" | "upcoming";
+  startDate?: string;
+  endDate?: string;
+  /** Prix habituel, ex. "19,99 €" */
+  worth?: string;
+  platforms?: string;
+}
+
+export interface FreeGamesData {
+  updatedAt?: string;
+  epicAvailable: boolean;
+  othersAvailable: boolean;
+  games: FreeGame[];
+}
+
+/** Grosse sortie attendue, affichée avec un compte à rebours. */
+export interface Release {
+  id: string;
+  title: string;
+  /** Nom court pour le bandeau, ex. « GTA VI » */
+  short?: string;
+  subtitle?: string;
+  /** Date de sortie (AAAA-MM-JJ), à minuit heure de Paris */
+  date: string;
+  platforms: Platform[];
+  /** Annonce officielle ou article de presse confirmant la date */
+  source: string;
+}

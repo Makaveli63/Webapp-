@@ -23,6 +23,11 @@ export default function LegalPage() {
         l&apos;article original fait foi.
       </p>
       <p>Un éditeur qui souhaite le retrait de ses contenus peut nous contacter.</p>
+      <p>
+        Jeux gratuits : données publiques de l&apos;Epic Games Store et de{" "}
+        <a href="https://www.gamerpower.com" target="_blank" rel="noopener noreferrer">GamerPower</a>. Les offres
+        peuvent changer à tout moment : vérifiez toujours sur la boutique avant de récupérer un jeu.
+      </p>
 
       <h2 id="confidentialite">Confidentialité</h2>
       <p>Ce site ne dépose aucun cookie et n&apos;utilise aucun outil de suivi. [À compléter selon votre hébergement.]</p>

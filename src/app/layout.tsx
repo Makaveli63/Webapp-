@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import { Footer } from "@/components/layout/Footer";
 import { MobileTabBar } from "@/components/layout/MobileTabBar";
 import { Navbar } from "@/components/layout/Navbar";
+import { ReleaseBanner } from "@/components/releases/ReleaseBanner";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -44,6 +45,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       </head>
       <body className="flex min-h-dvh flex-col font-sans antialiased">
         <Navbar />
+        <ReleaseBanner />
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:py-8">{children}</main>
         <Footer />
         <MobileTabBar />

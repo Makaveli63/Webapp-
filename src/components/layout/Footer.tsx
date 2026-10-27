@@ -8,6 +8,8 @@ const SECTIONS = [
       { href: "/actualites", label: "Actualités" },
       { href: "/tests", label: "Tests" },
       { href: "/consoles", label: "Consoles & matériel" },
+      { href: "/jeux-gratuits", label: "Jeux gratuits" },
+      { href: "/sorties", label: "Sorties à venir" },
       { href: "/recherche", label: "Recherche" },
     ],
   },

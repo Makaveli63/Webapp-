@@ -1,0 +1,48 @@
+[
+  {
+    "id": "zelda-ocarina-of-time-remake",
+    "title": "The Legend of Zelda: Ocarina of Time",
+    "short": "Zelda : Ocarina of Time",
+    "subtitle": "Remake",
+    "date": "2026-11-05",
+    "platforms": [
+      "Switch 2"
+    ],
+    "source": "https://www.nintendo.com/us/whatsnew/the-legend-of-zelda-40th-anniversary-celebration-revealed-in-new-nintendo-direct-presentation/"
+  },
+  {
+    "id": "gta-6",
+    "title": "Grand Theft Auto VI",
+    "short": "GTA VI",
+    "date": "2026-11-19",
+    "platforms": [
+      "PS5",
+      "Xbox"
+    ],
+    "source": "https://www.rockstargames.com/VI"
+  },
+  {
+    "id": "007-first-light-switch-2",
+    "title": "007 First Light",
+    "short": "007 First Light (Switch 2)",
+    "subtitle": "Version Switch 2",
+    "date": "2027-03-18",
+    "platforms": [
+      "Switch 2"
+    ],
+    "source": "https://www.gematsu.com/2026/10/007-first-light-for-switch-2-launches-march-18-2027"
+  },
+  {
+    "id": "final-fantasy-vii-revelation",
+    "title": "Final Fantasy VII Revelation",
+    "short": "FF VII Revelation",
+    "date": "2027-04-08",
+    "platforms": [
+      "PS5",
+      "Xbox",
+      "Switch 2",
+      "PC"
+    ],
+    "source": "https://engadget.com/2250355/final-fantasy-vii-revelation-launches-on-april-8-2027/"
+  }
+]

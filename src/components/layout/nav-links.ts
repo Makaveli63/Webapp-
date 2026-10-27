@@ -1,10 +1,11 @@
-import { Gamepad2, House, Newspaper, Search, Star } from "lucide-react";
+import { Gamepad2, Gift, House, Newspaper, Search, Star } from "lucide-react";
 
 export const NAV_LINKS = [
   { href: "/", label: "Accueil", icon: House },
   { href: "/actualites", label: "Actus", icon: Newspaper },
   { href: "/tests", label: "Tests", icon: Star },
   { href: "/consoles", label: "Consoles", icon: Gamepad2 },
+  { href: "/jeux-gratuits", label: "Gratuits", icon: Gift },
 ] as const;
 
 export const SEARCH_LINK = { href: "/recherche", label: "Recherche", icon: Search } as const;
