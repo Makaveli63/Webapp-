@@ -157,20 +157,17 @@ async function releaseImages() {
 
 async function main() {
   mkdirSync(path.dirname(OUT_FILE), { recursive: true });
-  let source;
-  let games = [];
-  try {
-    if (RAWG_KEY) {
-      games = await fromRawg();
-      source = "RAWG";
-    } else {
-      games = await fromSteam();
-      source = "Steam";
-    }
-    console.log(`[sorties] ${source} : ${games.length} jeux`);
-  } catch (err) {
-    console.log(`[sorties] calendrier indisponible (${err.message})`);
-  }
+  // RAWG (toutes plateformes, si clé) complété par Steam (PC) ; doublons retirés par titre.
+  const results = await Promise.allSettled([RAWG_KEY ? fromRawg() : Promise.resolve([]), fromSteam()]);
+  const [rawg, steam] = results.map((r) => (r.status === "fulfilled" ? r.value : []));
+  results.forEach((r, i) => {
+    if (r.status === "rejected") console.log(`[sorties] ${i ? "Steam" : "RAWG"} indisponible (${r.reason?.message})`);
+  });
+  const key = (t) => t.toLowerCase().normalize("NFD").replace(/[^a-z0-9]/g, "");
+  const known = new Set(rawg.map((g) => key(g.title)));
+  const games = [...rawg, ...steam.filter((g) => !known.has(key(g.title)))];
+  const source = rawg.length ? "RAWG" : steam.length ? "Steam" : undefined;
+  console.log(`[sorties] RAWG : ${rawg.length} jeux, Steam : ${steam.length} jeux, total : ${games.length}`);
   const images = await releaseImages();
   console.log(`[sorties] visuels des grosses sorties : ${Object.keys(images).length}`);
 

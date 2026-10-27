@@ -46,7 +46,7 @@ export default function ReleasesPage() {
 
       <p className="text-xs text-muted">
         {calendar.source === "RAWG"
-          ? "Calendrier et visuels : RAWG (rawg.io)."
+          ? "Calendrier et visuels : RAWG (rawg.io) et boutique Steam."
           : calendar.source === "Steam"
             ? "Calendrier et visuels : boutique Steam (sorties PC)."
             : "Calendrier momentanément indisponible."}{" "}
