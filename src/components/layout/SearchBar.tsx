@@ -1,18 +1,19 @@
 "use client";
 
-import { Mic, Search, Sparkles } from "lucide-react";
+import { Gamepad2, Mic, Search, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useState, type FormEvent, type KeyboardEvent } from "react";
 import { animeHref, https, searchAnime, titleOf, type AniMedia } from "@/lib/anilist";
 import { suggestTitles } from "@/lib/fuzzy";
 import { loadSearchIndex } from "@/lib/search-index";
+import type { SearchGame } from "@/types";
 
 /** Barre de recherche avec suggestions de jeux pendant la saisie (tolérantes aux fautes). */
 export function SearchBar({ className = "", autoFocus = false }: { className?: string; autoFocus?: boolean }) {
   const router = useRouter();
   const listId = useId();
   const [q, setQ] = useState("");
-  const [titles, setTitles] = useState<string[]>([]);
+  const [games, setGames] = useState<Map<string, SearchGame>>(new Map());
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
   const [canSpeak, setCanSpeak] = useState(false);
@@ -64,15 +65,29 @@ export function SearchBar({ className = "", autoFocus = false }: { className?: s
 
   // L'index n'est chargé qu'au premier usage de la barre.
   const prepare = () => {
-    if (!titles.length) loadSearchIndex().then((i) => setTitles(i.games.map((g) => g.title))).catch(() => {});
+    // Jeux vidéo seulement : les animes ont leur propre section (AniList), plus complète.
+    if (!games.size)
+      loadSearchIndex()
+        .then((i) => setGames(new Map(i.games.filter((g) => !g.id.startsWith("anilist-")).map((g) => [g.title, g]))))
+        .catch(() => {});
   };
   useEffect(() => {
     if (autoFocus) prepare();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- chargement unique
   }, []);
 
-  const suggestions = open ? suggestTitles(q, titles) : [];
+  const suggestions = open ? suggestTitles(q, [...games.keys()], 5) : [];
   const animeShown = open ? anime : [];
+
+  // Jeu avec une fiche sur le site : on l'ouvre directement ; sinon, recherche sur son titre.
+  const openGame = (title: string) => {
+    const url = games.get(title)?.url;
+    if (url?.startsWith("/")) {
+      setOpen(false);
+      setQ(title);
+      router.push(url);
+    } else go(title);
+  };
 
   const go = (query: string) => {
     const term = query.trim();
@@ -84,7 +99,8 @@ export function SearchBar({ className = "", autoFocus = false }: { className?: s
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    go(active >= 0 && suggestions[active] ? suggestions[active] : q);
+    if (active >= 0 && suggestions[active]) openGame(suggestions[active]);
+    else go(q);
   };
 
   const onKeyDown = (e: KeyboardEvent) => {
@@ -144,19 +160,38 @@ export function SearchBar({ className = "", autoFocus = false }: { className?: s
           role="listbox"
           className="absolute inset-x-0 top-full z-50 mt-1 max-h-[70vh] overflow-y-auto rounded-lg glass glass-strong shadow-xl"
         >
-          {suggestions.map((s, i) => (
-            <li key={s} role="option" aria-selected={i === active}>
-              <button
-                type="button"
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => go(s)}
-                className={`flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm ${i === active ? "bg-surface-2 text-heading" : "text-fg hover:bg-surface-2"}`}
-              >
-                <Search className="size-3.5 shrink-0 text-muted" aria-hidden />
-                <span className="truncate">{s}</span>
-              </button>
+          {suggestions.length > 0 && (
+            <li role="presentation" className="px-3 pb-1 pt-2 text-xs font-semibold uppercase tracking-wide text-muted">
+              Jeux vidéo
             </li>
-          ))}
+          )}
+          {suggestions.map((s, i) => {
+            const g = games.get(s);
+            const year = g?.date?.slice(0, 4);
+            return (
+              <li key={s} role="option" aria-selected={i === active}>
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => openGame(s)}
+                  className={`flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm ${i === active ? "bg-surface-2 text-heading" : "text-fg hover:bg-surface-2"}`}
+                >
+                  {g?.image?.startsWith("https://") ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- site statique
+                    <img src={g.image} alt="" referrerPolicy="no-referrer" loading="lazy" onError={(e) => e.currentTarget.classList.add("invisible")} className="h-8 w-14 shrink-0 rounded object-cover" />
+                  ) : (
+                    <span className="flex h-8 w-14 shrink-0 items-center justify-center rounded bg-accent/15">
+                      <Gamepad2 className="size-4 text-accent" aria-hidden />
+                    </span>
+                  )}
+                  <span className="min-w-0">
+                    <span className="block truncate font-semibold text-heading">{s}</span>
+                    <span className="block truncate text-xs text-muted">{[year, g?.platforms.slice(0, 3).join(" · ")].filter(Boolean).join(" · ")}</span>
+                  </span>
+                </button>
+              </li>
+            );
+          })}
           {animeShown.length > 0 && (
             <li role="presentation" className="border-t border-border px-3 pb-1 pt-2 text-xs font-semibold uppercase tracking-wide text-muted">
               Animes

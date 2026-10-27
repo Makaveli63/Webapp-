@@ -97,5 +97,8 @@ export function suggestTitles(query: string, titles: string[], limit = 6): strin
     }
     scored.push([score * 1000 + t.length, title]);
   }
-  return scored.sort((a, b) => a[0] - b[0]).slice(0, limit).map(([, t]) => t);
+  scored.sort((a, b) => a[0] - b[0]);
+  // Des titres contiennent ce qui est tapé : pas de propositions approximatives en plus (« Solo » ≠ « Nine Sols »).
+  const exact = scored.filter(([s]) => s < 3000);
+  return (exact.length ? exact.slice(0, limit) : scored.slice(0, Math.min(3, limit))).map(([, t]) => t);
 }
