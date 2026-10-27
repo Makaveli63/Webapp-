@@ -1,0 +1,8 @@
+.gradle/
+build/
+app/build/
+local.properties
+*.jks
+*.keystore
+# Icône copiée depuis public/ au moment de la compilation
+app/src/main/res/mipmap-*/

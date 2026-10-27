@@ -1,0 +1,53 @@
+plugins {
+    id "com.android.application"
+}
+
+// Numéro de version = numéro de la compilation GitHub (chaque APK est plus récent que le précédent).
+def build = (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInteger()
+def keystore = System.getenv("KEYSTORE_FILE")
+
+android {
+    namespace "io.github.makaveli63.gamingbase"
+    compileSdk 35
+
+    defaultConfig {
+        applicationId "io.github.makaveli63.gamingbase"
+        minSdk 24
+        targetSdk 35
+        versionCode build
+        versionName "1.0.${build}"
+    }
+
+    signingConfigs {
+        // Clé de signature fixe si les secrets GitHub sont configurés (mises à jour sans désinstaller).
+        if (keystore) {
+            release {
+                storeFile file(keystore)
+                storePassword System.getenv("KEYSTORE_PASSWORD")
+                keyAlias System.getenv("KEY_ALIAS") ?: "gamingbase"
+                keyPassword System.getenv("KEYSTORE_PASSWORD")
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig keystore ? signingConfigs.release : signingConfigs.debug
+        }
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    lint {
+        abortOnError false
+        checkReleaseBuilds false
+    }
+}
