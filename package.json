@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "news": "node scripts/fetch-news.mjs",
     "build": "next build && node scripts/csp.mjs",
-    "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {

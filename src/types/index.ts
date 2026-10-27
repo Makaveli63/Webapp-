@@ -15,7 +15,7 @@ export interface Article {
   slug: string;
   title: string;
   excerpt: string;
-  /** Contenu Markdown */
+  /** Markdown pour les articles locaux, texte brut (résumé de l'éditeur) pour les articles RSS */
   content: string;
   platforms: Platform[];
   tags: string[];
@@ -23,6 +23,8 @@ export interface Article {
   /** Date ISO 8601 */
   publishedAt: string;
   source: { name: string; url?: string };
+  /** Résumé original rédigé automatiquement (IA) à partir de la source */
+  aiSummary?: string;
   /** true si l'article provient d'un flux RSS externe */
   external?: boolean;
 }

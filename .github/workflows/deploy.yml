@@ -21,6 +21,7 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: read
+      models: read # résumés IA via GitHub Models (gratuit)
     steps:
       # Actions épinglées par SHA de commit (protection contre une étiquette déplacée).
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -34,6 +35,16 @@ jobs:
       - run: npm ci --ignore-scripts
       - name: Vérifier les signatures des paquets npm
         run: npm audit signatures
+      # Conserve les résumés déjà rédigés : seuls les nouveaux articles passent par l'IA.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .cache/news/summaries.json
+          key: news-summaries-${{ github.run_id }}
+          restore-keys: news-summaries-
+      - name: Récupérer les actus et rédiger les résumés
+        run: npm run news
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Construire le site statique
         run: npm run build
         env:

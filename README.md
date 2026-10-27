@@ -8,8 +8,8 @@ Webapp francophone d'actualité jeu vidéo et de suivi pédagogique de la scène
 
 ```bash
 npm install
-cp .env.example .env.local   # optionnel : configurer les flux RSS
-npm run dev                  # http://localhost:3000
+npm run news   # optionnel : récupère les actus (sinon, articles de démo)
+npm run dev    # http://localhost:3000
 ```
 
 Scripts : `npm run build` (génère le site statique dans `out/`), `npm run lint`.
@@ -41,7 +41,7 @@ src/
 
 ## Contenu
 
-- **Articles** : agrégés automatiquement depuis les flux RSS de la presse jeu vidéo francophone (`src/data/feeds.ts`, ou variable `RSS_FEEDS`). Plateformes et sujets « Scène » (hack, homebrew, failles…) sont détectés par mots-clés. Chaque article renvoie vers sa source. Le journal de build indique les flux qui ont répondu. Les articles de démo (`src/data/news.ts`) ne s'affichent que si aucun flux ne répond.
+- **Articles** : `npm run news` (`scripts/fetch-news.mjs`) récupère les flux RSS de la presse jeu vidéo francophone (`src/data/feeds.json`, ou variable `RSS_FEEDS`) et rédige pour chaque nouvel article un **résumé original par IA** via GitHub Models (gratuit dans GitHub Actions ; résumés conservés d'un build à l'autre grâce au cache). Résultat : `.cache/news/articles.json`, lu par le build. Plateformes et sujets « Scène » (hack, homebrew, failles…) sont détectés par mots-clés. Chaque article a sa page sur le site (titre, résumé réécrit, source citée, articles liés) avec un lien vers l'article original ; le texte intégral n'est pas repris (droit d'auteur / droit voisin). Le journal de build indique les flux qui ont répondu. Les articles de démo (`src/data/news.ts`) ne s'affichent que si aucun flux ne répond.
 - **Statut de la scène** : `src/data/scene-status.ts`. ⚠️ Les valeurs actuelles sont des **exemples** à remplacer par des informations vérifiées et sourcées.
 - **Guides / glossaire** : fichiers `.md` dans `content/`.
 

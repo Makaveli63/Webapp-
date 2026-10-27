@@ -31,7 +31,7 @@ export default function LegalPage() {
       <p>Ce site ne dépose aucun cookie de suivi. [À compléter selon votre hébergement et vos outils d&apos;analyse.]</p>
 
       <h2>Contenus tiers</h2>
-      <p>Les actualités issues de flux RSS restent la propriété de leurs éditeurs ; seuls un titre et un extrait sont affichés, avec un lien vers la source.</p>
+      <p>Les actualités issues de flux RSS restent la propriété de leurs éditeurs. Aucun article n&apos;est reproduit : chaque actualité fait l&apos;objet d&apos;un résumé original rédigé automatiquement par intelligence artificielle à partir du titre et du chapô diffusés par l&apos;éditeur dans son flux RSS (ou, à défaut, d&apos;un court extrait de ce flux), avec la mention systématique de la source et un lien vers l&apos;article original. Un éditeur qui souhaite le retrait de ses contenus peut nous contacter.</p>
     </article>
   );
 }
