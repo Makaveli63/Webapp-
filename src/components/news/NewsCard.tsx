@@ -2,6 +2,7 @@ import { Play } from "lucide-react";
 import Link from "next/link";
 import { CategoryBadge, PlatformBadge } from "@/components/ui/Badge";
 import { RemoteImage } from "@/components/ui/RemoteImage";
+import { ScoreBadge } from "@/components/ui/ScoreBadge";
 import { formatDate } from "@/lib/format";
 import { FavoriteButton } from "./FavoriteButton";
 import { themeFor } from "@/lib/themes";
@@ -21,9 +22,7 @@ export function NewsCard({ article }: { article: Article }) {
         credit={article.imageCredit ? "Wikimedia Commons" : article.image ? article.source.name : undefined}
       />
       {article.score && (
-        <span className="pointer-events-none absolute right-2 top-2 rounded-lg bg-amber-400 px-2 py-1 text-sm font-extrabold text-black shadow">
-          {article.score}
-        </span>
+        <ScoreBadge score={article.score} className="absolute right-2 top-2" />
       )}
       {article.video && (
         <span className="pointer-events-none absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-black/70 px-2.5 py-1 text-xs font-semibold text-white">
