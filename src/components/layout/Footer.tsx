@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Logo } from "@/components/ui/Logo";
+import { SecretAdminTap } from "./SecretAdminTap";
 
 const SECTIONS = [
   {
@@ -45,7 +46,7 @@ export function Footer() {
             L&apos;actualité du jeu vidéo en français : news, tests et nouvelles consoles.
           </p>
           <p className="mt-2 text-sm text-muted">
-            Site créé par <span className="font-semibold text-accent">Makaveli63</span>
+            Site créé par <SecretAdminTap>Makaveli63</SecretAdminTap>
           </p>
         </div>
         {SECTIONS.map((s) => (
