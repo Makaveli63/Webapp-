@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="w_text">#FFFFFFFF</color>
+    <color name="w_muted">#B3E6E8EE</color>
+    <color name="w_accent">#FF9F87FF</color>
+    <color name="w_gold">#FFFBBF24</color>
+    <string name="w_release_desc">Compte à rebours de la prochaine grosse sortie</string>
+    <string name="w_news_desc">Les dernières actus et tests</string>
+    <string name="w_free_desc">Les jeux gratuits du moment</string>
+</resources>

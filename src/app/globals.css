@@ -398,3 +398,33 @@ html[data-splash="off"] .splash { display: none; }
   .glass-bar { background: var(--bg); }
   .score-glass { background: var(--tint); }
 }
+
+/* ---------- Tirer pour actualiser (app installée) ---------- */
+.ptr {
+  position: fixed;
+  left: 50%;
+  top: calc(env(safe-area-inset-top) + 3.5rem);
+  z-index: 45;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 9999px;
+  color: var(--muted);
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, calc(var(--pull, 0px) - 3.5rem)) scale(.8);
+  transition: transform .3s ease, opacity .3s ease, color .2s;
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--glass-edge);
+  box-shadow: inset 0 1px 0 var(--glass-hi), 0 8px 24px -8px rgb(0 0 0 / .35);
+}
+.ptr[data-dragging="1"] { transition: opacity .2s; }
+.ptr[data-on="1"] { opacity: 1; transform: translate(-50%, calc(var(--pull, 0px) - 3.5rem)) scale(1); }
+.ptr[data-ready="1"] { color: var(--accent); }
+.ptr-icon { transform: rotate(var(--pull-turn, 0deg)); }
+.ptr[data-loading="1"] .ptr-icon { animation: ptr-spin .7s linear infinite; }
+@keyframes ptr-spin { to { transform: rotate(360deg); } }

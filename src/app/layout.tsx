@@ -7,6 +7,7 @@ import { ReleaseBanner } from "@/components/releases/ReleaseBanner";
 import { Splash } from "@/components/splash/Splash";
 import { DynamicBackground } from "@/components/theme/DynamicBackground";
 import { Tracker } from "@/components/analytics/Tracker";
+import { PullToRefresh } from "@/components/layout/PullToRefresh";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -60,6 +61,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <Footer />
         <MobileTabBar />
         <Tracker />
+        <PullToRefresh />
       </body>
     </html>
   );
