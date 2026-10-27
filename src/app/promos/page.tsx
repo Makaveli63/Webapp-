@@ -18,7 +18,7 @@ export default async function PromosPage() {
         <h1 className="text-2xl font-extrabold text-heading sm:text-3xl">Promos du moment</h1>
         <p className="mt-2 text-muted">
           Les plus grosses réductions sur PC et les bons plans consoles repérés par la presse. Ajoute « Je le veux » sur un jeu pour
-          retrouver ses promos dans Ma collection.
+          retrouver ses promos dans Ma bibliothèque.
         </p>
       </header>
 

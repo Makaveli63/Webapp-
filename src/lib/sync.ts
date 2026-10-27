@@ -161,7 +161,7 @@ export async function syncNow(code = savedCode()): Promise<void> {
   else setMeta({ rev: remote.rev, dirty: false });
 }
 
-const EMPTY_PAYLOAD: Payload = { v: 1, favoris: [], epingles: [], collection: { owned: [], wanted: [] }, notif: null, suivi: { anime: {}, games: {} } };
+const EMPTY_PAYLOAD: Payload = { v: 1, favoris: [], epingles: [], collection: { owned: [], wanted: [] }, notif: null, suivi: { anime: {}, games: {}, log: {} } };
 
 /** Relie cet appareil à un code (nouveau, ou saisi depuis un autre appareil) : on réunit les deux. */
 export async function linkDevice(code: string) {

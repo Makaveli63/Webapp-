@@ -10,6 +10,8 @@ export interface EpisodeInfo {
   title: string;
   image?: string;
   total?: number;
+  /** Durée d'un épisode (minutes) */
+  duration?: number;
   next?: { episode: number; at: string };
 }
 
@@ -132,7 +134,7 @@ export function EpisodeDialog({ anime, seen, tracked, onClose }: { anime: Episod
             </button>
           )}
         </div>
-        <p className="mt-3 text-xs text-muted">Touchez un épisode pour le cocher ou le décocher. Retrouvez votre suivi dans l&apos;onglet Anime et dans Ma collection.</p>
+        <p className="mt-3 text-xs text-muted">Touchez un épisode pour le cocher ou le décocher. Retrouvez votre suivi dans l&apos;onglet Anime et dans Ma bibliothèque.</p>
       </div>
     </div>,
     document.body,

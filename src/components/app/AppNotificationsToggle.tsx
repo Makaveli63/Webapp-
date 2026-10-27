@@ -187,7 +187,7 @@ export function AppNotificationsToggle() {
           <Option label="Seulement les tests" hint="Avec leur note." checked={prefs.testsOnly} onChange={(v) => update({ testsOnly: v })} />
           <Option
             label="Seulement mes jeux"
-            hint="Les jeux de Ma collection (« Je l'ai » et « Je le veux »)."
+            hint="Les jeux de Ma bibliothèque (« Je l'ai » et « Je le veux »)."
             checked={prefs.myGames}
             onChange={(v) => update({ myGames: v })}
           />

@@ -86,7 +86,7 @@ export function MyGameTracking({ empty }: { empty?: string }) {
                     <span className="block text-xs text-muted">
                       {[g.progress !== undefined && `${g.progress} %`, g.hours !== undefined && `${g.hours} h de jeu`].filter(Boolean).join(" · ")}
                     </span>
-                    <GameProgress game={g} className="mt-1.5" />
+                    <GameProgress game={g} full className="mt-1.5" />
                   </span>
                 </li>
               ))}

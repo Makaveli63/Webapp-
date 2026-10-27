@@ -141,7 +141,7 @@ export interface SearchGame {
   /** Autre titre (ex. titre japonais d'un anime), aussi cherché */
   aka?: string;
   /** Anime : nombre d'épisodes et prochain épisode (suivi des épisodes vus) */
-  anime?: { total?: number; next?: { episode: number; at: string } };
+  anime?: { total?: number; duration?: number; next?: { episode: number; at: string } };
 }
 
 export interface SearchIndex {
@@ -179,6 +179,8 @@ export interface Anime {
   banner?: string;
   format?: string;
   episodes?: number;
+  /** Durée d'un épisode en minutes */
+  duration?: number;
   /** Prochain épisode (date ISO) */
   next?: { episode: number; at: string };
   /** Date de début AAAA-MM-JJ */

@@ -16,6 +16,8 @@ export interface AnimeTrack {
   image?: string;
   /** Nombre total d'épisodes, s'il est connu */
   total?: number;
+  /** Durée d'un épisode en minutes (AniList) */
+  duration?: number;
   /** Prochain épisode à sortir (pour savoir combien sont déjà sortis) */
   next?: { episode: number; at: string };
   seen: number[];
@@ -44,10 +46,18 @@ export interface GameTrack {
   updatedAt: string;
 }
 
+/** Temps passé par jour (AAAA-MM-JJ), en minutes : a = anime, g = jeux. */
+export type ActivityLog = Record<string, { a?: number; g?: number }>;
+
 export interface Tracker {
   anime: Record<string, AnimeTrack>;
   games: Record<string, GameTrack>;
+  log: ActivityLog;
 }
+
+/** Durée par défaut d'un épisode quand AniList ne la donne pas. */
+export const DEFAULT_EPISODE_MINUTES = 24;
+const LOG_DAYS = 400;
 
 const MAX_ENTRIES = 300;
 const MAX_EPISODES = 2000;
@@ -57,6 +67,14 @@ const isEpisode = (n: unknown): n is number => Number.isInteger(n) && (n as numb
 /** Nettoie des données venant du stockage ou d'un autre appareil (synchronisation). */
 export function cleanTracker(raw: unknown): Tracker {
   const data = (raw && typeof raw === "object" ? raw : {}) as Partial<Record<keyof Tracker, Record<string, unknown>>>;
+  const log: ActivityLog = {};
+  const minutes = (n: unknown) => (typeof n === "number" && n > 0 ? Math.min(24 * 60 * 31, Math.round(n)) : undefined);
+  for (const [day, v] of Object.entries(data.log ?? {}).sort(([x], [y]) => y.localeCompare(x)).slice(0, LOG_DAYS)) {
+    const e = v as { a?: unknown; g?: unknown };
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || !e || typeof e !== "object") continue;
+    const entry = { a: minutes(e.a), g: minutes(e.g) };
+    if (entry.a || entry.g) log[day] = entry;
+  }
   const anime: Record<string, AnimeTrack> = {};
   const games: Record<string, GameTrack> = {};
   for (const a of Object.values(data.anime ?? {}).slice(0, MAX_ENTRIES) as Partial<AnimeTrack>[]) {
@@ -66,6 +84,7 @@ export function cleanTracker(raw: unknown): Tracker {
       title: a.title.slice(0, 200),
       image: typeof a.image === "string" && a.image.startsWith("https://") ? a.image : undefined,
       total: isEpisode(a.total) ? a.total : undefined,
+      duration: typeof a.duration === "number" && a.duration > 0 && a.duration < 400 ? Math.round(a.duration) : undefined,
       next: a.next && isEpisode(a.next.episode) && typeof a.next.at === "string" ? { episode: a.next.episode, at: a.next.at } : undefined,
       seen: [...new Set((Array.isArray(a.seen) ? a.seen : []).filter(isEpisode))].sort((x, y) => x - y),
       updatedAt: typeof a.updatedAt === "string" ? a.updatedAt : new Date(0).toISOString(),
@@ -83,14 +102,14 @@ export function cleanTracker(raw: unknown): Tracker {
       updatedAt: typeof g.updatedAt === "string" ? g.updatedAt : new Date(0).toISOString(),
     };
   }
-  return { anime, games };
+  return { anime, games, log };
 }
 
 export function readTracker(): Tracker {
   try {
     return cleanTracker(JSON.parse(localStorage.getItem(TRACKER_KEY) ?? "{}"));
   } catch {
-    return { anime: {}, games: {} };
+    return { anime: {}, games: {}, log: {} };
   }
 }
 
@@ -110,10 +129,32 @@ export function mergeTrackers(a: Tracker, b: Tracker): Tracker {
     for (const [id, v] of Object.entries(x)) if (!out[id] || v.updatedAt >= out[id].updatedAt) out[id] = v;
     return out;
   };
-  return { anime: pick(a.anime, b.anime), games: pick(a.games, b.games) };
+  // Journal : pour chaque jour, la plus grande valeur (les deux appareils peuvent avoir le même jour).
+  const log: ActivityLog = { ...b.log };
+  for (const [day, v] of Object.entries(a.log)) {
+    const o = log[day] ?? {};
+    log[day] = { a: Math.max(v.a ?? 0, o.a ?? 0) || undefined, g: Math.max(v.g ?? 0, o.g ?? 0) || undefined };
+  }
+  return { anime: pick(a.anime, b.anime), games: pick(a.games, b.games), log };
 }
 
-type AnimeInfo = { id: string; title: string; image?: string; total?: number; next?: { episode: number; at: string } };
+type AnimeInfo = { id: string; title: string; image?: string; total?: number; duration?: number; next?: { episode: number; at: string } };
+
+const today = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+
+/** Ajoute (ou retire, si on décoche) du temps au journal du jour, sans descendre sous zéro. */
+function logTime(t: Tracker, kind: "a" | "g", deltaMinutes: number) {
+  if (!deltaMinutes) return;
+  const day = today();
+  const e = t.log[day] ?? {};
+  const v = Math.max(0, (e[kind] ?? 0) + deltaMinutes);
+  t.log[day] = { ...e, [kind]: v || undefined };
+}
+
+export const episodeMinutes = (a: { duration?: number }) => a.duration ?? DEFAULT_EPISODE_MINUTES;
 
 /** Épisodes déjà sortis (selon le prochain épisode annoncé), sinon le total. */
 export function airedEpisodes(a: { total?: number; next?: { episode: number; at: string } }, now = Date.now()): number | undefined {
@@ -125,13 +166,17 @@ export function airedEpisodes(a: { total?: number; next?: { episode: number; at:
 export function setEpisodes(info: AnimeInfo, seen: number[]) {
   const t = readTracker();
   const prev = t.anime[info.id];
+  const clean = [...new Set(seen.filter(isEpisode))];
+  const duration = info.duration ?? prev?.duration;
+  logTime(t, "a", (clean.length - (prev?.seen.length ?? 0)) * episodeMinutes({ duration }));
   t.anime[info.id] = {
     id: info.id,
     title: info.title,
     image: info.image ?? prev?.image,
     total: info.total ?? prev?.total,
+    duration,
     next: info.next ?? (info.total ? undefined : prev?.next),
-    seen: [...new Set(seen.filter(isEpisode))].sort((x, y) => x - y),
+    seen: clean.sort((x, y) => x - y),
     updatedAt: new Date().toISOString(),
   };
   writeTracker(t);
@@ -139,6 +184,8 @@ export function setEpisodes(info: AnimeInfo, seen: number[]) {
 
 export function untrackAnime(id: string) {
   const t = readTracker();
+  const prev = t.anime[id];
+  if (prev) logTime(t, "a", -prev.seen.length * episodeMinutes(prev));
   delete t.anime[id];
   writeTracker(t);
 }
@@ -149,9 +196,12 @@ export const gameKey = (title: string) => `t-${titleKey(title).slice(0, 120)}`;
 export function setGameTrack(game: { title: string; image?: string }, patch: Partial<Pick<GameTrack, "status" | "progress" | "hours">> | null) {
   const t = readTracker();
   const id = gameKey(game.title);
-  if (!patch) delete t.games[id];
-  else {
-    const prev = t.games[id];
+  const prev = t.games[id];
+  if (!patch) {
+    logTime(t, "g", -(prev?.hours ?? 0) * 60);
+    delete t.games[id];
+  } else {
+    if (patch.hours !== undefined || "hours" in patch) logTime(t, "g", ((patch.hours ?? 0) - (prev?.hours ?? 0)) * 60);
     const status = patch.status ?? prev?.status ?? "en-cours";
     t.games[id] = {
       id,
@@ -159,7 +209,7 @@ export function setGameTrack(game: { title: string; image?: string }, patch: Par
       image: game.image ?? prev?.image,
       status,
       progress: status === "termine" || status === "platine" ? 100 : (patch.progress ?? prev?.progress),
-      hours: patch.hours ?? prev?.hours,
+      hours: "hours" in patch ? patch.hours : prev?.hours,
       updatedAt: new Date().toISOString(),
     };
   }
@@ -179,4 +229,47 @@ export function useTracker(): Tracker | null {
     };
   }, []);
   return t;
+}
+
+export interface LibraryStats {
+  gameHours: number;
+  animeMinutes: number;
+  episodes: number;
+  finished: number;
+  platinum: number;
+  playing: number;
+  animeUpToDate: number;
+}
+
+export function libraryStats(t: Tracker): LibraryStats {
+  const games = Object.values(t.games);
+  const anime = Object.values(t.anime);
+  return {
+    gameHours: games.reduce((s, g) => s + (g.hours ?? 0), 0),
+    animeMinutes: anime.reduce((s, a) => s + a.seen.length * episodeMinutes(a), 0),
+    episodes: anime.reduce((s, a) => s + a.seen.length, 0),
+    finished: games.filter((g) => g.status === "termine" || g.status === "platine").length,
+    platinum: games.filter((g) => g.status === "platine").length,
+    playing: games.filter((g) => g.status === "en-cours").length,
+    animeUpToDate: anime.filter((a) => {
+      const max = a.total ?? airedEpisodes(a);
+      return !!max && a.seen.length >= max;
+    }).length,
+  };
+}
+
+/** Heures par mois (les 6 derniers mois, du plus ancien au plus récent). */
+export function monthlyHours(log: ActivityLog, months = 6, now = new Date()) {
+  return Array.from({ length: months }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - (months - 1 - i), 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    let a = 0;
+    let g = 0;
+    for (const [day, v] of Object.entries(log)) {
+      if (!day.startsWith(key)) continue;
+      a += v.a ?? 0;
+      g += v.g ?? 0;
+    }
+    return { key, label: new Intl.DateTimeFormat("fr-FR", { month: "short" }).format(d), anime: a / 60, games: g / 60 };
+  });
 }

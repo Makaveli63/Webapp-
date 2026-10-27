@@ -15,7 +15,7 @@ const SECTIONS = [
       { href: "/promos", label: "Promos du moment" },
       { href: "/videos", label: "Vidéos" },
       { href: "/classement", label: "Classement et tendances" },
-      { href: "/collection", label: "Ma collection" },
+      { href: "/collection", label: "Ma bibliothèque" },
       { href: "/recherche", label: "Recherche" },
       { href: "/favoris", label: "Mes favoris" },
     ],

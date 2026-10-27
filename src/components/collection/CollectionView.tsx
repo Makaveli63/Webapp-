@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { DealCard } from "@/components/deals/DealCard";
 import { NewsCard } from "@/components/news/NewsCard";
 import { GameProgress } from "@/components/tracker/GameProgress";
+import { LibraryStats } from "@/components/tracker/LibraryStats";
 import { MyAnimeTracking, MyGameTracking } from "@/components/tracker/MyTracking";
 import { RemoteImage } from "@/components/ui/RemoteImage";
 import { mentions, toggleCollection, useCollection, type CollectionGame } from "@/lib/collection";
@@ -62,6 +63,7 @@ export function CollectionView({ deals }: { deals: Deal[] }) {
 
   return (
     <div className="mt-8 space-y-10">
+      <LibraryStats />
       {(forMeDeals.length > 0 || forMeNews.length > 0) && (
         <section>
           <h2 className="text-xl font-bold text-heading">✨ Pour toi</h2>

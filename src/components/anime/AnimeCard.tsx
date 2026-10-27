@@ -62,7 +62,7 @@ export function AnimeCard({ anime }: { anime: Anime }) {
               ))}
             </div>
           )}
-          <EpisodeTracker anime={{ id: anime.id, title: anime.title, image: anime.image, total: anime.episodes, next: anime.next }} className="mt-2" />
+          <EpisodeTracker anime={{ id: anime.id, title: anime.title, image: anime.image, total: anime.episodes, duration: anime.duration, next: anime.next }} className="mt-2" />
         </div>
       </div>
     </article>

@@ -4,7 +4,7 @@ import Link from "next/link";
 const LINKS = [
   { href: "/promos", label: "Promos", icon: Tag },
   { href: "/videos", label: "Vidéos", icon: Clapperboard },
-  { href: "/collection", label: "Ma collection", icon: Heart },
+  { href: "/collection", label: "Ma bibliothèque", icon: Heart },
   { href: "/classement", label: "Classement", icon: Trophy },
   { href: "/consoles", label: "Consoles", icon: Gamepad2 },
 ];

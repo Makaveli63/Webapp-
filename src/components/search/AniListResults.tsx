@@ -11,6 +11,7 @@ interface Media {
   format?: string;
   status?: string;
   episodes?: number;
+  duration?: number;
   startDate?: { year?: number };
   nextAiringEpisode?: { episode: number; airingAt: number } | null;
   siteUrl?: string;
@@ -20,7 +21,7 @@ interface Media {
 const QUERY = `query ($q: String) {
   Page(perPage: 8) {
     media(search: $q, type: ANIME, isAdult: false, sort: SEARCH_MATCH) {
-      id title { romaji english } coverImage { large } format status episodes startDate { year }
+      id title { romaji english } coverImage { large } format status episodes duration startDate { year }
       nextAiringEpisode { episode airingAt } siteUrl externalLinks { site url type language }
     }
   }
@@ -112,6 +113,7 @@ export function AniListResults({ query, onCount }: { query: string; onCount?: (n
                       title: title ?? "",
                       image: cover,
                       total: m.episodes ?? undefined,
+                      duration: m.duration ?? undefined,
                       next: m.nextAiringEpisode ? { episode: m.nextAiringEpisode.episode, at: new Date(m.nextAiringEpisode.airingAt * 1000).toISOString() } : undefined,
                     }}
                     className="mt-2"

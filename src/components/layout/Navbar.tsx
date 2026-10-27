@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Bookmark } from "lucide-react";
+import { Bookmark, LibraryBig } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Logo } from "@/components/ui/Logo";
@@ -38,9 +38,16 @@ export function Navbar() {
 
         <SearchBar className="ml-auto hidden w-44 lg:block xl:w-56" />
 
-        <div className="ml-auto flex items-center gap-4 lg:ml-0">
+        <div className="ml-auto flex items-center gap-1 sm:gap-4 lg:ml-0">
           <AdminLink active={pathname.startsWith("/admin")} />
           <ThemeToggle className="-mr-1" />
+          <Link
+            href="/collection"
+            aria-label="Ma bibliothèque"
+            className="-mr-1 flex size-11 items-center justify-center rounded-full text-muted hover:text-fg"
+          >
+            <LibraryBig className="size-5" aria-hidden />
+          </Link>
           <Link
             href="/favoris"
             aria-label="Mes favoris"

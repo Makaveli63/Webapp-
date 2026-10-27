@@ -14,7 +14,7 @@ export default function FavoritesPage() {
     <div className="space-y-10">
       <header>
         <h1 className="text-2xl font-extrabold text-heading sm:text-3xl">Mes favoris</h1>
-        <p className="mt-2 text-muted">Tes jeux épinglés, tes articles enregistrés et tes réglages. Pour ta collection de jeux, va dans Ma collection.</p>
+        <p className="mt-2 text-muted">Tes jeux épinglés, tes articles enregistrés et tes réglages. Pour tes jeux et tes animes, va dans Ma bibliothèque.</p>
       </header>
       <AppNotificationsToggle />
       <MyBadges />

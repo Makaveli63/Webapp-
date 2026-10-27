@@ -443,3 +443,12 @@ html[data-splash="off"] .splash { display: none; }
 .ptr-icon { transform: rotate(var(--pull-turn, 0deg)); }
 .ptr[data-loading="1"] .ptr-icon { animation: ptr-spin .7s linear infinite; }
 @keyframes ptr-spin { to { transform: rotate(360deg); } }
+
+/* Graphique « Ma bibliothèque » : couleurs des séries (jeux, anime), réglées pour chaque thème. */
+:root { --viz-games: #2a78d6; --viz-anime: #eb6834; }
+:root[data-theme="dark"] { --viz-games: #3987e5; --viz-anime: #d95926; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) { --viz-games: #3987e5; --viz-anime: #d95926; }
+}
+.bg-viz-games { background: var(--viz-games); }
+.bg-viz-anime { background: var(--viz-anime); }

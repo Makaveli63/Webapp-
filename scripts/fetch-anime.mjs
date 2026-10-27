@@ -19,6 +19,7 @@ fragment f on Media {
   bannerImage
   format
   episodes
+  duration
   nextAiringEpisode { episode airingAt }
   startDate { year month day }
   genres
@@ -60,6 +61,7 @@ function toAnime(m) {
     banner: https(m.bannerImage),
     format: FORMATS[m.format] ?? m.format ?? undefined,
     episodes: Number.isInteger(m.episodes) ? m.episodes : undefined,
+    duration: Number.isInteger(m.duration) && m.duration > 0 && m.duration < 400 ? m.duration : undefined,
     next: m.nextAiringEpisode?.airingAt
       ? { episode: m.nextAiringEpisode.episode, at: new Date(m.nextAiringEpisode.airingAt * 1000).toISOString() }
       : undefined,
