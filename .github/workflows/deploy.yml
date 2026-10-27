@@ -21,7 +21,6 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: read
-      models: read # résumés IA via GitHub Models (gratuit)
     steps:
       # Actions épinglées par SHA de commit (protection contre une étiquette déplacée).
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -44,7 +43,9 @@ jobs:
       - name: Récupérer les actus et rédiger les résumés
         run: npm run news
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Secret AI_API_KEY et variable AI_PROVIDER (mistral ou gemini) : Settings → Secrets and variables → Actions
+          AI_API_KEY: ${{ secrets.AI_API_KEY }}
+          AI_PROVIDER: ${{ vars.AI_PROVIDER }}
       - name: Construire le site statique
         run: npm run build
         env:
