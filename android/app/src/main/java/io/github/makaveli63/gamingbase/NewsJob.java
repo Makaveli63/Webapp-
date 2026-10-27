@@ -17,7 +17,9 @@ import android.os.Build;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.text.Normalizer;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -31,6 +33,50 @@ public class NewsJob extends JobService {
     private static final int JOB_ID = 1001;
     private static final String CHANNEL = "actus";
     private static final String PREFS = "notifications";
+
+    static void savePrefs(Context ctx, String json) {
+        ctx.getSharedPreferences(PREFS, MODE_PRIVATE).edit().putString("prefs", json).apply();
+    }
+
+    private static JSONObject prefs(Context ctx) {
+        try {
+            return new JSONObject(ctx.getSharedPreferences(PREFS, MODE_PRIVATE).getString("prefs", "{}"));
+        } catch (Exception e) {
+            return new JSONObject();
+        }
+    }
+
+    private static String norm(String s) {
+        String t = Normalizer.normalize(s == null ? "" : s, Normalizer.Form.NFD).replaceAll("\\p{M}", "");
+        return " " + t.toLowerCase().replaceAll("[^a-z0-9]+", " ").trim() + " ";
+    }
+
+    /** L'article correspond-il aux réglages ? (plateformes, tests seulement, jeux de Ma collection) */
+    static boolean matches(JSONObject a, JSONObject p) {
+        JSONArray wanted = p.optJSONArray("platforms");
+        if (wanted != null && wanted.length() > 0) {
+            JSONArray plats = a.optJSONArray("platforms");
+            boolean ok = false;
+            for (int i = 0; plats != null && i < plats.length() && !ok; i++) {
+                String pl = plats.optString(i);
+                if ("Multi".equals(pl)) ok = true;
+                for (int j = 0; j < wanted.length() && !ok; j++) ok = wanted.optString(j).equals(pl);
+            }
+            if (!ok) return false;
+        }
+        if (p.optBoolean("testsOnly") && !"Test".equals(a.optString("category"))) return false;
+        if (p.optBoolean("myGames")) {
+            JSONArray games = p.optJSONArray("games");
+            String title = norm(a.optString("title"));
+            boolean ok = false;
+            for (int i = 0; games != null && i < games.length() && !ok; i++) {
+                String g = norm(games.optString(i));
+                ok = g.trim().length() >= 3 && title.contains(g);
+            }
+            if (!ok) return false;
+        }
+        return true;
+    }
 
     static boolean isEnabled(Context ctx) {
         return ctx.getSharedPreferences(PREFS, MODE_PRIVATE).getBoolean("enabled", false);
@@ -86,14 +132,40 @@ public class NewsJob extends JobService {
         }
         for (String s : seen) if (keep.size() < 200) keep.add(s);
         prefs.edit().putStringSet("seen", keep).apply();
-        if (!notify || firstRun || fresh.isEmpty()) return;
-        if (Build.VERSION.SDK_INT >= 33
-                && ctx.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return;
+        if (!notify || firstRun) return;
+        JSONObject p = prefs(ctx);
+        List<JSONObject> matched = new ArrayList<>();
+        for (JSONObject a : fresh) if (matches(a, p)) matched.add(a);
 
-        NotificationManager nm = ctx.getSystemService(NotificationManager.class);
-        if (Build.VERSION.SDK_INT >= 26) {
-            nm.createNotificationChannel(new NotificationChannel(CHANNEL, "Nouveaux articles", NotificationManager.IMPORTANCE_DEFAULT));
+        // Résumé du soir : on met de côté, et on envoie une seule notification par jour à partir de 19 h.
+        if (p.optBoolean("digest")) {
+            JSONArray pending;
+            try {
+                pending = new JSONArray(prefs.getString("pending", "[]"));
+            } catch (Exception e) {
+                pending = new JSONArray();
+            }
+            for (JSONObject a : matched) if (pending.length() < 50) pending.put(a);
+            Calendar now = Calendar.getInstance();
+            String today = now.get(Calendar.YEAR) + "-" + now.get(Calendar.DAY_OF_YEAR);
+            boolean due = now.get(Calendar.HOUR_OF_DAY) >= 19 && !today.equals(prefs.getString("digestDay", ""));
+            if (!due || pending.length() == 0) {
+                prefs.edit().putString("pending", pending.toString()).apply();
+                return;
+            }
+            prefs.edit().putString("pending", "[]").putString("digestDay", today).apply();
+            fresh = new ArrayList<>();
+            for (int i = 0; i < pending.length(); i++) fresh.add(pending.optJSONObject(i));
+            if (!canNotify(ctx)) return;
+            StringBuilder titles = new StringBuilder();
+            for (int i = 0; i < Math.min(4, fresh.size()); i++) titles.append(i > 0 ? "\n" : "").append("• ").append(fresh.get(i).optString("title"));
+            channel(ctx).notify(3000, build(ctx, "🌙 Ton résumé du soir : " + fresh.size() + " actu" + (fresh.size() > 1 ? "s" : ""),
+                    titles.toString(), "/Webapp-/actualites/", 3000));
+            return;
         }
+        fresh = matched;
+        if (fresh.isEmpty() || !canNotify(ctx)) return;
+        NotificationManager nm = channel(ctx);
         if (fresh.size() > 3) {
             StringBuilder titles = new StringBuilder();
             for (int i = 0; i < 3; i++) titles.append(i > 0 ? " · " : "").append(fresh.get(i).optString("title"));
@@ -107,6 +179,19 @@ public class NewsJob extends JobService {
             String score = a.isNull("score") ? "" : " · " + a.optString("score");
             nm.notify(id, build(ctx, test ? "⭐ Nouveau test" + score : "📰 Nouvelle actu", a.optString("title"), path, id));
         }
+    }
+
+    private static boolean canNotify(Context ctx) {
+        return Build.VERSION.SDK_INT < 33
+                || ctx.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private static NotificationManager channel(Context ctx) {
+        NotificationManager nm = ctx.getSystemService(NotificationManager.class);
+        if (Build.VERSION.SDK_INT >= 26) {
+            nm.createNotificationChannel(new NotificationChannel(CHANNEL, "Nouveaux articles", NotificationManager.IMPORTANCE_DEFAULT));
+        }
+        return nm;
     }
 
     @SuppressWarnings("deprecation")

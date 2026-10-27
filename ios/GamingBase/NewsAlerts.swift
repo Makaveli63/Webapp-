@@ -9,6 +9,47 @@ enum NewsAlerts {
     static let taskId = "io.github.makaveli63.gamingbase.news"
     private static let enabledKey = "notif.enabled"
     private static let seenKey = "notif.seen"
+    private static let prefsKey = "notif.prefs"
+    private static let pendingKey = "notif.pending"
+    private static let digestDayKey = "notif.digestDay"
+
+    /// Réglages envoyés par le site : plateformes, tests seulement, jeux de Ma collection, résumé du soir.
+    struct Prefs: Codable {
+        var platforms: [String] = []
+        var testsOnly = false
+        var myGames = false
+        var digest = false
+        var games: [String] = []
+    }
+
+    static func savePrefs(_ raw: [String: Any]) {
+        guard JSONSerialization.isValidJSONObject(raw), let data = try? JSONSerialization.data(withJSONObject: raw),
+              data.count < 20_000, (try? JSONDecoder().decode(Prefs.self, from: data)) != nil else { return }
+        defaults.set(data, forKey: prefsKey)
+    }
+
+    private static var prefs: Prefs {
+        defaults.data(forKey: prefsKey).flatMap { try? JSONDecoder().decode(Prefs.self, from: $0) } ?? Prefs()
+    }
+
+    private static func norm(_ s: String) -> String {
+        let folded = s.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: Locale(identifier: "fr_FR"))
+        let words = folded.lowercased().components(separatedBy: CharacterSet.alphanumerics.inverted).filter { !$0.isEmpty }
+        return " " + words.joined(separator: " ") + " "
+    }
+
+    static func matches(_ a: Feed.News, _ p: Prefs) -> Bool {
+        if !p.platforms.isEmpty {
+            let plats = a.platforms ?? []
+            if !plats.contains("Multi") && Set(plats).isDisjoint(with: p.platforms) { return false }
+        }
+        if p.testsOnly && a.category != "Test" { return false }
+        if p.myGames {
+            let title = norm(a.title)
+            if !p.games.contains(where: { let g = norm($0); return g.count >= 5 && title.contains(g) }) { return false }
+        }
+        return true
+    }
     private static var defaults: UserDefaults { AppGroup.defaults ?? .standard }
 
     static var enabled: Bool { defaults.bool(forKey: enabledKey) }
@@ -53,11 +94,37 @@ enum NewsAlerts {
     static func check(notify: Bool) async -> Int {
         guard enabled, let feed = await FeedLoader.load() else { return 0 }
         let seen = Set(defaults.stringArray(forKey: seenKey) ?? [])
-        let fresh = feed.news.filter { !seen.contains($0.path) }
+        let unseen = feed.news.filter { !seen.contains($0.path) }
         defaults.set(Array((feed.news.map(\.path) + seen).prefix(200)), forKey: seenKey)
-        guard notify, !seen.isEmpty, !fresh.isEmpty else { return 0 }
-
+        guard notify, !seen.isEmpty else { return 0 }
+        let p = prefs
+        let fresh = unseen.filter { matches($0, p) }
         let center = UNUserNotificationCenter.current()
+
+        // Résumé du soir : on met de côté, une seule notification par jour à partir de 19 h.
+        if p.digest {
+            var pending = (defaults.data(forKey: pendingKey).flatMap { try? JSONDecoder().decode([Feed.News].self, from: $0) }) ?? []
+            pending = Array((pending + fresh).prefix(50))
+            let now = Date()
+            let cal = Calendar.current
+            let today = "\(cal.component(.year, from: now))-\(cal.ordinality(of: .day, in: .year, for: now) ?? 0)"
+            let due = cal.component(.hour, from: now) >= 19 && defaults.string(forKey: digestDayKey) != today
+            guard due, !pending.isEmpty else {
+                defaults.set(try? JSONEncoder().encode(pending), forKey: pendingKey)
+                return 0
+            }
+            defaults.set(try? JSONEncoder().encode([Feed.News]()), forKey: pendingKey)
+            defaults.set(today, forKey: digestDayKey)
+            let content = UNMutableNotificationContent()
+            content.title = "🌙 Ton résumé du soir : \(pending.count) actu\(pending.count > 1 ? "s" : "")"
+            content.body = pending.prefix(4).map { "• \($0.title)" }.joined(separator: "\n")
+            content.sound = .default
+            content.userInfo = ["path": "/Webapp-/actualites/"]
+            try? await center.add(UNNotificationRequest(identifier: "digest-\(today)", content: content, trigger: nil))
+            return pending.count
+        }
+        guard !fresh.isEmpty else { return 0 }
+
         if fresh.count > 3 {
             let content = UNMutableNotificationContent()
             content.title = "🎮 \(fresh.count) nouvelles actus"

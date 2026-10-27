@@ -11,6 +11,8 @@ import { PageTheme } from "@/components/theme/PageTheme";
 import { LikeButton } from "@/components/social/LikeButton";
 import { RemoteImage } from "@/components/ui/RemoteImage";
 import { VideoPlayer } from "@/components/ui/VideoPlayer";
+import { OtherScores } from "@/components/tests/ScoreCompare";
+import { otherTests } from "@/lib/compare";
 import { renderMarkdown } from "@/lib/markdown";
 import { formatDate } from "@/lib/format";
 import { getArticles } from "@/lib/news";
@@ -36,7 +38,9 @@ export default async function ArticlePage({ params }: Props) {
   const article = await getArticle((await params).slug);
   if (!article) notFound();
 
-  const related = (await getArticles())
+  const all = await getArticles();
+  const others = otherTests(article, all);
+  const related = all
     .filter((a) => a.slug !== article.slug && a.platforms.some((p) => article.platforms.includes(p)))
     .sort((a, b) => Number(b.category === article.category) - Number(a.category === article.category))
     .slice(0, 3);
@@ -87,6 +91,7 @@ export default async function ArticlePage({ params }: Props) {
                 </span>
               </p>
             )}
+            {others.length > 0 && <OtherScores tests={others} />}
             {article.aiSummary ? (
               <>
                 <p className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-accent-2">

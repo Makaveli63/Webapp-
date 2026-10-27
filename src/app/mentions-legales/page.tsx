@@ -55,6 +55,12 @@ export default function LegalPage() {
         journée grâce à une empreinte chiffrée qui change chaque jour. Les données sont effacées après 13 mois. Si votre
         navigateur envoie le signal « Do Not Track » ou « Global Privacy Control », rien n&apos;est mesuré.
       </p>
+      <p>
+        Sondage de la semaine : un vote par appareil, enregistré avec un identifiant aléatoire et une empreinte chiffrée de la
+        connexion (anti-abus), sans donnée personnelle. Synchronisation entre appareils (facultative) : vos favoris, jeux épinglés,
+        collection et réglages de notifications sont stockés à l&apos;aide d&apos;un code secret que vous seul connaissez ; seule une
+        empreinte chiffrée de ce code est conservée, et les données sont effacées après 13 mois sans utilisation.
+      </p>
     </article>
   );
 }

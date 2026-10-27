@@ -21,9 +21,11 @@ export async function GET() {
       image: r.image ?? null,
       path: `${BASE}/sorties/`,
     })),
-    news: articles.slice(0, 5).map((a) => ({
+    // 15 derniers : les widgets en affichent 3 à 6, les notifications filtrent par plateforme / tests / jeux.
+    news: articles.slice(0, 15).map((a) => ({
       title: a.title,
       category: a.category,
+      platforms: a.platforms,
       score: a.score ?? null,
       source: a.source.name,
       path: `${BASE}/actualites/${a.slug}/`,

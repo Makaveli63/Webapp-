@@ -64,7 +64,9 @@ public class MainActivity extends Activity {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri url = request.getUrl();
-                if (isSite(url)) return false;
+                String path = url.getPath();
+                boolean calendar = path != null && path.toLowerCase().endsWith(".ics"); // « Ajouter au calendrier »
+                if (isSite(url) && !calendar) return false;
                 openOutside(url);
                 return true;
             }

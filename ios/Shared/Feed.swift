@@ -17,6 +17,7 @@ struct Feed: Codable {
         let title: String
         let score: String?
         let category: String?
+        let platforms: [String]?
         let path: String
     }
 

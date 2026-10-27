@@ -1,4 +1,5 @@
-import { ExternalLink } from "lucide-react";
+import { CalendarPlus, ExternalLink } from "lucide-react";
+import { CollectionButtons } from "@/components/collection/CollectionButtons";
 import { PlatformBadge } from "@/components/ui/Badge";
 import { Countdown } from "@/components/ui/Countdown";
 import { RemoteImage } from "@/components/ui/RemoteImage";
@@ -43,6 +44,16 @@ export function ReleaseCard({ release, pinned = false }: { release: Release & { 
             doneLabel="🎉 Disponible !"
             variant="blocks"
           />
+        </div>
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          {/* Fichier .ics : le téléphone propose d'ajouter la sortie (avec un rappel la veille) à son calendrier */}
+          <a
+            href={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/calendrier/${release.id}.ics`}
+            className="inline-flex items-center gap-1.5 rounded-full bg-accent px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90"
+          >
+            <CalendarPlus className="size-3.5" aria-hidden /> Ajouter au calendrier
+          </a>
+          <CollectionButtons game={{ id: `sortie-${release.id}`, title: release.short ?? release.title, image: release.image }} />
         </div>
         <a
           href={release.source}

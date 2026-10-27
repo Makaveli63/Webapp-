@@ -69,6 +69,11 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
     func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
         guard message.frameInfo.isMainFrame, Self.isSite(message.frameInfo.request.url ?? Self.home),
               let body = message.body as? [String: Any] else { return }
+        // Réglages des notifications (plateformes, tests, mes jeux, résumé du soir).
+        if let prefs = body["notifPrefs"] as? [String: Any] {
+            NewsAlerts.savePrefs(prefs)
+            return
+        }
         // Interrupteur « Notifications des nouveaux articles » du site.
         if let on = body["notifications"] as? Bool {
             Task { @MainActor [weak self] in
@@ -97,6 +102,11 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
                  decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         guard let url = action.request.url else { return decisionHandler(.cancel) }
         let isFrame = action.targetFrame.map { !$0.isMainFrame } ?? false
+        // « Ajouter au calendrier » (.ics) : Safari propose l'ajout au Calendrier de l'iPhone.
+        if url.pathExtension.lowercased() == "ics" {
+            UIApplication.shared.open(url)
+            return decisionHandler(.cancel)
+        }
         if isFrame || ["about", "data", "blob"].contains(url.scheme ?? "") || Self.isSite(url) {
             return decisionHandler(.allow) // vidéos intégrées, page hors connexion, site
         }

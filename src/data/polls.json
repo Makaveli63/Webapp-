@@ -1,0 +1,42 @@
+[
+  { "question": "Quel est ton jeu le plus attendu ?", "options": "releases" },
+  {
+    "question": "Sur quoi joues-tu le plus en ce moment ?",
+    "options": [
+      { "id": "ps5", "label": "PS5" },
+      { "id": "switch-2", "label": "Switch 2" },
+      { "id": "xbox", "label": "Xbox" },
+      { "id": "pc", "label": "PC" },
+      { "id": "mobile", "label": "Mobile" }
+    ]
+  },
+  {
+    "question": "Ton genre de jeu préféré ?",
+    "options": [
+      { "id": "action-aventure", "label": "Action / aventure" },
+      { "id": "rpg", "label": "RPG" },
+      { "id": "fps", "label": "FPS" },
+      { "id": "sport-course", "label": "Sport / course" },
+      { "id": "strategie", "label": "Stratégie" },
+      { "id": "indes", "label": "Jeux indés" }
+    ]
+  },
+  {
+    "question": "Combien de temps joues-tu par semaine ?",
+    "options": [
+      { "id": "moins-5h", "label": "Moins de 5 h" },
+      { "id": "5-10h", "label": "5 à 10 h" },
+      { "id": "10-20h", "label": "10 à 20 h" },
+      { "id": "plus-20h", "label": "Plus de 20 h" }
+    ]
+  },
+  {
+    "question": "Tu achètes tes jeux plutôt…",
+    "options": [
+      { "id": "sortie", "label": "Dès la sortie" },
+      { "id": "promo", "label": "En promo" },
+      { "id": "abonnement", "label": "Via un abonnement (Game Pass, PS Plus…)" },
+      { "id": "occasion", "label": "D'occasion" }
+    ]
+  }
+]

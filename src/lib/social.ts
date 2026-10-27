@@ -17,6 +17,10 @@ const ERRORS: Record<string, string> = {
   TROP_DE_MESSAGES: "Doucement ! Patientez un peu avant de réessayer.",
   PSEUDO_INVALIDE: "Le pseudo doit faire entre 2 et 30 caractères.",
   MESSAGE_INVALIDE: "Le message doit faire entre 2 et 1 000 caractères.",
+  TROP_DE_VOTES: "Trop de votes depuis cette connexion pour ce sondage.",
+  CODE_INVALIDE: "Code de synchronisation invalide (16 caractères).",
+  TROP_DE_REQUETES: "Trop de synchronisations : réessaie dans une heure.",
+  DONNEES_INVALIDES: "Données trop volumineuses pour être synchronisées.",
 };
 
 export async function rpc<T>(fn: string, args: Record<string, unknown>): Promise<T> {

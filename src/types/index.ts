@@ -142,3 +142,21 @@ export interface SearchIndex {
   /** Mots connus et leur fréquence, pour corriger les fautes de frappe */
   vocab: Record<string, number>;
 }
+
+/** Jeu en promotion (boutique Steam, prix en euros). */
+export interface Deal {
+  id: string;
+  title: string;
+  store: string;
+  discount: number;
+  price?: string;
+  oldPrice?: string;
+  image?: string;
+  url: string;
+  until?: string;
+}
+
+export interface DealsData {
+  updatedAt?: string;
+  steam: Deal[];
+}

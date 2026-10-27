@@ -4,6 +4,7 @@ import android.content.Context;
 import android.webkit.JavascriptInterface;
 
 import org.json.JSONArray;
+import org.json.JSONObject;
 
 /**
  * Pont site → application : le site transmet la liste des jeux épinglés (📌) pour le widget.
@@ -16,6 +17,17 @@ final class AppBridge {
     AppBridge(MainActivity activity) {
         this.activity = activity;
         this.ctx = activity.getApplicationContext();
+    }
+
+    /** Réglages des notifications (plateformes, tests, mes jeux, résumé du soir). */
+    @JavascriptInterface
+    public void setNotificationPrefs(String json) {
+        try {
+            JSONObject p = new JSONObject(json);
+            if (json.length() < 20_000) NewsJob.savePrefs(ctx, p.toString());
+        } catch (Exception ignored) {
+            // réglages invalides : ignorés
+        }
     }
 
     /** Interrupteur « Notifications des nouveaux articles » du site. */

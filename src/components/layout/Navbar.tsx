@@ -24,7 +24,7 @@ export function Navbar() {
 
         <ul className="ml-4 hidden items-center gap-0.5 md:flex">
           {NAV_LINKS.map((l) => (
-            <li key={l.href}>
+            <li key={l.href} className={"wide" in l && l.wide ? "hidden xl:block" : undefined}>
               <Link
                 href={l.href}
                 aria-current={active === l.href ? "page" : undefined}
@@ -36,7 +36,7 @@ export function Navbar() {
           ))}
         </ul>
 
-        <SearchBar className="ml-auto hidden w-56 lg:block" />
+        <SearchBar className="ml-auto hidden w-44 lg:block xl:w-56" />
 
         <div className="ml-auto flex items-center gap-4 lg:ml-0">
           <AdminLink active={pathname.startsWith("/admin")} />

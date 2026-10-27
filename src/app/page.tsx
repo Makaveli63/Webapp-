@@ -1,4 +1,9 @@
 import { FreeGamesTeaser } from "@/components/free/FreeGamesTeaser";
+import { PromosTeaser } from "@/components/home/PromosTeaser";
+import { QuickLinks } from "@/components/home/QuickLinks";
+import { VideosTeaser } from "@/components/home/VideosTeaser";
+import { PollCard } from "@/components/poll/PollCard";
+import { currentPoll } from "@/lib/polls";
 import { NewsSection } from "@/components/news/NewsSection";
 import { UpcomingReleases } from "@/components/releases/UpcomingReleases";
 import { WeekReleasesTeaser } from "@/components/releases/WeekReleasesTeaser";
@@ -22,10 +27,14 @@ export default async function HomePage() {
         </p>
       </section>
 
+      <QuickLinks />
       <UpcomingReleases />
       <NewsSection id="latest-title" title="Dernières actualités" href="/actualites" articles={latest.slice(0, 6)} />
+      <PollCard poll={currentPoll()} />
       <WeekReleasesTeaser />
       <FreeGamesTeaser />
+      <PromosTeaser />
+      <VideosTeaser />
       <NewsSection id="tests-title" title="Derniers tests" href="/tests" articles={tests.slice(0, 3)} />
       <NewsSection id="consoles-title" title="Consoles & matériel" href="/consoles" articles={consoles.slice(0, 3)} />
     </div>

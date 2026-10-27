@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CollectionButtons } from "@/components/collection/CollectionButtons";
 import { RemoteImage } from "@/components/ui/RemoteImage";
 import { TrailerButton } from "@/components/ui/TrailerButton";
 import { themeFor } from "@/lib/themes";
@@ -28,6 +29,7 @@ export function GameCard({ game }: { game: SearchGame }) {
         <p className="mt-1 truncate text-xs text-muted">
           {[game.note, game.date && fullDate(game.date), game.platforms.join(" · ")].filter(Boolean).join(" — ")}
         </p>
+        <CollectionButtons game={{ id: game.id, title: game.title, image: game.image }} className="mt-2" />
       </div>
     </>
   );
