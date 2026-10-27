@@ -42,21 +42,54 @@ jobs:
           mkdir -p android/app/src/main/res/mipmap-xxxhdpi
           cp public/icon-512.png android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
 
+      # Clé de signature fixe : créée une seule fois, puis conservée CHIFFRÉE (AES-256, mot de passe =
+      # secret ANDROID_KEYSTORE_PASSWORD) dans la release « android ». Même clé à chaque version :
+      # l'APK se met à jour par-dessus l'ancien sans désinstaller. Sans le secret : clé de test.
+      - name: Clé de signature
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          if [ -z "$KEYSTORE_PASSWORD" ]; then
+            echo "::warning::Secret ANDROID_KEYSTORE_PASSWORD absent : APK signé avec une clé de test."
+            exit 0
+          fi
+          if [ "${#KEYSTORE_PASSWORD}" -lt 16 ]; then
+            echo "::error::ANDROID_KEYSTORE_PASSWORD doit faire au moins 16 caractères."
+            exit 1
+          fi
+          KEY="$RUNNER_TEMP/release.jks"
+          # Liste des fichiers de la release : en cas d'échec, on s'arrête plutôt que de recréer une clé.
+          gh release view android >/dev/null 2>&1 || gh release create android --target "$GITHUB_SHA" --title "GamingBase pour Android" --notes "…"
+          ASSETS=$(gh release view android --json assets --jq '.assets[].name') || { echo "::error::Release illisible."; exit 1; }
+          if grep -qx "signing-key.enc" <<<"$ASSETS"; then
+            gh release download android --pattern signing-key.enc --dir "$RUNNER_TEMP"
+            if ! openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 -in "$RUNNER_TEMP/signing-key.enc" -out "$KEY" -pass env:KEYSTORE_PASSWORD; then
+              echo "::error::Impossible de déchiffrer la clé : le mot de passe ANDROID_KEYSTORE_PASSWORD a changé."
+              exit 1
+            fi
+            echo "Clé de signature existante réutilisée."
+          else
+            "$JAVA_HOME_17_X64/bin/keytool" -genkeypair -keystore "$KEY" -storetype PKCS12 \
+              -storepass:env KEYSTORE_PASSWORD -keypass:env KEYSTORE_PASSWORD -alias gamingbase \
+              -keyalg RSA -keysize 4096 -validity 10000 -dname "CN=Makaveli63, O=GamingBase, C=FR"
+            openssl enc -aes-256-cbc -salt -pbkdf2 -iter 600000 -in "$KEY" -out "$RUNNER_TEMP/signing-key.enc" -pass env:KEYSTORE_PASSWORD
+            gh release upload android "$RUNNER_TEMP/signing-key.enc" --clobber
+            echo "Nouvelle clé de signature créée et conservée chiffrée."
+          fi
+          echo "KEYSTORE_FILE=$KEY" >> "$GITHUB_ENV"
+
       - name: Compiler l'APK
         env:
-          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
           KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
         run: |
           export JAVA_HOME="$JAVA_HOME_17_X64"
-          # Clé de signature fixe (facultative) : sans elle, l'APK est signé avec une clé de test.
-          if [ -n "$KEYSTORE_B64" ]; then
-            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
-            export KEYSTORE_FILE="$RUNNER_TEMP/release.jks"
-          fi
           cd android
           gradle --no-daemon --stacktrace assembleRelease
           cp app/build/outputs/apk/release/app-release.apk "$RUNNER_TEMP/GamingBase.apk"
           sha256sum "$RUNNER_TEMP/GamingBase.apk"
+          rm -f "$RUNNER_TEMP/release.jks"
 
       - name: Publier l'APK
         env:
@@ -65,7 +98,8 @@ jobs:
         run: |
           NOTES="Application Android de GamingBase (compilation n°${GITHUB_RUN_NUMBER}).
           Sur ton téléphone Android : télécharge GamingBase.apk ci-dessous, ouvre-le et autorise l'installation.
-          L'application affiche le site en ligne : elle est toujours à jour sans réinstallation."
+          L'application affiche le site en ligne : elle est toujours à jour sans réinstallation.
+          (signing-key.enc : fichier technique chiffré utilisé par GitHub pour signer l'APK, inutile de le télécharger.)"
           if gh release view android >/dev/null 2>&1; then
             gh release edit android --title "GamingBase pour Android" --notes "$NOTES" --latest
           else

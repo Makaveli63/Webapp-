@@ -11,6 +11,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:id="@+id/w_header"
         android:text="⏳ Prochaine sortie"
         android:textColor="@color/w_muted"
         android:textSize="12sp" />

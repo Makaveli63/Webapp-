@@ -3,7 +3,6 @@ package io.github.makaveli63.gamingbase;
 import android.content.Context;
 import android.widget.RemoteViews;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
@@ -16,18 +15,9 @@ public class ReleaseWidget extends GamingWidget {
     @Override
     RemoteViews render(Context ctx, JSONObject data, int widgetId) {
         RemoteViews v = new RemoteViews(ctx.getPackageName(), R.layout.widget_release);
-        JSONArray releases = data != null ? data.optJSONArray("releases") : null;
-        JSONObject next = null;
-        long now = System.currentTimeMillis();
-        if (releases != null) {
-            for (int i = 0; i < releases.length(); i++) {
-                JSONObject r = releases.optJSONObject(i);
-                if (r != null && r.optLong("atMs") > now - 86_400_000L) {
-                    next = r;
-                    break;
-                }
-            }
-        }
+        boolean[] pinned = {false};
+        JSONObject next = WidgetData.chooseRelease(ctx, data, pinned);
+        v.setTextViewText(R.id.w_header, pinned[0] ? "📌 Mon jeu épinglé" : "⏳ Prochaine sortie");
         if (next == null) {
             v.setTextViewText(R.id.w_title, "Aucune sortie annoncée");
             v.setTextViewText(R.id.w_count, "—");
@@ -36,11 +26,7 @@ public class ReleaseWidget extends GamingWidget {
             return v;
         }
         long at = next.optLong("atMs");
-        long left = at - now;
-        String count;
-        if (left <= 0) count = "Dispo !";
-        else if (left < 86_400_000L) count = (left / 3_600_000L) + " h";
-        else count = "J-" + (long) Math.ceil(left / 86_400_000.0);
+        String count = WidgetData.countdown(at);
 
         SimpleDateFormat fmt = new SimpleDateFormat("d MMMM yyyy", Locale.FRANCE);
         fmt.setTimeZone(TimeZone.getTimeZone("Europe/Paris"));

@@ -12,9 +12,15 @@ export async function GET() {
   const free = getFreeGames().games.filter((g) => g.status === "now");
   const data = {
     updatedAt: new Date().toISOString(),
-    releases: getUpcomingReleases()
-      .slice(0, 3)
-      .map((r) => ({ title: r.short ?? r.title, at: r.at, atMs: Date.parse(r.at), path: `${BASE}/sorties/` })),
+    releases: getUpcomingReleases().map((r) => ({
+      id: r.id,
+      title: r.short ?? r.title,
+      fullTitle: r.title,
+      at: r.at,
+      atMs: Date.parse(r.at),
+      image: r.image ?? null,
+      path: `${BASE}/sorties/`,
+    })),
     news: articles.slice(0, 5).map((a) => ({
       title: a.title,
       category: a.category,

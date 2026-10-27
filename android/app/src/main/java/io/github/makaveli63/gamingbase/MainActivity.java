@@ -55,6 +55,7 @@ public class MainActivity extends Activity {
         s.setAllowContentAccess(false);
         s.setMediaPlaybackRequiresUserGesture(true);
         s.setUserAgentString(s.getUserAgentString() + " GamingBaseApp/" + BuildConfig.VERSION_NAME);
+        web.addJavascriptInterface(new AppBridge(this), "GamingBaseApp");
 
         web.setWebViewClient(new WebViewClient() {
             @Override

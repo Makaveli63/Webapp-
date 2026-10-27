@@ -15,6 +15,17 @@ function read(): string[] {
   }
 }
 
+/** Application Android : transmet les épingles au widget « Mon jeu épinglé » (pont fourni par l'app). */
+function syncApp(list: string[]) {
+  try {
+    (window as Window & { GamingBaseApp?: { setPins?: (json: string) => void } }).GamingBaseApp?.setPins?.(
+      JSON.stringify(list.slice(0, 20)),
+    );
+  } catch {
+    /* hors application : rien à faire */
+  }
+}
+
 export function togglePin(id: string) {
   const list = read();
   const next = list.includes(id) ? list.filter((x) => x !== id) : [id, ...list];
@@ -30,7 +41,11 @@ export function togglePin(id: string) {
 export function usePins(): string[] | null {
   const [pins, setPins] = useState<string[] | null>(null);
   useEffect(() => {
-    const update = () => setPins(read());
+    const update = () => {
+      const list = read();
+      setPins(list);
+      syncApp(list);
+    };
     update();
     window.addEventListener(EVENT, update);
     window.addEventListener("storage", update);
