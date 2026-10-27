@@ -158,7 +158,7 @@ export function AdminDashboard() {
               load(password, p);
             }}
             aria-pressed={days === p}
-            className={`rounded-full px-3.5 py-1.5 text-sm ring-1 ring-inset ${days === p ? "bg-accent text-white ring-accent" : "bg-surface text-muted ring-border hover:text-fg"}`}
+            className={`rounded-full px-3.5 py-1.5 text-sm ring-1 ring-inset ${days === p ? "bg-accent text-white ring-accent" : "glass-pill text-muted ring-border hover:text-fg"}`}
           >
             {p} derniers jours
           </button>

@@ -54,7 +54,7 @@ function FilterableNewsList({ articles, showCategories, initialPlatform }: Props
 
   const chip = (active: boolean) =>
     `shrink-0 whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm ring-1 ring-inset transition-colors ${
-      active ? "bg-accent text-white ring-accent" : "bg-surface text-muted ring-border hover:text-fg"
+      active ? "bg-accent text-white ring-accent" : "glass-pill text-muted ring-border hover:text-fg"
     }`;
 
   return (

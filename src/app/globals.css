@@ -213,9 +213,10 @@ html[data-splash="off"] .splash { display: none; }
   z-index: -1;
   overflow: hidden;
   pointer-events: none;
-  opacity: .22;
+  opacity: .34;
 }
-:root[data-theme="dark"] .dyn-bg { opacity: .32; }
+:root[data-theme="dark"] .dyn-bg { opacity: .42; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme]) .dyn-bg { opacity: .42; } }
 .dyn-blob {
   position: absolute;
   width: 60vmax;
@@ -253,6 +254,9 @@ html[data-splash="off"] .splash { display: none; }
   --glass-lo: rgb(15 23 42 / .05);
   --glass-shine: rgb(255 255 255 / .45);
   --glass-drop: 0 0 0 1px rgb(15 23 42 / .05), 0 12px 32px -14px rgb(15 23 42 / .28);
+  --glass-a: 52%;
+  --glass-b: 30%;
+  --glass-bar: 42%;
 }
 :root[data-theme="dark"] {
   --glass-edge: rgb(255 255 255 / .11);
@@ -260,6 +264,9 @@ html[data-splash="off"] .splash { display: none; }
   --glass-lo: rgb(0 0 0 / .35);
   --glass-shine: rgb(255 255 255 / .08);
   --glass-drop: 0 14px 36px -14px rgb(0 0 0 / .7);
+  --glass-a: 48%;
+  --glass-b: 26%;
+  --glass-bar: 40%;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) {
@@ -268,6 +275,9 @@ html[data-splash="off"] .splash { display: none; }
     --glass-lo: rgb(0 0 0 / .35);
     --glass-shine: rgb(255 255 255 / .08);
     --glass-drop: 0 14px 36px -14px rgb(0 0 0 / .7);
+    --glass-a: 48%;
+    --glass-b: 26%;
+    --glass-bar: 40%;
   }
 }
 
@@ -277,11 +287,15 @@ html[data-splash="off"] .splash { display: none; }
     isolation: isolate;
     border: 1px solid var(--glass-edge);
     background: linear-gradient(140deg,
-      color-mix(in srgb, var(--surface) 74%, transparent),
-      color-mix(in srgb, var(--surface) 52%, transparent));
-    -webkit-backdrop-filter: blur(20px) saturate(170%);
-    backdrop-filter: blur(20px) saturate(170%);
-    box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 -1px 0 var(--glass-lo), var(--glass-drop);
+      color-mix(in srgb, var(--surface) var(--glass-a), transparent),
+      color-mix(in srgb, var(--surface) var(--glass-b), transparent));
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    backdrop-filter: blur(28px) saturate(180%);
+    box-shadow:
+      inset 0 1px 0 var(--glass-hi),
+      inset 1px 0 0 color-mix(in srgb, var(--glass-hi) 45%, transparent),
+      inset 0 -1px 0 var(--glass-lo),
+      var(--glass-drop);
   }
   /* Reflet : la lumière glisse sur le verre en haut à gauche. */
   .glass::before {
@@ -291,18 +305,28 @@ html[data-splash="off"] .splash { display: none; }
     z-index: 1;
     border-radius: inherit;
     pointer-events: none;
-    background: linear-gradient(155deg, var(--glass-shine) 0%, transparent 32%);
+    background:
+      radial-gradient(120% 60% at 0% 0%, var(--glass-shine), transparent 55%),
+      linear-gradient(155deg, var(--glass-shine) 0%, transparent 28%);
   }
   .glass-strong {
     background: color-mix(in srgb, var(--surface) 88%, transparent);
   }
   /* En-tête et barre d'onglets : verre plus léger, sur toute la largeur. */
   .glass-bar {
-    background: color-mix(in srgb, var(--bg) 58%, transparent);
-    -webkit-backdrop-filter: blur(24px) saturate(180%);
-    backdrop-filter: blur(24px) saturate(180%);
+    background: color-mix(in srgb, var(--bg) var(--glass-bar), transparent);
+    -webkit-backdrop-filter: blur(30px) saturate(190%);
+    backdrop-filter: blur(30px) saturate(190%);
     border-color: var(--glass-edge);
     box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 -1px 0 var(--glass-lo);
+  }
+
+  /* Pastilles de filtre : petites bulles de verre. */
+  .glass-pill {
+    background: color-mix(in srgb, var(--surface) var(--glass-b), transparent);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    backdrop-filter: blur(16px) saturate(180%);
+    box-shadow: inset 0 1px 0 var(--glass-hi), 0 1px 2px rgb(0 0 0 / .06);
   }
 
   /* Note des tests : goutte de verre teintée selon la note. */
@@ -344,12 +368,12 @@ html[data-splash="off"] .splash { display: none; }
 }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .glass, .glass-strong { background: var(--surface); }
+  .glass, .glass-strong, .glass-pill { background: var(--surface); }
   .glass-bar { background: color-mix(in srgb, var(--bg) 94%, transparent); }
   .score-glass { background: var(--tint); }
 }
 @media (prefers-reduced-transparency: reduce) {
-  .glass, .glass-strong { background: var(--surface); -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .glass, .glass-strong, .glass-pill { background: var(--surface); -webkit-backdrop-filter: none; backdrop-filter: none; }
   .glass-bar { background: var(--bg); }
   .score-glass { background: var(--tint); }
 }
