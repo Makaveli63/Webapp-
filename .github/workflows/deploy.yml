@@ -54,6 +54,9 @@ jobs:
           AI_PROVIDER: ${{ vars.AI_PROVIDER }}
           # Facultatif : clé gratuite RAWG (rawg.io/apidocs) pour un calendrier toutes plateformes
           RAWG_API_KEY: ${{ secrets.RAWG_API_KEY }}
+          # Articles écrits dans le tableau de bord (lecture publique des articles publiés)
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
       - name: Construire le site statique
         run: npm run build
         env:

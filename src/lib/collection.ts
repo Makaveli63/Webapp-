@@ -65,17 +65,5 @@ export function useCollection(): Collection | null {
   return c;
 }
 
-/** Titre simplifié pour rapprocher un jeu de la collection d'un article ou d'une promo. */
-export const titleKey = (t: string) =>
-  t
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim();
-
-/** Le texte parle-t-il de ce jeu ? (titre entier, mots entiers) */
-export function mentions(text: string, gameTitle: string): boolean {
-  const k = titleKey(gameTitle);
-  return k.length >= 3 && ` ${titleKey(text)} `.includes(` ${k} `);
-}
+// Comparaison de titres partagée avec le serveur (fiches de jeux).
+export { mentions, titleKey } from "@/lib/text";

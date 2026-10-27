@@ -43,6 +43,8 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
     override func loadView() {
         let config = WKWebViewConfiguration()
         config.allowsInlineMediaPlayback = true
+        // Domaines de l'app (Info.plist) : active le service worker → lecture hors connexion.
+        config.limitsNavigationsToAppBoundDomains = true
         config.mediaTypesRequiringUserActionForPlayback = .all
         // « GamingBaseApp » active sur le site le geste « tirer pour actualiser » et le mode application.
         config.applicationNameForUserAgent = "Mobile/15E148 GamingBaseApp/iOS"

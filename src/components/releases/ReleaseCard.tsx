@@ -1,4 +1,5 @@
 import { CalendarPlus, ExternalLink } from "lucide-react";
+import Link from "next/link";
 import { CollectionButtons } from "@/components/collection/CollectionButtons";
 import { PlatformBadge } from "@/components/ui/Badge";
 import { Countdown } from "@/components/ui/Countdown";
@@ -6,8 +7,11 @@ import { RemoteImage } from "@/components/ui/RemoteImage";
 import { TrailerButton } from "@/components/ui/TrailerButton";
 import { PinButton } from "./PinButton";
 import { formatDate } from "@/lib/format";
+import { titleKey } from "@/lib/text";
 import { THEMES, themeFor, type ThemeId } from "@/lib/themes";
 import type { Release } from "@/types";
+
+const gameSlug = (title: string) => titleKey(title).replace(/\s+/g, "-").slice(0, 80);
 
 export function ReleaseCard({ release, pinned = false }: { release: Release & { at: string }; pinned?: boolean }) {
   const theme = release.theme && release.theme in THEMES ? THEMES[release.theme as ThemeId] : themeFor(release.title, release.platforms);
@@ -31,7 +35,11 @@ export function ReleaseCard({ release, pinned = false }: { release: Release & { 
               <PlatformBadge key={p} platform={p} />
             ))}
           </div>
-          <h3 className="mt-2 text-xl font-extrabold leading-tight text-white drop-shadow">{release.title}</h3>
+          <h3 className="mt-2 text-xl font-extrabold leading-tight text-white drop-shadow">
+            <Link href={`/jeux/${gameSlug(release.title)}`} className="hover:underline">
+              {release.title}
+            </Link>
+          </h3>
           {release.subtitle && <p className="text-sm text-white/80">{release.subtitle}</p>}
         </div>
       </div>

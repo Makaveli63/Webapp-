@@ -119,7 +119,7 @@ export interface CalendarData {
   /** Photos libres des consoles (thème → photo), pour les articles sans image */
   consolePhotos: Record<string, { url: string; credit: string; page: string }>;
   /** Jeux populaires (RAWG) pour la recherche ; date facultative */
-  database: (Omit<CalendarGame, "date"> & { date?: string })[];
+  database: (Omit<CalendarGame, "date"> & { date?: string; playtime?: number; genres?: string[] })[];
 }
 
 /** Jeu affiché dans la recherche (base RAWG, calendrier, sorties, jeux gratuits). */
@@ -134,6 +134,9 @@ export interface SearchGame {
   rating?: number;
   video?: Video;
   note?: string;
+  /** Temps de jeu moyen (heures, joueurs RAWG) */
+  playtime?: number;
+  genres?: string[];
 }
 
 export interface SearchIndex {

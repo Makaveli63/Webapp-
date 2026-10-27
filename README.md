@@ -61,6 +61,11 @@ src/
 - **Ajouter au calendrier** : un fichier `.ics` par grosse sortie (`public/calendrier/`, généré au build), avec rappel la veille.
 - **Sondage de la semaine** et **synchronisation entre appareils** (code secret, sans compte) : exécuter `supabase/extras.sql` après `schema.sql`.
 - **Notifications des apps** : filtres par plateforme, tests seulement, « mes jeux » (collection) et résumé du soir.
+- **Fiches de jeux** (`/jeux/<jeu>`) : tests et moyenne de la presse, note des lecteurs, pronostics, durée de vie (RAWG), promos, actus, bande-annonce.
+- **Classement et tendances** (`/classement`) : meilleurs jeux par plateforme et par mois, jeux les plus cités de la semaine.
+- **Badges**, **recherche vocale**, **partage** (aperçu Open Graph), **couleur du site** au choix, **lecture hors connexion** (service worker `public/sw.js`).
+- **Tes articles** : rédigés dans le tableau de bord, publiés à la mise à jour suivante (`scripts/fetch-admin-articles.mjs`, HTML neutralisé).
+- **Rapport hebdomadaire** ntfy (pg_cron). Mise en place de tout ce bloc : activer pg_cron (Database → Extensions), puis exécuter `supabase/community.sql`.
 - **Tableau de bord privé** (`/admin/`, absent des menus, non indexé) : pages vues, visiteurs uniques, provenance, appareils, articles les plus aimés et modération des commentaires (masquer, réafficher, supprimer). Mesure d'audience sans cookie ni IP stockée. Mise en place : exécuter `supabase/stats.sql` après `schema.sql`, puis dans le SQL Editor `select public.admin_set_password('…');` (10 caractères minimum, 5 essais ratés max. par 15 min).
 - **Notifications sur le téléphone** (ntfy, gratuit) : nouveau commentaire et nouveaux « j'aime » (regroupés, au plus une notification par article tous les quarts d'heure). Mise en place : exécuter `supabase/notifications.sql`, installer l'app ntfy, s'abonner à un sujet secret, puis `select public.admin_set_notifications('mon-sujet-secret', true);`.
 - **Épingler un compte à rebours** : l'icône 📌 sur une sortie la place en tête du bandeau et dans *Mes favoris* (enregistré sur l'appareil).

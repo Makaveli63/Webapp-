@@ -1,6 +1,7 @@
 import { FreeGamesTeaser } from "@/components/free/FreeGamesTeaser";
 import { PromosTeaser } from "@/components/home/PromosTeaser";
 import { QuickLinks } from "@/components/home/QuickLinks";
+import { TrendingStrip } from "@/components/home/TrendingStrip";
 import { VideosTeaser } from "@/components/home/VideosTeaser";
 import { PollCard } from "@/components/poll/PollCard";
 import { currentPoll } from "@/lib/polls";
@@ -28,6 +29,7 @@ export default async function HomePage() {
       </section>
 
       <QuickLinks />
+      <TrendingStrip />
       <UpcomingReleases />
       <NewsSection id="latest-title" title="Dernières actualités" href="/actualites" articles={latest.slice(0, 6)} />
       <PollCard poll={currentPoll()} />

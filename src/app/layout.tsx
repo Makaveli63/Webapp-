@@ -9,6 +9,7 @@ import { DynamicBackground } from "@/components/theme/DynamicBackground";
 import { Tracker } from "@/components/analytics/Tracker";
 import { PullToRefresh } from "@/components/layout/PullToRefresh";
 import { AutoSync } from "@/components/sync/AutoSync";
+import { OfflineSupport } from "@/components/offline/OfflineSupport";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -26,6 +27,13 @@ export const metadata: Metadata = {
   creator: "Makaveli63",
   referrer: "strict-origin-when-cross-origin",
   formatDetection: { email: false, address: false, telephone: false },
+  metadataBase: new URL(`https://makaveli63.github.io${BASE_PATH}/`),
+  openGraph: {
+    siteName: "GamingBase",
+    locale: "fr_FR",
+    type: "website",
+    images: [`${BASE_PATH}/icon-512.png`],
+  },
 };
 
 // Couleur de la barre du navigateur assortie au mode clair / sombre du téléphone.
@@ -64,6 +72,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <Tracker />
         <PullToRefresh />
         <AutoSync />
+        <OfflineSupport />
       </body>
     </html>
   );

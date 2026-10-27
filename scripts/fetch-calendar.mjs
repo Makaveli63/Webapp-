@@ -225,6 +225,9 @@ async function gameDatabase() {
         image: httpsUrl(g.background_image),
         url: httpsUrl(`https://rawg.io/games/${g.slug}`),
         rating: typeof g.metacritic === "number" ? g.metacritic : undefined,
+        // Temps de jeu moyen déclaré par les joueurs RAWG (heures), genres en anglais (traduits sur le site).
+        playtime: Number.isInteger(g.playtime) && g.playtime > 0 && g.playtime < 1000 ? g.playtime : undefined,
+        genres: (g.genres ?? []).map((x) => clean(x?.name, 40)).filter(Boolean).slice(0, 3),
       });
     }
     if (!data?.next) break;

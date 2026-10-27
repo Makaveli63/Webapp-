@@ -6,7 +6,7 @@ import type { Article } from "@/types";
  */
 export function testedGame(title: string): string {
   const t = title
-    .replace(/^\s*(notre\s+)?(test|critique|review|avis)\s*(express\s*)?(:|de |du |des |d['’]|-|–)?\s*/i, "")
+    .replace(/^\s*((mon|notre)\s+)?(test|critique|review|avis)\s*(express\s*)?(:|sur |de |du |des |d['’]|-|–)?\s*/i, "")
     .replace(/[,:–—|-]\s*(le|notre|l['’]|la)?\s*(test|critique|verdict|avis)\b.*$/i, "")
     .split(/\s+[:–—|]\s+|\s+-\s+|\s*:\s+/)[0]
     .replace(/\((ps5|ps4|switch 2|switch|xbox[^)]*|pc|steam deck)\)/gi, "")

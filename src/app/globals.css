@@ -39,6 +39,19 @@
   }
 }
 
+/* Couleur d'accent choisie par le visiteur (data-accent, posé par public/theme.js). */
+:root[data-accent="playstation"] { --accent: #0062c4; --accent-2: #0b7f95; }
+:root[data-accent="xbox"] { --accent: #107c10; --accent-2: #0f766e; }
+:root[data-accent="nintendo"] { --accent: #d0000f; --accent-2: #b45309; }
+:root[data-theme="dark"][data-accent="playstation"] { --accent: #2f7fe0; }
+:root[data-theme="dark"][data-accent="xbox"] { --accent: #1f9d3a; }
+:root[data-theme="dark"][data-accent="nintendo"] { --accent: #f0273a; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme])[data-accent="playstation"] { --accent: #2f7fe0; }
+  :root:not([data-theme])[data-accent="xbox"] { --accent: #1f9d3a; }
+  :root:not([data-theme])[data-accent="nintendo"] { --accent: #f0273a; }
+}
+
 /* Tableau de bord ouvert (data-admin, posé par AdminDashboard) : couleur d'accent émeraude
    et liseré en haut de l'écran, pour ne pas confondre ses statistiques avec le site public. */
 :root[data-admin] { --accent: #047857; --accent-2: #0f766e; }

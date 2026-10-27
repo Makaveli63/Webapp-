@@ -16,7 +16,11 @@ export function ScoreCompare({ groups }: { groups: ScoreGroup[] }) {
         {groups.slice(0, 9).map((g) => (
           <article key={g.key} className="glass rounded-xl p-4">
             <div className="flex items-start justify-between gap-3">
-              <h3 className="font-bold capitalize text-heading">{g.game}</h3>
+              <h3 className="font-bold capitalize text-heading">
+                <Link href={`/jeux/${g.key.replace(/\s+/g, "-")}`} className="hover:underline">
+                  {g.game}
+                </Link>
+              </h3>
               <span
                 className={`score-glass score-solid shrink-0 rounded-xl px-2 py-1 text-sm font-black ${scoreTier(fmt(g.average)).className}`}
                 title="Moyenne sur 20"

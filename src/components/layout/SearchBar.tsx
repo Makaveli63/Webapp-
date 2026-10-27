@@ -1,6 +1,6 @@
 "use client";
 
-import { Search } from "lucide-react";
+import { Mic, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useState, type FormEvent, type KeyboardEvent } from "react";
 import { suggestTitles } from "@/lib/fuzzy";
@@ -14,6 +14,32 @@ export function SearchBar({ className = "", autoFocus = false }: { className?: s
   const [titles, setTitles] = useState<string[]>([]);
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
+  const [canSpeak, setCanSpeak] = useState(false);
+  const [listening, setListening] = useState(false);
+
+  // Recherche vocale (API Web Speech) : bouton affiché seulement si le navigateur la propose.
+  useEffect(() => {
+    setCanSpeak(!!speechApi());
+  }, []);
+
+  const listen = () => {
+    const Api = speechApi();
+    if (!Api || listening) return;
+    const rec = new Api();
+    rec.lang = "fr-FR";
+    rec.interimResults = true;
+    rec.maxAlternatives = 1;
+    rec.onresult = (e: SpeechEvent) => {
+      const result = e.results[e.results.length - 1];
+      const text = result[0].transcript;
+      setQ(text);
+      if (result.isFinal) go(text);
+    };
+    rec.onend = () => setListening(false);
+    rec.onerror = () => setListening(false);
+    setListening(true);
+    rec.start();
+  };
 
   // L'index n'est chargé qu'au premier usage de la barre.
   const prepare = () => {
@@ -78,8 +104,18 @@ export function SearchBar({ className = "", autoFocus = false }: { className?: s
         aria-controls={listId}
         aria-autocomplete="list"
         aria-label="Rechercher"
-        className="w-full rounded-lg border border-border bg-surface py-2.5 pl-9 pr-3 text-base placeholder:text-muted focus:border-accent focus:outline-none md:py-2 md:text-sm"
+        className={`w-full rounded-lg border border-border bg-surface py-2.5 pl-9 text-base placeholder:text-muted focus:border-accent focus:outline-none md:py-2 md:text-sm ${canSpeak ? "pr-10" : "pr-3"}`}
       />
+      {canSpeak && (
+        <button
+          type="button"
+          onClick={listen}
+          aria-label={listening ? "Écoute en cours…" : "Recherche vocale"}
+          className={`absolute right-1.5 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-full transition-colors ${listening ? "animate-pulse bg-accent text-white" : "text-muted hover:text-fg"}`}
+        >
+          <Mic className="size-4" aria-hidden />
+        </button>
+      )}
       {suggestions.length > 0 && (
         <ul
           id={listId}
@@ -103,4 +139,23 @@ export function SearchBar({ className = "", autoFocus = false }: { className?: s
       )}
     </form>
   );
+}
+
+/** Reconnaissance vocale du navigateur (préfixée « webkit » sur Safari et Chrome). */
+interface SpeechEvent {
+  results: ArrayLike<ArrayLike<{ transcript: string }> & { isFinal: boolean }>;
+}
+interface SpeechRecognitionLike {
+  lang: string;
+  interimResults: boolean;
+  maxAlternatives: number;
+  onresult: (e: SpeechEvent) => void;
+  onend: () => void;
+  onerror: () => void;
+  start: () => void;
+}
+function speechApi(): (new () => SpeechRecognitionLike) | undefined {
+  if (typeof window === "undefined") return undefined;
+  const w = window as unknown as Record<string, unknown>;
+  return (w.SpeechRecognition ?? w.webkitSpeechRecognition) as (new () => SpeechRecognitionLike) | undefined;
 }

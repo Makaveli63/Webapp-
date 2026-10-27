@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from
 import { loadSearchIndex } from "@/lib/search-index";
 import { setPageGlow } from "@/lib/background";
 import { ADMIN_ERRORS, ADMIN_SESSION_KEY, rpc, setAdminDevice, socialEnabled, timeAgo } from "@/lib/social";
+import { AdminArticles } from "./AdminArticles";
 import { BarList, DailyChart, type DailyPoint } from "./charts";
 
 interface Stats {
@@ -272,6 +273,8 @@ export function AdminDashboard() {
           <p className="text-sm text-muted">Aucun j&apos;aime pour l&apos;instant.</p>
         )}
       </section>
+
+      <AdminArticles password={password} />
 
       <section className="rounded-xl glass p-4">
         <h2 className="mb-1 flex items-center gap-2 font-semibold text-heading">

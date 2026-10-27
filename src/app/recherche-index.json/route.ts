@@ -1,5 +1,6 @@
 import { getCalendar } from "@/lib/calendar";
 import { getFreeGames } from "@/lib/free-games";
+import { gameSlug, getGames } from "@/lib/games";
 import { getArticles } from "@/lib/news";
 import { getUpcomingReleases } from "@/lib/releases";
 import { normalize } from "@/lib/fuzzy";
@@ -44,6 +45,19 @@ export async function GET() {
   games.forEach((g) => addWords(g.title, 5));
   articles.forEach((a) => addWords(`${a.title} ${a.tags.join(" ")}`, 1));
   ["PS5", "PlayStation", "Xbox", "Switch 2", "Nintendo", "PC", "Steam", "test", "sortie", "gratuit"].forEach((w) => addWords(w, 10));
+
+  // Jeux qui ont une fiche sur le site : lien vers la fiche plutôt que vers la boutique.
+  const pages = new Set((await getGames()).map((g) => g.slug));
+  for (const g of games) {
+    const slug = gameSlug(g.title);
+    if (pages.has(slug) && !g.note?.startsWith("Gratuit")) g.url = `/jeux/${slug}`;
+  }
+  for (const g of await getGames()) {
+    if (!seen.has(norm(g.title))) {
+      seen.add(norm(g.title));
+      games.push({ id: `jeu-${g.slug}`, title: g.title, platforms: g.platforms, image: g.image, date: g.date, rating: g.rating, url: `/jeux/${g.slug}` });
+    }
+  }
 
   const index: SearchIndex = { articles, games, vocab };
   return Response.json(index);

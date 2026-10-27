@@ -10,7 +10,16 @@
       return "system";
     }
   }
+  // Couleur d'accent choisie dans Mes favoris → Réglages (violet par défaut).
+  function accent() {
+    try {
+      return localStorage.getItem("gb-accent") || "violet";
+    } catch {
+      return "violet";
+    }
+  }
   function apply() {
+    root.setAttribute("data-accent", accent());
     var c = choice();
     var dark = c === "dark" || (c === "system" && media.matches);
     root.setAttribute("data-theme", dark ? "dark" : "light");

@@ -25,6 +25,12 @@ targets:
         ITSAppUsesNonExemptEncryption: false
         UIBackgroundModes:
           - fetch
+        # Domaines de l'app : nécessaires au mode hors connexion (service worker) dans la vue web.
+        WKAppBoundDomains:
+          - makaveli63.github.io
+          - www.youtube-nocookie.com
+        NSMicrophoneUsageDescription: GamingBase utilise le micro uniquement pour la recherche vocale.
+        NSSpeechRecognitionUsageDescription: GamingBase transforme ta voix en texte pour la recherche vocale.
         BGTaskSchedulerPermittedIdentifiers:
           - io.github.makaveli63.gamingbase.news
         CFBundleURLTypes:

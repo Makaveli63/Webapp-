@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "news": "node scripts/fetch-news.mjs && node scripts/fetch-free-games.mjs && node scripts/fetch-calendar.mjs && node scripts/fetch-deals.mjs",
+    "news": "node scripts/fetch-news.mjs && node scripts/fetch-admin-articles.mjs && node scripts/fetch-free-games.mjs && node scripts/fetch-calendar.mjs && node scripts/fetch-deals.mjs",
     "build": "next build && node scripts/csp.mjs",
     "lint": "eslint"
   },

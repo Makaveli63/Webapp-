@@ -109,6 +109,7 @@ export function clearAdminSession() {
 export const ADMIN_ERRORS: Record<string, string> = {
   ACCES_REFUSE: "Mot de passe incorrect.",
   TROP_DE_TENTATIVES: "Trop de tentatives : réessayez dans 15 minutes.",
+  ARTICLE_INVALIDE: "Article refusé : vérifie le titre, le texte, l'image (https://) et la note (ex. 16/20).",
   MOT_DE_PASSE_NON_DEFINI:
     "Aucun mot de passe enregistré : dans Supabase (SQL Editor), lance select public.admin_set_password('…');",
 };

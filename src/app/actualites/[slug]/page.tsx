@@ -6,13 +6,15 @@ import { notFound } from "next/navigation";
 import { NewsCard } from "@/components/news/NewsCard";
 import { CategoryBadge, PlatformBadge } from "@/components/ui/Badge";
 import { FavoriteButton } from "@/components/news/FavoriteButton";
+import { ShareButton } from "@/components/share/ShareButton";
 import { Comments } from "@/components/social/Comments";
 import { PageTheme } from "@/components/theme/PageTheme";
 import { LikeButton } from "@/components/social/LikeButton";
 import { RemoteImage } from "@/components/ui/RemoteImage";
 import { VideoPlayer } from "@/components/ui/VideoPlayer";
 import { OtherScores } from "@/components/tests/ScoreCompare";
-import { otherTests } from "@/lib/compare";
+import { otherTests, testedGame } from "@/lib/compare";
+import { aboutGame, getGames } from "@/lib/games";
 import { renderMarkdown } from "@/lib/markdown";
 import { formatDate } from "@/lib/format";
 import { getArticles } from "@/lib/news";
@@ -31,7 +33,21 @@ async function getArticle(slug: string) {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const article = await getArticle((await params).slug);
-  return article ? { title: article.title, description: article.excerpt } : {};
+  if (!article) return {};
+  // Aperçu riche quand le lien est partagé (WhatsApp, Messages, X…).
+  return {
+    title: article.title,
+    description: article.excerpt,
+    openGraph: {
+      type: "article",
+      title: article.title,
+      description: article.excerpt,
+      images: article.image ? [article.image] : undefined,
+      siteName: "GamingBase",
+      locale: "fr_FR",
+    },
+    twitter: { card: article.image ? "summary_large_image" : "summary", title: article.title, description: article.excerpt },
+  };
 }
 
 export default async function ArticlePage({ params }: Props) {
@@ -40,6 +56,10 @@ export default async function ArticlePage({ params }: Props) {
 
   const all = await getArticles();
   const others = otherTests(article, all);
+  // Fiche du jeu testé (ou du jeu dont parle l'article), si elle existe.
+  const games = await getGames();
+  const tested = article.category === "Test" ? testedGame(article.title) : "";
+  const gamePage = (games.find((g) => g.key === tested) ?? games.find((g) => g.key.length >= 4 && aboutGame(article.title, g)))?.slug;
   const related = all
     .filter((a) => a.slug !== article.slug && a.platforms.some((p) => article.platforms.includes(p)))
     .sort((a, b) => Number(b.category === article.category) - Number(a.category === article.category))
@@ -73,6 +93,7 @@ export default async function ArticlePage({ params }: Props) {
         </p>
         <div className="flex shrink-0 items-center gap-1">
           <LikeButton type="article" id={article.slug} />
+          <ShareButton title={article.title} path={`/actualites/${article.slug}/`} />
           <FavoriteButton article={article} withLabel />
         </div>
         </div>
@@ -92,6 +113,13 @@ export default async function ArticlePage({ params }: Props) {
               </p>
             )}
             {others.length > 0 && <OtherScores tests={others} />}
+            {gamePage && (
+              <p>
+                <Link href={`/jeux/${gamePage}`} className="font-semibold">
+                  🎮 Voir la fiche du jeu : notes, note des lecteurs, promos et vidéos
+                </Link>
+              </p>
+            )}
             {article.aiSummary ? (
               <>
                 <p className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-accent-2">
