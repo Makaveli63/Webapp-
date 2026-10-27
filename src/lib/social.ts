@@ -5,7 +5,8 @@
  * L'URL et la clé « anon » sont publiques par conception : la base n'expose que des fonctions
  * qui filtrent, valident et limitent le débit côté serveur.
  */
-const URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+// Accepte « https://xxx.supabase.co » comme « https://xxx.supabase.co/rest/v1/ ».
+const URL = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").trim().replace(/\/+$/, "").replace(/\/rest\/v1$/, "");
 const KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 
 export const socialEnabled = !!URL && !!KEY;
