@@ -23,6 +23,7 @@ export const mockArticles: Article[] = [
 Le rythme de sorties reste soutenu. Reste à voir comment les portages tireront parti du matériel.
 
 > Article de démonstration — contenu fictif.`,
+    category: "Actu",
     platforms: ["Switch 2"],
     tags: ["Nintendo", "Showcase", "Annonces"],
     author: "Rédaction",
@@ -42,11 +43,10 @@ Le rythme de sorties reste soutenu. Reste à voir comment les portages tireront 
 2. Nouvelles options de sous-titres ;
 3. Correctifs de sécurité (détails non communiqués).
 
-Comme toujours, les correctifs de sécurité ferment des failles potentielles : si vous possédez une console de recherche, lisez notre section *Scène* avant de mettre à jour.
-
 > Article de démonstration — contenu fictif.`,
+    category: "Console",
     platforms: ["PS5"],
-    tags: ["Sony", "Firmware", "Mise à jour"],
+    tags: ["Sony", "Mise à jour"],
     author: "Rédaction",
     publishedAt: "2026-10-25T15:30:00Z",
     source: { name: "Pixel Underground" },
@@ -68,6 +68,7 @@ Comme toujours, les correctifs de sécurité ferment des failles potentielles : 
 - Un jeu de stratégie incontournable.
 
 > Article de démonstration — contenu fictif.`,
+    category: "Actu",
     platforms: ["PC"],
     tags: ["Bons plans", "Soldes"],
     author: "Rédaction",
@@ -81,6 +82,7 @@ Comme toujours, les correctifs de sécurité ferment des failles potentielles : 
     content: `Le catalogue s'enrichit en novembre avec plusieurs **sorties day one** sur Xbox et PC.
 
 > Article de démonstration — contenu fictif.`,
+    category: "Actu",
     platforms: ["Xbox", "PC"],
     tags: ["Microsoft", "Abonnement"],
     author: "Rédaction",
@@ -88,34 +90,13 @@ Comme toujours, les correctifs de sécurité ferment des failles potentielles : 
     source: { name: "Pixel Underground" },
   },
   {
-    slug: "conference-securite-consoles-bilan",
-    title: "Conférence sécurité : bilan des présentations sur les consoles",
-    excerpt:
-      "Divulgation responsable, primes aux bugs et recherche matérielle : le point sur les talks.",
-    content: `Plusieurs chercheurs ont présenté leurs travaux sur la **sécurité des consoles** lors d'une conférence spécialisée.
-
-## Tendances
-
-- Montée en puissance des programmes de *bug bounty* des constructeurs ;
-- Divulgation responsable : les failles présentées étaient déjà corrigées ;
-- Intérêt croissant pour la recherche matérielle.
-
-Retrouvez les notions abordées dans notre [glossaire](/scene/glossaire).
-
-> Article de démonstration — contenu fictif.`,
-    platforms: ["PS5", "Switch 2"],
-    tags: ["Sécurité", "Scène", "Conférence"],
-    author: "Rédaction",
-    publishedAt: "2026-10-22T08:00:00Z",
-    source: { name: "Pixel Underground" },
-  },
-  {
     slug: "multi-sortie-jeu-action-attendu",
-    title: "Le jeu d'action le plus attendu de l'année sort cette semaine",
-    excerpt: "Disponible sur PS5, Xbox, PC et Switch 2 : tout ce qu'il faut savoir.",
-    content: `Après plusieurs reports, le titre arrive enfin sur **toutes les plateformes**.
+    title: "Test : le jeu d'action le plus attendu de l'année tient-il ses promesses ?",
+    excerpt: "Disponible sur PS5, Xbox, PC et Switch 2 : notre verdict.",
+    content: `Après plusieurs reports, le titre arrive enfin sur **toutes les plateformes**. Verdict : une réussite technique, malgré un scénario convenu.
 
 > Article de démonstration — contenu fictif.`,
+    category: "Test",
     platforms: ["Multi", "PS5", "Xbox", "PC", "Switch 2"],
     tags: ["Sortie", "Action"],
     author: "Rédaction",

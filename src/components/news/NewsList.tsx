@@ -2,20 +2,34 @@
 
 import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
-import { PLATFORMS, type Article, type Platform } from "@/types";
+import { CATEGORIES, PLATFORMS, type Article, type Category, type Platform } from "@/types";
 import { NewsCard } from "./NewsCard";
 
 const PAGE_SIZE = 24;
 const MAX_TAGS = 16;
 
-/** Lit le filtre de plateforme dans l'URL (?plateforme=PS5) et réinitialise la liste quand il change. */
-export function NewsList({ articles }: { articles: Article[] }) {
-  const param = useSearchParams().get("plateforme");
-  const initial = PLATFORMS.includes(param as Platform) ? (param as Platform) : undefined;
-  return <FilterableNewsList key={initial ?? "all"} articles={articles} initialPlatform={initial} />;
+interface Props {
+  articles: Article[];
+  /** Affiche le filtre par rubrique (page Actualités uniquement). */
+  showCategories?: boolean;
 }
 
-function FilterableNewsList({ articles, initialPlatform }: { articles: Article[]; initialPlatform?: Platform }) {
+/** Lit le filtre de plateforme dans l'URL (?plateforme=PS5) et réinitialise la liste quand il change. */
+export function NewsList({ articles, showCategories = false }: Props) {
+  const param = useSearchParams().get("plateforme");
+  const initial = PLATFORMS.includes(param as Platform) ? (param as Platform) : undefined;
+  return (
+    <FilterableNewsList
+      key={initial ?? "all"}
+      articles={articles}
+      showCategories={showCategories}
+      initialPlatform={initial}
+    />
+  );
+}
+
+function FilterableNewsList({ articles, showCategories, initialPlatform }: Props & { initialPlatform?: Platform }) {
+  const [category, setCategory] = useState<Category | "Toutes">("Toutes");
   const [platform, setPlatform] = useState<Platform | "Toutes">(initialPlatform ?? "Toutes");
   const [tag, setTag] = useState<string | null>(null);
   const [shown, setShown] = useState(PAGE_SIZE);
@@ -32,17 +46,38 @@ function FilterableNewsList({ articles, initialPlatform }: { articles: Article[]
   }, [articles]);
 
   const filtered = articles.filter(
-    (a) => (platform === "Toutes" || a.platforms.includes(platform)) && (!tag || a.tags.includes(tag)),
+    (a) =>
+      (category === "Toutes" || a.category === category) &&
+      (platform === "Toutes" || a.platforms.includes(platform)) &&
+      (!tag || a.tags.includes(tag)),
   );
 
   const chip = (active: boolean) =>
-    `rounded-full px-3 py-1 text-sm ring-1 ring-inset transition-colors ${
+    `shrink-0 whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm ring-1 ring-inset transition-colors ${
       active ? "bg-accent text-white ring-accent" : "bg-surface text-muted ring-border hover:text-fg"
     }`;
 
   return (
     <div>
-      <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrer par plateforme">
+      {showCategories && (
+        <div className="mb-2 scroll-row -mx-4 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0" role="group" aria-label="Filtrer par rubrique">
+          {(["Toutes", ...(Object.keys(CATEGORIES) as Category[])] as const).map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => {
+                setCategory(c);
+                setShown(PAGE_SIZE);
+              }}
+              className={chip(category === c)}
+              aria-pressed={category === c}
+            >
+              {c === "Toutes" ? "Toutes les rubriques" : CATEGORIES[c].label}
+            </button>
+          ))}
+        </div>
+      )}
+      <div className="scroll-row -mx-4 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0" role="group" aria-label="Filtrer par plateforme">
         {(["Toutes", ...PLATFORMS] as const).map((p) => (
           <button
             key={p}
@@ -54,12 +89,12 @@ function FilterableNewsList({ articles, initialPlatform }: { articles: Article[]
             className={chip(platform === p)}
             aria-pressed={platform === p}
           >
-            {p}
+            {p === "Toutes" ? "Toutes les plateformes" : p}
           </button>
         ))}
       </div>
       {tags.length > 0 && (
-        <div className="mt-3 flex flex-wrap gap-1.5" role="group" aria-label="Filtrer par tag">
+        <div className="mt-2 scroll-row -mx-4 flex gap-1.5 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0" role="group" aria-label="Filtrer par tag">
           {tags.map((t) => (
             <button
               key={t}
@@ -69,8 +104,8 @@ function FilterableNewsList({ articles, initialPlatform }: { articles: Article[]
                 setShown(PAGE_SIZE);
               }}
               aria-pressed={tag === t}
-              className={`rounded-md px-2 py-0.5 text-xs ring-1 ring-inset ${
-                tag === t ? "bg-accent-2/20 text-accent-2 ring-accent-2/50" : "text-muted ring-border hover:text-fg"
+              className={`shrink-0 whitespace-nowrap rounded-md px-2.5 py-1 text-xs ring-1 ring-inset ${
+                tag === t ? "bg-accent-2/15 text-accent-2 ring-accent-2/50" : "text-muted ring-border hover:text-fg"
               }`}
             >
               #{t}
@@ -81,7 +116,7 @@ function FilterableNewsList({ articles, initialPlatform }: { articles: Article[]
 
       {filtered.length ? (
         <>
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
             {filtered.slice(0, shown).map((a) => (
               <NewsCard key={a.slug} article={a} />
             ))}
@@ -91,7 +126,7 @@ function FilterableNewsList({ articles, initialPlatform }: { articles: Article[]
               <button
                 type="button"
                 onClick={() => setShown((n) => n + PAGE_SIZE)}
-                className="rounded-lg border border-border bg-surface px-4 py-2 text-sm hover:border-accent/60"
+                className="w-full rounded-lg border border-border bg-surface px-4 py-3 text-sm font-medium hover:border-accent/60 sm:w-auto sm:py-2"
               >
                 Afficher plus ({filtered.length - shown} restants)
               </button>

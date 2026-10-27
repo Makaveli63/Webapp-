@@ -1,21 +1,36 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { Footer } from "@/components/layout/Footer";
+import { MobileTabBar } from "@/components/layout/MobileTabBar";
 import { Navbar } from "@/components/layout/Navbar";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-jetbrains" });
 
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
 export const metadata: Metadata = {
   title: { default: "Pixel Underground", template: "%s · Pixel Underground" },
-  description:
-    "Actualité du jeu vidéo et suivi pédagogique de la scène homebrew PS5 et Switch 2, en français.",
+  description: "L'actualité du jeu vidéo en français : news, tests et nouvelles consoles, mis à jour toutes les 2 heures.",
+  manifest: `${BASE_PATH}/manifest.webmanifest`,
+  icons: { icon: `${BASE_PATH}/icon.svg`, apple: `${BASE_PATH}/apple-touch-icon.png` },
+  appleWebApp: { capable: true, title: "Pixel Underground", statusBarStyle: "default" },
   referrer: "strict-origin-when-cross-origin",
   formatDetection: { email: false, address: false, telephone: false },
 };
 
-const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+// Couleur de la barre du navigateur assortie au mode clair / sombre du téléphone.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  colorScheme: "light dark",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f6f7fb" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b0d12" },
+  ],
+};
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
@@ -27,8 +42,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       </head>
       <body className="flex min-h-dvh flex-col font-sans antialiased">
         <Navbar />
-        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">{children}</main>
+        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:py-8">{children}</main>
         <Footer />
+        <MobileTabBar />
       </body>
     </html>
   );

@@ -4,7 +4,7 @@ import { Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
-export function SearchBar({ className = "", onSubmitted }: { className?: string; onSubmitted?: () => void }) {
+export function SearchBar({ className = "", autoFocus = false }: { className?: string; autoFocus?: boolean }) {
   const router = useRouter();
   const [q, setQ] = useState("");
 
@@ -12,7 +12,6 @@ export function SearchBar({ className = "", onSubmitted }: { className?: string;
     e.preventDefault();
     if (!q.trim()) return;
     router.push(`/recherche?q=${encodeURIComponent(q.trim())}`);
-    onSubmitted?.();
   }
 
   return (
@@ -22,9 +21,11 @@ export function SearchBar({ className = "", onSubmitted }: { className?: string;
         type="search"
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        placeholder="Rechercher un article, un guide…"
+        placeholder="Rechercher un jeu, une console…"
+        enterKeyHint="search"
+        autoFocus={autoFocus}
         aria-label="Rechercher"
-        className="w-full rounded-lg border border-border bg-surface py-2 pl-9 pr-3 text-sm placeholder:text-muted focus:border-accent focus:outline-none"
+        className="w-full rounded-lg border border-border bg-surface py-2.5 pl-9 pr-3 text-base placeholder:text-muted focus:border-accent focus:outline-none md:py-2 md:text-sm"
       />
     </form>
   );

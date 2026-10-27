@@ -44,9 +44,16 @@ const PLATFORM_KEYWORDS = [
   ["PC", /\b(pc|steam|epic games)\b/i],
   ["Mobile", /\b(ios|android|mobile)\b/i],
 ];
-const SCENE_TAG = "Scène";
-const SCENE_KEYWORDS =
-  /\b(hack|hacks|hacker|jailbreak|homebrew|exploit|exploits|faille|failles|cfw|custom firmware|modchip|kernel|vulnérabilité|bug bounty)\b/i;
+// Rubrique détectée sur le titre (plus fiable que le résumé, qui cite souvent d'autres sujets).
+const TEST_KEYWORDS = /(\btest\b|\bcritique\b|\breview\b|\bverdict\b|on a testé|prise en main|\bnotre avis\b)/i;
+const CONSOLE_KEYWORDS =
+  /(\bconsoles?\b|\bhardware\b|\bmatériel\b|\bmanettes?\b|ps5 pro|playstation 6|\bps6\b|switch 2|xbox series|prochaine xbox|steam deck|rog ally|\bportables?\b|mise à jour système|\bfirmware\b)/i;
+
+function detectCategory(title) {
+  if (TEST_KEYWORDS.test(title)) return "Test";
+  if (CONSOLE_KEYWORDS.test(title)) return "Console";
+  return "Actu";
+}
 
 function getFeeds() {
   const env = (process.env.RSS_FEEDS ?? "").trim();
@@ -122,12 +129,12 @@ async function fetchFeed(feed) {
       const sourceSummary = clean(item.contentSnippet ?? "", 600);
       const text = `${title} ${sourceSummary}`;
       const tags = (item.categories ?? []).filter((c) => typeof c === "string").slice(0, 3);
-      if (SCENE_KEYWORDS.test(text)) tags.unshift(SCENE_TAG);
       return {
         slug: `rss-${slugify(feed.name)}-${slugify(title)}`,
         title,
         excerpt: clean(sourceSummary, 220),
         content: sourceSummary,
+        category: detectCategory(title),
         platforms: detectPlatforms(text),
         tags,
         author: clean(item.creator ?? feed.name, 80),

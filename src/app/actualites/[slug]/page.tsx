@@ -3,8 +3,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { NewsCard } from "@/components/news/NewsCard";
-import { PlatformBadge } from "@/components/ui/Badge";
-import { renderMarkdown } from "@/lib/content";
+import { CategoryBadge, PlatformBadge } from "@/components/ui/Badge";
+import { renderMarkdown } from "@/lib/markdown";
 import { formatDate } from "@/lib/format";
 import { getArticles } from "@/lib/news";
 
@@ -30,6 +30,7 @@ export default async function ArticlePage({ params }: Props) {
 
   const related = (await getArticles())
     .filter((a) => a.slug !== article.slug && a.platforms.some((p) => article.platforms.includes(p)))
+    .sort((a, b) => Number(b.category === article.category) - Number(a.category === article.category))
     .slice(0, 3);
 
   return (
@@ -38,10 +39,11 @@ export default async function ArticlePage({ params }: Props) {
         <Link href="/actualites" className="inline-flex items-center gap-1 text-sm text-muted hover:text-fg">
           <ArrowLeft className="size-4" aria-hidden /> Toutes les actualités
         </Link>
-        <div className="mt-6 flex flex-wrap gap-1.5">
+        <div className="mt-5 flex flex-wrap gap-1.5 sm:mt-6">
+          <CategoryBadge category={article.category} />
           {article.platforms.map((p) => <PlatformBadge key={p} platform={p} />)}
         </div>
-        <h1 className="mt-3 text-3xl font-extrabold leading-tight text-white sm:text-4xl">{article.title}</h1>
+        <h1 className="mt-3 text-2xl font-extrabold leading-tight text-heading sm:text-4xl">{article.title}</h1>
         <p className="mt-4 border-b border-border pb-6 text-sm text-muted">
           {article.author !== article.source.name && <>Par {article.author} · </>}
           <time dateTime={article.publishedAt}>{formatDate(article.publishedAt)}</time>
@@ -73,7 +75,7 @@ export default async function ArticlePage({ params }: Props) {
 
         {article.external && (
           <aside className="mt-8 rounded-xl border border-border bg-surface p-4 text-sm">
-            <p className="flex items-center gap-2 font-semibold text-white">
+            <p className="flex items-center gap-2 font-semibold text-heading">
               <Newspaper className="size-4 text-accent-2" aria-hidden /> Source : {article.source.name}
             </p>
             <p className="mt-1 text-muted">
@@ -106,7 +108,7 @@ export default async function ArticlePage({ params }: Props) {
 
       {related.length > 0 && (
         <section aria-labelledby="related-title" className="mt-12">
-          <h2 id="related-title" className="text-lg font-bold text-white">À lire aussi</h2>
+          <h2 id="related-title" className="text-lg font-bold text-heading">À lire aussi</h2>
           <div className="mt-4 grid gap-4">
             {related.map((a) => <NewsCard key={a.slug} article={a} />)}
           </div>

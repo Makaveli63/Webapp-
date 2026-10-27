@@ -1,31 +1,20 @@
 "use client";
 
-import { Gamepad2, Menu, X } from "lucide-react";
+import { Gamepad2 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { activeHref, NAV_LINKS, SEARCH_LINK } from "./nav-links";
 import { SearchBar } from "./SearchBar";
 
-const LINKS = [
-  { href: "/", label: "Accueil" },
-  { href: "/actualites", label: "Actualités" },
-  { href: "/scene", label: "Scène & Jailbreak" },
-  { href: "/scene/glossaire", label: "Glossaire" },
-];
-
+/** En-tête : navigation complète sur ordinateur, logo + recherche sur mobile (onglets en bas d'écran). */
 export function Navbar() {
-  const pathname = usePathname();
-  const [open, setOpen] = useState(false);
-  // Le lien actif est celui dont le préfixe correspondant est le plus long.
-  const activeHref = LINKS.map((l) => l.href)
-    .filter((h) => (h === "/" ? pathname === "/" : pathname.startsWith(h)))
-    .sort((a, b) => b.length - a.length)[0];
-  const isActive = (href: string) => href === activeHref;
+  const active = activeHref(usePathname());
+  const SearchIcon = SEARCH_LINK.icon;
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-bg/85 backdrop-blur">
-      <nav className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4">
-        <Link href="/" className="flex items-center gap-2 font-bold tracking-tight">
+    <header className="sticky top-0 z-40 border-b border-border bg-bg/85 pt-[env(safe-area-inset-top)] backdrop-blur">
+      <nav className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4 md:h-16">
+        <Link href="/" className="flex items-center gap-2 font-bold tracking-tight text-heading">
           <Gamepad2 className="size-6 text-accent" aria-hidden />
           <span>
             Pixel<span className="text-accent-2">Underground</span>
@@ -33,11 +22,12 @@ export function Navbar() {
         </Link>
 
         <ul className="ml-6 hidden items-center gap-1 md:flex">
-          {LINKS.map((l) => (
+          {NAV_LINKS.map((l) => (
             <li key={l.href}>
               <Link
                 href={l.href}
-                className={`rounded-md px-3 py-2 text-sm transition-colors ${isActive(l.href) ? "bg-surface-2 text-white" : "text-muted hover:text-fg"}`}
+                aria-current={active === l.href ? "page" : undefined}
+                className={`rounded-md px-3 py-2 text-sm transition-colors ${active === l.href ? "bg-surface-2 text-heading" : "text-muted hover:text-fg"}`}
               >
                 {l.label}
               </Link>
@@ -47,35 +37,14 @@ export function Navbar() {
 
         <SearchBar className="ml-auto hidden w-64 md:block" />
 
-        <button
-          type="button"
-          className="ml-auto rounded-md p-2 text-muted hover:text-fg md:hidden"
-          onClick={() => setOpen((o) => !o)}
-          aria-label={open ? "Fermer le menu" : "Ouvrir le menu"}
-          aria-expanded={open}
+        <Link
+          href={SEARCH_LINK.href}
+          aria-label="Rechercher"
+          className="-mr-2 ml-auto flex size-11 items-center justify-center rounded-full text-muted hover:text-fg md:hidden"
         >
-          {open ? <X className="size-5" /> : <Menu className="size-5" />}
-        </button>
+          <SearchIcon className="size-5" aria-hidden />
+        </Link>
       </nav>
-
-      {open && (
-        <div className="border-t border-border px-4 pb-4 md:hidden">
-          <SearchBar className="mt-3" onSubmitted={() => setOpen(false)} />
-          <ul className="mt-2">
-            {LINKS.map((l) => (
-              <li key={l.href}>
-                <Link
-                  href={l.href}
-                  onClick={() => setOpen(false)}
-                  className={`block rounded-md px-3 py-2 text-sm ${isActive(l.href) ? "bg-surface-2 text-white" : "text-muted"}`}
-                >
-                  {l.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
     </header>
   );
 }

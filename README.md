@@ -1,6 +1,6 @@
 # Pixel Underground
 
-Webapp francophone d'actualité jeu vidéo et de suivi pédagogique de la scène homebrew (PS5, Switch 2).
+Webapp francophone d'actualité jeu vidéo : news, tests et nouvelles consoles, mise à jour automatiquement toutes les 2 heures. Mode clair/sombre selon l'appareil, navigation mobile par onglets, installable sur l'écran d'accueil.
 
 **Stack** : Next.js 15 (App Router) · TypeScript strict · Tailwind CSS v4 · Lucide React.
 
@@ -28,23 +28,19 @@ Prérequis (une seule fois) : *Settings → Pages → Source : GitHub Actions*. 
 ## Arborescence
 
 ```
-content/
-  guides/        Guides pédagogiques (Markdown + frontmatter)
-  glossaire/     Définitions des termes techniques
+scripts/
+  fetch-news.mjs Récupération des flux RSS + résumés IA (avant le build)
+  csp.mjs        Politique de sécurité ajoutée aux pages (après le build)
 src/
-  app/           Routes (accueil, actualites, scene, recherche, mentions-legales)
-  components/    layout/ (Navbar, Footer, SearchBar), news/, scene/, ui/
-  data/          Données mockées : articles, matrice de statut
-  lib/           Chargement du contenu Markdown, agrégation RSS, formatage
-  types/         Modèles TypeScript (Article, FirmwareStatus, Guide…)
+  app/           Routes (accueil, actualites, tests, consoles, recherche, mentions-legales)
+  components/    layout/ (Navbar, MobileTabBar, Footer, SearchBar), news/, ui/
+  data/          Liste des flux RSS, articles de démonstration
+  lib/           Lecture des articles, rendu Markdown, formatage
+  types/         Modèles TypeScript (Article, Category, Platform)
 ```
 
 ## Contenu
 
-- **Articles** : `npm run news` (`scripts/fetch-news.mjs`) récupère les flux RSS de la presse jeu vidéo francophone (`src/data/feeds.json`, ou variable `RSS_FEEDS`) et rédige pour chaque nouvel article un **résumé original par IA** (offre gratuite de Mistral ou de Google Gemini : secret `AI_API_KEY` et variable `AI_PROVIDER` dans *Settings → Secrets and variables → Actions* ; résumés conservés d'un build à l'autre grâce au cache). Résultat : `.cache/news/articles.json`, lu par le build. Plateformes et sujets « Scène » (hack, homebrew, failles…) sont détectés par mots-clés. Chaque article a sa page sur le site (titre, résumé réécrit, source citée, articles liés) avec un lien vers l'article original ; le texte intégral n'est pas repris (droit d'auteur / droit voisin). Le journal de build indique les flux qui ont répondu. Les articles de démo (`src/data/news.ts`) ne s'affichent que si aucun flux ne répond.
-- **Statut de la scène** : `src/data/scene-status.ts`. ⚠️ Les valeurs actuelles sont des **exemples** à remplacer par des informations vérifiées et sourcées.
-- **Guides / glossaire** : fichiers `.md` dans `content/`.
+- **Articles** : `npm run news` (`scripts/fetch-news.mjs`) récupère les flux RSS de la presse jeu vidéo francophone (`src/data/feeds.json`, ou variable `RSS_FEEDS`) et rédige pour chaque nouvel article un **résumé original par IA** (offre gratuite de Mistral ou de Google Gemini : secret `AI_API_KEY` et variable `AI_PROVIDER` dans *Settings → Secrets and variables → Actions* ; résumés conservés d'un build à l'autre grâce au cache). Résultat : `.cache/news/articles.json`, lu par le build. Plateformes et rubriques (Actu, Test, Console) sont détectées par mots-clés. Chaque article a sa page sur le site (titre, résumé réécrit, source citée, articles liés) avec un lien vers l'article original ; le texte intégral n'est pas repris (droit d'auteur / droit voisin). Le journal de build indique les flux qui ont répondu. Les articles de démo (`src/data/news.ts`) ne s'affichent que si aucun flux ne répond.
 
-## Ligne éditoriale
-
-La section Scène est informative : pas de fichiers, de clés, de firmwares ni de liens vers des outils de contournement ou des contenus piratés. Complétez les mentions légales (`src/app/mentions-legales/page.tsx`) avant mise en ligne.
+Complétez les mentions légales (`src/app/mentions-legales/page.tsx`) avant de faire connaître le site.
