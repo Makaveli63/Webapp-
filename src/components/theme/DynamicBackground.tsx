@@ -13,6 +13,7 @@ const SECTION_GLOW: [string, readonly [string, string, string]][] = [
   ["/jeux-gratuits", ["#10b981", "#ffd166", "#22d3ee"]],
   ["/recherche", ["#22d3ee", "#6246ea", "#2563eb"]],
   ["/favoris", ["#8b5cf6", "#ff6a88", "#22d3ee"]],
+  ["/anime", ["#ff4f9a", "#8b5cf6", "#ffb3d1"]],
 ];
 const DEFAULT_GLOW = ["#6246ea", "#22d3ee", "#ff6a88"] as const;
 

@@ -19,6 +19,7 @@ enum NewsAlerts {
         var testsOnly = false
         var myGames = false
         var digest = false
+        var anime: Bool? = true
         var games: [String] = []
     }
 
@@ -39,7 +40,9 @@ enum NewsAlerts {
     }
 
     static func matches(_ a: Feed.News, _ p: Prefs) -> Bool {
-        if !p.platforms.isEmpty {
+        let anime = a.category == "Anime"
+        if anime && (!(p.anime ?? true) || p.testsOnly) { return false }
+        if !anime && !p.platforms.isEmpty { // l'anime n'a pas de plateforme de jeu
             let plats = a.platforms ?? []
             if !plats.contains("Multi") && Set(plats).isDisjoint(with: p.platforms) { return false }
         }

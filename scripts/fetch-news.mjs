@@ -318,12 +318,13 @@ async function fetchFeed(feed) {
         title,
         excerpt: clean(sourceSummary, 220),
         content: sourceSummary,
-        category: detectCategory(title),
+        // Flux anime (feeds.json : "category": "Anime") : rubrique Anime, sans plateforme de jeu.
+        category: feed.category === "Anime" ? "Anime" : detectCategory(title),
         score:
-          detectCategory(title) === "Test"
+          feed.category !== "Anime" && detectCategory(title) === "Test"
             ? (extractScore(`${title} ${sourceSummary}`) ?? scoreFromHtml(String(item["content:encoded"] ?? item.content ?? "")))
             : undefined,
-        platforms: detectPlatforms(text),
+        platforms: feed.category === "Anime" ? [] : detectPlatforms(text),
         tags,
         author: clean(item.creator ?? feed.name, 80),
         publishedAt: validDate(item.isoDate),
@@ -336,7 +337,7 @@ async function fetchFeed(feed) {
     .filter((a) => Date.parse(a.publishedAt) >= minDate);
 }
 
-const SYSTEM_PROMPT = `Tu es rédacteur pour un site francophone d'actualité jeu vidéo.
+const SYSTEM_PROMPT = `Tu es rédacteur pour un site francophone d'actualité jeu vidéo et anime.
 Pour chaque article fourni (titre + résumé de l'éditeur), rédige un résumé ORIGINAL en français :
 - 2 à 4 phrases, 60 à 90 mots, ton neutre et informatif ;
 - reformule entièrement avec tes propres mots, ne recopie aucune phrase de la source ;

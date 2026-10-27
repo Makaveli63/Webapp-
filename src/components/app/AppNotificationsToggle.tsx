@@ -12,8 +12,9 @@ interface Prefs {
   testsOnly: boolean;
   myGames: boolean; // seulement les jeux de Ma collection
   digest: boolean; // un résumé par jour (vers 19 h) au lieu d'une notification par article
+  anime: boolean; // inclure l'actu anime
 }
-const DEFAULT_PREFS: Prefs = { platforms: [], testsOnly: false, myGames: false, digest: false };
+const DEFAULT_PREFS: Prefs = { platforms: [], testsOnly: false, myGames: false, digest: false, anime: true };
 const PLATFORM_CHOICES = ["PS5", "Switch 2", "Xbox", "PC"];
 
 function readPrefs(): Prefs {
@@ -190,6 +191,7 @@ export function AppNotificationsToggle() {
             checked={prefs.myGames}
             onChange={(v) => update({ myGames: v })}
           />
+          <Option label="Inclure l'actu anime" hint="Séries, films et annonces anime." checked={prefs.anime} onChange={(v) => update({ anime: v })} />
           <Option
             label="Résumé du soir"
             hint="Une seule notification par jour, vers 19 h, au lieu d'une par article."

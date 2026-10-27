@@ -53,8 +53,10 @@ public class NewsJob extends JobService {
 
     /** L'article correspond-il aux réglages ? (plateformes, tests seulement, jeux de Ma collection) */
     static boolean matches(JSONObject a, JSONObject p) {
+        boolean anime = "Anime".equals(a.optString("category"));
+        if (anime && (!p.optBoolean("anime", true) || p.optBoolean("testsOnly"))) return false;
         JSONArray wanted = p.optJSONArray("platforms");
-        if (wanted != null && wanted.length() > 0) {
+        if (!anime && wanted != null && wanted.length() > 0) { // l'anime n'a pas de plateforme de jeu
             JSONArray plats = a.optJSONArray("platforms");
             boolean ok = false;
             for (int i = 0; plats != null && i < plats.length() && !ok; i++) {

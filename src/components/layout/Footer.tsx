@@ -11,6 +11,7 @@ const SECTIONS = [
       { href: "/consoles", label: "Consoles & matériel" },
       { href: "/jeux-gratuits", label: "Jeux gratuits" },
       { href: "/sorties", label: "Sorties de la semaine" },
+      { href: "/anime", label: "Anime" },
       { href: "/promos", label: "Promos du moment" },
       { href: "/videos", label: "Vidéos" },
       { href: "/classement", label: "Classement et tendances" },

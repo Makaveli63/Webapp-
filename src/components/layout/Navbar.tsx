@@ -24,7 +24,7 @@ export function Navbar() {
 
         <ul className="ml-4 hidden items-center gap-0.5 md:flex">
           {NAV_LINKS.map((l) => (
-            <li key={l.href} className={"wide" in l && l.wide ? (l.wide === "2xl" ? "hidden 2xl:block" : "hidden xl:block") : undefined}>
+            <li key={l.href} className={"wide" in l && l.wide ? (l.wide === "never" ? "hidden" : "hidden xl:block") : undefined}>
               <Link
                 href={l.href}
                 aria-current={active === l.href ? "page" : undefined}

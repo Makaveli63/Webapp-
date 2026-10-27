@@ -1,4 +1,5 @@
 import { FreeGamesTeaser } from "@/components/free/FreeGamesTeaser";
+import { AnimeTeaser } from "@/components/home/AnimeTeaser";
 import { PromosTeaser } from "@/components/home/PromosTeaser";
 import { QuickLinks } from "@/components/home/QuickLinks";
 import { TrendingStrip } from "@/components/home/TrendingStrip";
@@ -31,10 +32,11 @@ export default async function HomePage() {
       <QuickLinks />
       <TrendingStrip />
       <UpcomingReleases />
-      <NewsSection id="latest-title" title="Dernières actualités" href="/actualites" articles={latest.slice(0, 6)} />
+      <NewsSection id="latest-title" title="Dernières actualités" href="/actualites" articles={latest.filter((a) => a.category !== "Anime").slice(0, 6)} />
       <PollCard poll={currentPoll()} />
       <WeekReleasesTeaser />
       <FreeGamesTeaser />
+      <AnimeTeaser />
       <PromosTeaser />
       <VideosTeaser />
       <NewsSection id="tests-title" title="Derniers tests" href="/tests" articles={tests.slice(0, 3)} />

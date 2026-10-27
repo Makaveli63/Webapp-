@@ -12,12 +12,13 @@ export type Platform = "PC" | "PS5" | "Switch 2" | "Xbox" | "Mobile" | "Multi";
 export const PLATFORMS: readonly Platform[] = ["PC", "PS5", "Switch 2", "Xbox", "Mobile", "Multi"] as const;
 
 /** Rubrique de l'article, détectée automatiquement à partir du titre. */
-export type Category = "Actu" | "Test" | "Console";
+export type Category = "Actu" | "Test" | "Console" | "Anime";
 
 export const CATEGORIES: Record<Category, { label: string; href: string }> = {
   Actu: { label: "Actus", href: "/actualites" },
   Test: { label: "Tests", href: "/tests" },
   Console: { label: "Consoles", href: "/consoles" },
+  Anime: { label: "Anime", href: "/anime" },
 };
 
 export interface Article {
@@ -162,4 +163,34 @@ export interface Deal {
 export interface DealsData {
   updatedAt?: string;
   steam: Deal[];
+}
+
+/** Anime (AniList) : en cours de diffusion ou à venir. */
+export interface Anime {
+  id: string;
+  title: string;
+  /** Titre japonais romanisé, si différent */
+  original?: string;
+  image?: string;
+  banner?: string;
+  format?: string;
+  episodes?: number;
+  /** Prochain épisode (date ISO) */
+  next?: { episode: number; at: string };
+  /** Date de début AAAA-MM-JJ */
+  start?: string;
+  genres: string[];
+  /** Note moyenne AniList sur 100 */
+  score?: number;
+  url?: string;
+  /** Plateformes de streaming officielles */
+  streaming: { site: string; url: string }[];
+  /** Bande-annonce YouTube */
+  trailer?: string;
+}
+
+export interface AnimeData {
+  updatedAt?: string;
+  airing: Anime[];
+  upcoming: Anime[];
 }
