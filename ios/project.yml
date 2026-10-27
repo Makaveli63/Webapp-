@@ -57,6 +57,7 @@ targets:
   GamingBaseWidgets:
     type: app-extension
     platform: iOS
+    deploymentTarget: "17.0" # widgets configurables (App Intents)
     sources:
       - path: Widgets
         excludes:

@@ -72,11 +72,12 @@ enum FeedLoader {
     /// Jeux épinglés dans l'app (📌), le plus récent en premier.
     static var pins: [String] { AppGroup.defaults?.stringArray(forKey: AppGroup.pinsKey) ?? [] }
 
-    /// Sortie à afficher : la plus récemment épinglée encore à venir, sinon la plus proche.
-    static func choose(_ feed: Feed?, now: Date = Date()) -> (release: Feed.Release, pinned: Bool)? {
+    /// Sortie à afficher : le jeu choisi dans le widget, sinon le plus récemment épinglé dans l'app,
+    /// sinon la grosse sortie la plus proche.
+    static func choose(_ feed: Feed?, preferred: String? = nil, now: Date = Date()) -> (release: Feed.Release, pinned: Bool)? {
         guard let releases = feed?.releases else { return nil }
         let upcoming = releases.filter { $0.date > now.addingTimeInterval(-86_400) }
-        for id in pins {
+        for id in [preferred].compactMap({ $0 }) + pins {
             if let r = upcoming.first(where: { $0.id == id }) { return (r, true) }
         }
         return upcoming.first.map { ($0, false) }

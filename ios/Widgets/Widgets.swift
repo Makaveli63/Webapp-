@@ -1,3 +1,4 @@
+import AppIntents
 import SwiftUI
 import WidgetKit
 
@@ -19,33 +20,80 @@ struct GBEntry: TimelineEntry {
         image: nil)
 }
 
-struct GBProvider: TimelineProvider {
-    var withImage = false
+extension GBEntry {
+    static func make(chosen: String?, withImage: Bool) async -> GBEntry {
+        let feed = await FeedLoader.load()
+        let pick = FeedLoader.choose(feed, preferred: chosen)
+        let image = withImage ? await FeedLoader.image(pick?.release.image) : nil
+        return GBEntry(date: Date(), feed: feed, release: pick?.release, pinned: pick?.pinned ?? false, image: image)
+    }
 
+    /// Une entrée par heure pendant 6 h : le compte à rebours avance même sans réseau.
+    func timeline() -> Timeline<GBEntry> {
+        let entries = (0..<6).map { h in
+            GBEntry(date: date.addingTimeInterval(Double(h) * 3600), feed: feed, release: release, pinned: pinned, image: image)
+        }
+        return Timeline(entries: entries, policy: .after(date.addingTimeInterval(3600)))
+    }
+}
+
+/// Widgets sans réglage (actus, jeux gratuits).
+struct GBProvider: TimelineProvider {
     func placeholder(in context: Context) -> GBEntry { .placeholder }
 
     func getSnapshot(in context: Context, completion: @escaping (GBEntry) -> Void) {
         if context.isPreview { return completion(.placeholder) }
-        Task { completion(await entry()) }
+        Task { completion(await GBEntry.make(chosen: nil, withImage: false)) }
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<GBEntry>) -> Void) {
-        Task {
-            let first = await entry()
-            // Une entrée par heure pendant 6 h : le compte à rebours avance même sans réseau.
-            let entries = (0..<6).map { h in
-                GBEntry(date: first.date.addingTimeInterval(Double(h) * 3600), feed: first.feed,
-                        release: first.release, pinned: first.pinned, image: first.image)
-            }
-            completion(Timeline(entries: entries, policy: .after(first.date.addingTimeInterval(3600))))
-        }
+        Task { completion(await GBEntry.make(chosen: nil, withImage: false).timeline()) }
+    }
+}
+
+// MARK: - Choix du jeu (appui long sur le widget → « Modifier le widget »)
+
+struct GameEntity: AppEntity {
+    let id: String
+    let title: String
+
+    static var typeDisplayRepresentation: TypeDisplayRepresentation { "Jeu" }
+    static var defaultQuery: GameQuery { GameQuery() }
+    var displayRepresentation: DisplayRepresentation { DisplayRepresentation(title: "\(title)") }
+}
+
+struct GameQuery: EntityQuery {
+    func entities(for identifiers: [String]) async throws -> [GameEntity] {
+        await all().filter { identifiers.contains($0.id) }
     }
 
-    private func entry() async -> GBEntry {
-        let feed = await FeedLoader.load()
-        let chosen = FeedLoader.choose(feed)
-        let image = withImage ? await FeedLoader.image(chosen?.release.image) : nil
-        return GBEntry(date: Date(), feed: feed, release: chosen?.release, pinned: chosen?.pinned ?? false, image: image)
+    func suggestedEntities() async throws -> [GameEntity] { await all() }
+
+    private func all() async -> [GameEntity] {
+        (await FeedLoader.load())?.releases.map { GameEntity(id: $0.id, title: $0.title) } ?? []
+    }
+}
+
+struct ChooseGameIntent: WidgetConfigurationIntent {
+    static var title: LocalizedStringResource { "Choisir le jeu" }
+    static var description: IntentDescription { IntentDescription("Le jeu dont le widget affiche le compte à rebours.") }
+
+    @Parameter(title: "Jeu")
+    var game: GameEntity?
+}
+
+/// Widgets de compte à rebours : jeu choisi dans le widget, sinon épinglé, sinon le plus proche.
+struct GBGameProvider: AppIntentTimelineProvider {
+    var withImage = false
+
+    func placeholder(in context: Context) -> GBEntry { .placeholder }
+
+    func snapshot(for configuration: ChooseGameIntent, in context: Context) async -> GBEntry {
+        context.isPreview ? .placeholder : await GBEntry.make(chosen: configuration.game?.id, withImage: withImage)
+    }
+
+    func timeline(for configuration: ChooseGameIntent, in context: Context) async -> Timeline<GBEntry> {
+        await GBEntry.make(chosen: configuration.game?.id, withImage: withImage).timeline()
     }
 }
 
@@ -93,7 +141,7 @@ struct PinnedView: View {
     @ViewBuilder private var content: some View {
         if let r = entry.release {
             VStack(alignment: .leading, spacing: 4) {
-                Text(entry.pinned ? "📌 Mon jeu épinglé" : "⏳ Prochaine grosse sortie")
+                Text(entry.pinned ? "📌 Mon jeu" : "⏳ Prochaine grosse sortie")
                     .font(.caption2.weight(.semibold))
                     .padding(.horizontal, 8).padding(.vertical, 3)
                     .background(Capsule().fill(.white.opacity(0.18)))
@@ -114,7 +162,7 @@ struct PinnedView: View {
             .shadow(color: .black.opacity(0.6), radius: 6)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         } else {
-            Text(entry.feed == nil ? "Pas de connexion" : "📌 Épingle un jeu dans l'app")
+            Text(entry.feed == nil ? "Pas de connexion" : "Choisis ton jeu : Modifier le widget")
                 .font(.headline).foregroundStyle(.white)
         }
     }
@@ -122,9 +170,11 @@ struct PinnedView: View {
 
 struct PinnedWidget: Widget {
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: "PinnedWidget", provider: GBProvider(withImage: true)) { PinnedView(entry: $0) }
+        AppIntentConfiguration(kind: "PinnedWidget", intent: ChooseGameIntent.self, provider: GBGameProvider(withImage: true)) {
+            PinnedView(entry: $0)
+        }
             .configurationDisplayName("Mon jeu épinglé")
-            .description("Le jeu que tu as épinglé, avec son image et le compte à rebours.")
+            .description("Ton jeu (à choisir avec « Modifier le widget »), avec son image et le compte à rebours.")
             .supportedFamilies([.systemMedium, .systemLarge])
     }
 }
@@ -178,7 +228,9 @@ struct ReleaseView: View {
 
 struct ReleaseWidget: Widget {
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: "ReleaseWidget", provider: GBProvider()) { ReleaseView(entry: $0) }
+        AppIntentConfiguration(kind: "ReleaseWidget", intent: ChooseGameIntent.self, provider: GBGameProvider()) {
+            ReleaseView(entry: $0)
+        }
             .configurationDisplayName("Prochaine sortie")
             .description("Compte à rebours de la prochaine grosse sortie (ou de ton jeu épinglé).")
             .supportedFamilies([.systemSmall, .accessoryCircular, .accessoryRectangular, .accessoryInline])
