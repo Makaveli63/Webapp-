@@ -17,7 +17,7 @@ export function Navbar() {
   const mySpace = /^\/(favoris|collection)(\/|$)/.test(pathname);
 
   return (
-    <header className="sticky top-0 z-40 glass-bar border-b pt-[env(safe-area-inset-top)]">
+    <header className="topbar sticky top-0 z-40 glass-bar border-b pt-[env(safe-area-inset-top)]">
       <nav className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4 md:h-16">
         <Link href="/" aria-label="GamingBase, accueil">
           <Logo id="gb-nav" className="text-lg" />

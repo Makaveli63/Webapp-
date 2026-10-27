@@ -142,53 +142,57 @@ html[data-splash="off"] .splash { display: none; }
 .splash-pc   { animation: fly-pc 1.5s cubic-bezier(.2,.8,.2,1) .18s forwards; }
 .splash-anime { animation: fly-anime 1.5s cubic-bezier(.2,.8,.2,1) .24s forwards; }
 
+/* Les symboles approchent, puis sont aspirés dans la manette du logo (--gb-in : centre du pictogramme). */
+.splash { --gb-in: -36px; }
 @keyframes fly-ps {
   0%   { opacity: 0; transform: translate(-60vw, -55vh) rotate(-140deg) scale(.5); }
-  15%  { opacity: 1; }
-  55%  { opacity: 1; transform: translate(-70px, -70px) rotate(0) scale(1); }
-  78%  { opacity: 0; transform: translate(0, 0) rotate(90deg) scale(0); }
-  100% { opacity: 0; transform: scale(0); }
+  12%  { opacity: 1; }
+  45%  { opacity: 1; transform: translate(-88px, calc(var(--gb-in) - 88px)) rotate(0) scale(.9); }
+  68%  { opacity: 1; transform: translate(0, var(--gb-in)) rotate(90deg) scale(.08); }
+  72%, 100% { opacity: 0; transform: translate(0, var(--gb-in)) scale(0); }
 }
 @keyframes fly-xbox {
   0%   { opacity: 0; transform: translate(60vw, -55vh) rotate(140deg) scale(.5); }
-  15%  { opacity: 1; }
-  55%  { opacity: 1; transform: translate(70px, -70px) rotate(0) scale(1); }
-  78%  { opacity: 0; transform: translate(0, 0) rotate(-90deg) scale(0); }
-  100% { opacity: 0; transform: scale(0); }
+  12%  { opacity: 1; }
+  45%  { opacity: 1; transform: translate(88px, calc(var(--gb-in) - 88px)) rotate(0) scale(.9); }
+  68%  { opacity: 1; transform: translate(0, var(--gb-in)) rotate(-90deg) scale(.08); }
+  72%, 100% { opacity: 0; transform: translate(0, var(--gb-in)) scale(0); }
 }
 @keyframes fly-nin {
   0%   { opacity: 0; transform: translate(-60vw, 55vh) rotate(140deg) scale(.5); }
-  15%  { opacity: 1; }
-  55%  { opacity: 1; transform: translate(-70px, 70px) rotate(0) scale(1); }
-  78%  { opacity: 0; transform: translate(0, 0) rotate(-90deg) scale(0); }
-  100% { opacity: 0; transform: scale(0); }
+  12%  { opacity: 1; }
+  45%  { opacity: 1; transform: translate(-88px, calc(var(--gb-in) + 88px)) rotate(0) scale(.9); }
+  68%  { opacity: 1; transform: translate(0, var(--gb-in)) rotate(-90deg) scale(.08); }
+  72%, 100% { opacity: 0; transform: translate(0, var(--gb-in)) scale(0); }
 }
 @keyframes fly-pc {
   0%   { opacity: 0; transform: translate(60vw, 55vh) rotate(-140deg) scale(.5); }
-  15%  { opacity: 1; }
-  55%  { opacity: 1; transform: translate(70px, 70px) rotate(0) scale(1); }
-  78%  { opacity: 0; transform: translate(0, 0) rotate(90deg) scale(0); }
-  100% { opacity: 0; transform: scale(0); }
+  12%  { opacity: 1; }
+  45%  { opacity: 1; transform: translate(88px, calc(var(--gb-in) + 88px)) rotate(0) scale(.9); }
+  68%  { opacity: 1; transform: translate(0, var(--gb-in)) rotate(90deg) scale(.08); }
+  72%, 100% { opacity: 0; transform: translate(0, var(--gb-in)) scale(0); }
 }
-
 @keyframes fly-anime {
   0%   { opacity: 0; transform: translate(0, -65vh) rotate(-180deg) scale(.5); }
-  15%  { opacity: 1; }
-  55%  { opacity: 1; transform: translate(0, -160px) rotate(0) scale(1); }
-  78%  { opacity: 0; transform: translate(0, 0) rotate(120deg) scale(0); }
-  100% { opacity: 0; transform: scale(0); }
+  12%  { opacity: 1; }
+  45%  { opacity: 1; transform: translate(0, calc(var(--gb-in) - 130px)) rotate(0) scale(.9); }
+  68%  { opacity: 1; transform: translate(0, var(--gb-in)) rotate(120deg) scale(.08); }
+  72%, 100% { opacity: 0; transform: translate(0, var(--gb-in)) scale(0); }
 }
 
 .splash-logo {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   opacity: 0;
-  animation: logo-pop 1.9s cubic-bezier(.3,1.5,.5,1) forwards;
+  animation: logo-in .35s ease-out forwards;
 }
 .splash-logo-icon {
   width: 96px;
   height: 96px;
+  animation: logo-pop 1.9s ease-out forwards;
   filter: drop-shadow(0 10px 30px color-mix(in srgb, var(--accent) 50%, transparent));
 }
 .splash-title {
@@ -200,10 +204,17 @@ html[data-splash="off"] .splash { display: none; }
 }
 .splash-tagline { margin-top: 4px; font-size: .9rem; color: var(--muted); }
 
+@keyframes logo-in { from { opacity: 0; transform: scale(.85); } to { opacity: 1; transform: scale(1); } }
+/* La manette « avale » les symboles : petits rebonds à leur arrivée. */
 @keyframes logo-pop {
-  0%, 50% { opacity: 0; transform: scale(.4); }
-  68%     { opacity: 1; transform: scale(1.12); }
-  80%     { transform: scale(1); }
+  0%      { opacity: 0; transform: scale(.5); }
+  14%     { opacity: 1; transform: scale(1); }
+  54%     { transform: scale(1); }
+  60%     { transform: scale(1.1); }
+  64%     { transform: scale(.97); }
+  68%     { transform: scale(1.12); }
+  76%     { transform: scale(.96); }
+  86%     { transform: scale(1.03); }
   100%    { opacity: 1; transform: scale(1); }
 }
 @keyframes splash-out {
@@ -461,3 +472,89 @@ html[data-splash="off"] .splash { display: none; }
 }
 .bg-viz-games { background: var(--viz-games); }
 .bg-viz-anime { background: var(--viz-anime); }
+
+/* ---------- Style « iOS Music » (Réglages → Style) ----------
+   Inspiré de l'app Musique d'iOS : noir profond (ou gris iOS), accent rose-rouge, grands titres,
+   cartes pleines très arrondies, barres en verre liquide et barre d'onglets flottante en capsule. */
+:root[data-style="ios"] {
+  --bg: #f2f2f7;
+  --surface: #ffffff;
+  --surface-2: #e5e5ea;
+  --border: #d1d1d6;
+  --fg: #1c1c1e;
+  --heading: #000000;
+  --muted: #6e6e73;
+  --accent: #fa2d48;
+  --accent-2: #ff6482;
+  --glass-a: 92%;
+  --glass-b: 80%;
+  --glass-bar: 55%;
+  --glass-drop: 0 1px 2px rgb(0 0 0 / .06), 0 10px 30px -18px rgb(0 0 0 / .35);
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", var(--font-inter), system-ui, sans-serif;
+}
+:root[data-style="ios"][data-theme="dark"] {
+  --bg: #000000;
+  --surface: #1c1c1e;
+  --surface-2: #2c2c2e;
+  --border: #38383a;
+  --fg: #f2f2f7;
+  --heading: #ffffff;
+  --muted: #98989f;
+  --accent: #fa2d48;
+  --accent-2: #ff6482;
+  --glass-edge: rgb(255 255 255 / .10);
+  --glass-hi: rgb(255 255 255 / .14);
+  --glass-a: 88%;
+  --glass-b: 72%;
+  --glass-bar: 50%;
+  --glass-drop: 0 18px 40px -20px rgb(0 0 0 / .9);
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-style="ios"]:not([data-theme]) {
+    --bg: #000000;
+    --surface: #1c1c1e;
+    --surface-2: #2c2c2e;
+    --border: #38383a;
+    --fg: #f2f2f7;
+    --heading: #ffffff;
+    --muted: #98989f;
+  }
+}
+:root[data-style="ios"] body { font-family: var(--font-sans); }
+
+/* Grands titres façon iOS. */
+:root[data-style="ios"] main h1 { font-size: 2.125rem; line-height: 1.1; font-weight: 800; letter-spacing: -0.025em; }
+:root[data-style="ios"] main h2 { letter-spacing: -0.02em; font-weight: 800; }
+
+/* Cartes : pleines, sans liseré, très arrondies (le reflet de verre est retiré). */
+:root[data-style="ios"] .glass:not(.rounded-full) { border-radius: 22px; }
+:root[data-style="ios"] .glass { border-color: transparent; box-shadow: var(--glass-drop); }
+:root[data-style="ios"] .glass::before { display: none; }
+:root[data-style="ios"] .glass-pill { box-shadow: none; }
+
+/* En-tête : verre liquide, sans trait. */
+:root[data-style="ios"] .topbar { border-bottom-color: transparent; box-shadow: none; }
+
+/* Barre d'onglets flottante en capsule de verre, onglet actif sur une bulle teintée. */
+@media (max-width: 767px) {
+  :root[data-style="ios"] .tabbar {
+    left: 12px;
+    right: 12px;
+    bottom: calc(env(safe-area-inset-bottom) + 8px);
+    padding: 4px;
+    border: 1px solid var(--glass-edge);
+    border-radius: 9999px;
+    background: color-mix(in srgb, var(--surface) 62%, transparent);
+    -webkit-backdrop-filter: blur(28px) saturate(220%);
+    backdrop-filter: blur(28px) saturate(220%);
+    box-shadow: inset 0 1px 0 var(--glass-hi), 0 16px 40px -12px rgb(0 0 0 / .45);
+  }
+  :root[data-style="ios"] .tabbar a { height: 3.25rem; border-radius: 9999px; font-size: 10px; font-weight: 600; }
+  :root[data-style="ios"] .tabbar a[aria-current="page"] { background: color-mix(in srgb, var(--accent) 16%, transparent); }
+}
+
+/* iOS Music : fond très sobre ; seule l'image floutée du jeu (comme la pochette d'un album) colore le haut. */
+:root[data-style="ios"] .dyn-blob { display: none; }
+:root[data-style="ios"] .dyn-bg { opacity: .35; -webkit-mask-image: linear-gradient(#000 0%, transparent 70%); mask-image: linear-gradient(#000 0%, transparent 70%); }
+:root[data-style="ios"] .dyn-bg:has(.dyn-photo-on) { opacity: .55; }
+:root[data-style="ios"] .logo-gradient { background-image: linear-gradient(90deg, #fa2d48, #ff6482 60%, #ff9f0a); }
