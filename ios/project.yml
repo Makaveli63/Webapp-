@@ -1,0 +1,43 @@
+# Projet Xcode généré sur le Mac de GitHub par XcodeGen (voir .github/workflows/ios.yml).
+name: GamingBase
+options:
+  bundleIdPrefix: io.github.makaveli63
+  deploymentTarget:
+    iOS: "15.0"
+targets:
+  GamingBase:
+    type: application
+    platform: iOS
+    sources:
+      - path: GamingBase
+        excludes:
+          - Info.plist
+    info:
+      path: GamingBase/Info.plist
+      properties:
+        CFBundleDisplayName: GamingBase
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        ITSAppUsesNonExemptEncryption: false
+        UILaunchScreen:
+          UIColorName: LaunchBackground
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.github.makaveli63.gamingbase
+        MARKETING_VERSION: "1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SWIFT_VERSION: "5.0"
+        CODE_SIGNING_ALLOWED: "NO"

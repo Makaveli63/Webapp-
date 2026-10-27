@@ -1,0 +1,69 @@
+name: Application iOS
+
+# Compile l'application iPhone (IPA non signée, à installer avec AltStore ou SideStore qui la signent
+# avec l'identifiant Apple de l'utilisateur) et la publie dans la release « ios ».
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "ios/**"
+      - ".github/workflows/ios.yml"
+      - "public/icon-512.png"
+
+permissions: {}
+
+concurrency:
+  group: ios
+  cancel-in-progress: true
+
+jobs:
+  ipa:
+    runs-on: macos-15
+    timeout-minutes: 30
+    permissions:
+      contents: write # publier l'IPA dans une « release »
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Installer XcodeGen
+        run: brew install xcodegen
+
+      - name: Icône de l'application
+        run: sips -z 1024 1024 public/icon-512.png --out ios/GamingBase/Assets.xcassets/AppIcon.appiconset/icon-1024.png
+
+      - name: Compiler l'application
+        working-directory: ios
+        run: |
+          xcodegen generate
+          xcodebuild -project GamingBase.xcodeproj -target GamingBase -configuration Release -sdk iphoneos \
+            SYMROOT="$PWD/build" \
+            MARKETING_VERSION="1.0.${GITHUB_RUN_NUMBER}" CURRENT_PROJECT_VERSION="${GITHUB_RUN_NUMBER}" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            build | tail -n 40
+          test -d build/Release-iphoneos/GamingBase.app
+
+      - name: Créer l'IPA
+        working-directory: ios
+        run: |
+          mkdir -p Payload
+          cp -R build/Release-iphoneos/GamingBase.app Payload/
+          zip -qry "$RUNNER_TEMP/GamingBase.ipa" Payload
+          shasum -a 256 "$RUNNER_TEMP/GamingBase.ipa"
+
+      - name: Publier l'IPA
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          NOTES="Application iPhone de GamingBase (compilation n°${GITHUB_RUN_NUMBER}).
+          IPA non signée : à installer avec AltStore (ou SideStore), qui la signe avec ton identifiant Apple.
+          L'application affiche le site en ligne : elle est toujours à jour sans réinstallation."
+          if gh release view ios >/dev/null 2>&1; then
+            gh release edit ios --title "GamingBase pour iPhone" --notes "$NOTES"
+          else
+            gh release create ios --target "$GITHUB_SHA" --title "GamingBase pour iPhone" --notes "$NOTES" --latest=false
+          fi
+          gh release upload ios "$RUNNER_TEMP/GamingBase.ipa" --clobber
