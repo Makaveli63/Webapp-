@@ -1,6 +1,7 @@
 "use client";
 
 import { Check, ListChecks, X } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { airedEpisodes, setEpisodes, untrackAnime, useTracker } from "@/lib/tracker";
@@ -71,6 +72,11 @@ export function EpisodeDialog({ anime, seen, tracked, onClose }: { anime: Episod
           <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-wide text-accent">Mon suivi</p>
             <h2 className="line-clamp-2 font-bold text-heading">{anime.title}</h2>
+            {anime.id.startsWith("anilist-") && (
+              <Link href={`/anime/fiche?id=${anime.id.slice(8)}`} onClick={onClose} className="text-xs font-semibold text-accent underline underline-offset-2">
+                Voir la fiche et toutes les saisons
+              </Link>
+            )}
             <p className="mt-0.5 text-sm text-muted">
               {seen.length} épisode{seen.length > 1 ? "s" : ""} vu{seen.length > 1 ? "s" : ""}
               {anime.total ? ` sur ${anime.total}` : ""}

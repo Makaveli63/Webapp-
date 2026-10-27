@@ -1,4 +1,5 @@
 import { ExternalLink, PlayCircle } from "lucide-react";
+import Link from "next/link";
 import { EpisodeTracker } from "@/components/tracker/EpisodeTracker";
 import { Countdown } from "@/components/ui/Countdown";
 import { RemoteImage } from "@/components/ui/RemoteImage";
@@ -16,7 +17,7 @@ const startLabel = (ymd: string) =>
 /** Carte d'un anime : affiche, prochain épisode avec compte à rebours, où le regarder légalement. */
 export function AnimeCard({ anime }: { anime: Anime }) {
   return (
-    <article className="glass flex flex-col overflow-hidden rounded-xl">
+    <article className="glass relative flex flex-col overflow-hidden rounded-xl">
       <div className="relative aspect-[3/4] w-full sm:aspect-[2/3]">
         <div className="absolute inset-0">
           <RemoteImage src={anime.image} alt={anime.title} theme={themeFor(anime.title)} seed={anime.id} className="h-full w-full" credit="AniList" />
@@ -26,10 +27,14 @@ export function AnimeCard({ anime }: { anime: Anime }) {
             {anime.score}%
           </span>
         )}
-        {anime.trailer && <TrailerButton video={{ youtube: anime.trailer }} title={anime.title} className="absolute bottom-2 right-2" />}
+        {anime.trailer && <TrailerButton video={{ youtube: anime.trailer }} title={anime.title} className="absolute bottom-2 right-2 z-10" />}
       </div>
       <div className="flex flex-1 flex-col p-3">
-        <h3 className="line-clamp-2 font-semibold leading-snug text-heading">{anime.title}</h3>
+        <h3 className="line-clamp-2 font-semibold leading-snug text-heading">
+          <Link href={`/anime/fiche?id=${anime.id.replace(/^anilist-/, "")}`} className="hover:text-accent after:absolute after:inset-0">
+            {anime.title}
+          </Link>
+        </h3>
         {anime.original && <p className="truncate text-xs text-muted">{anime.original}</p>}
         <p className="mt-1 text-xs text-muted">{[anime.format, anime.genres.join(" · ")].filter(Boolean).join(" — ")}</p>
         {anime.next ? (
@@ -55,7 +60,7 @@ export function AnimeCard({ anime }: { anime: Anime }) {
                   href={s.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 rounded-full bg-accent/15 px-2.5 py-1 text-xs font-semibold text-accent hover:bg-accent/25"
+                  className="relative z-10 inline-flex items-center gap-1 rounded-full bg-accent/15 px-2.5 py-1 text-xs font-semibold text-accent hover:bg-accent/25"
                 >
                   {s.site} <ExternalLink className="size-3" aria-hidden />
                 </a>
