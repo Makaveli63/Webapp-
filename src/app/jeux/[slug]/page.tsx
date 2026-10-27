@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { CollectionButtons } from "@/components/collection/CollectionButtons";
 import { DealCard } from "@/components/deals/DealCard";
 import { Prediction } from "@/components/game/Prediction";
+import { GameProgress } from "@/components/tracker/GameProgress";
 import { ShareButton } from "@/components/share/ShareButton";
 import { ReaderRating } from "@/components/game/ReaderRating";
 import { NewsCard } from "@/components/news/NewsCard";
@@ -101,6 +102,12 @@ export default async function GamePage({ params }: Props) {
           <ShareButton title={game.title} path={`/jeux/${game.slug}/`} />
           <CollectionButtons game={{ id: game.releaseId ? `sortie-${game.releaseId}` : `jeu-${game.slug}`, title: game.title, image: game.image }} />
         </div>
+        {!upcoming && (
+          <div className="border-t border-border p-5">
+            <p className="mb-2 text-sm font-bold text-heading">📋 Mon suivi</p>
+            <GameProgress game={{ title: game.title, image: game.image }} full className="max-w-md" />
+          </div>
+        )}
         {game.releaseAt && upcoming && (
           <div className="flex flex-wrap items-center gap-4 border-t border-border p-5">
             <Countdown target={game.releaseAt} fallback={`Sortie le ${formatDate(game.releaseAt)}`} doneLabel="🎉 Disponible !" variant="blocks" />

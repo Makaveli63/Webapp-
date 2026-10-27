@@ -1,10 +1,11 @@
 "use client";
 
 import { rpc } from "@/lib/social";
+import { cleanTracker, mergeTrackers, TRACKER_EVENT, TRACKER_KEY, type Tracker } from "@/lib/tracker";
 
 /**
  * Synchronisation entre appareils par « code de synchronisation » (16 caractères, sans compte ni email).
- * Données synchronisées : favoris, jeux épinglés, collection, réglage des notifications.
+ * Données synchronisées : favoris, jeux épinglés, collection, suivi (épisodes, jeux), réglage des notifications.
  * Fusion sans perte : on réunit le contenu des deux appareils (rien n'est effacé par erreur).
  */
 const CODE_KEY = "gb-sync-code";
@@ -17,6 +18,7 @@ interface Payload {
   epingles: string[];
   collection: { owned: Item[]; wanted: Item[] };
   notif?: string | null;
+  suivi?: Tracker;
 }
 
 export function newCode(): string {
@@ -68,6 +70,7 @@ function local(): Payload {
     epingles: readJson<string[]>("gb-epingles", []),
     collection: { owned: col.owned ?? [], wanted: col.wanted ?? [] },
     notif,
+    suivi: cleanTracker(readJson<unknown>(TRACKER_KEY, {})),
   };
 }
 
@@ -88,6 +91,7 @@ function merge(mine: Payload, theirs: Partial<Payload> | null): Payload {
       wanted: union(mine.collection.wanted, theirs.collection?.wanted ?? [], "id").slice(0, 500),
     },
     notif: mine.notif ?? theirs.notif ?? null,
+    suivi: mergeTrackers(cleanTracker(mine.suivi), cleanTracker(theirs.suivi)),
   };
 }
 
@@ -99,10 +103,11 @@ function apply(p: Payload) {
     const owned = new Set(p.collection.owned.map((g) => g.id));
     localStorage.setItem("gb-collection", JSON.stringify({ owned: p.collection.owned, wanted: p.collection.wanted.filter((g) => !owned.has(g.id)) }));
     if (p.notif) localStorage.setItem("gb-notif-prefs", p.notif);
+    if (p.suivi) localStorage.setItem(TRACKER_KEY, JSON.stringify(cleanTracker(p.suivi)));
   } catch {
     /* stockage indisponible */
   }
-  for (const e of ["gb-favoris-change", "gb-epingles-change", "gb-collection-change", "gb-notif-prefs-change"]) {
+  for (const e of ["gb-favoris-change", "gb-epingles-change", "gb-collection-change", "gb-notif-prefs-change", TRACKER_EVENT]) {
     window.dispatchEvent(new Event(e));
   }
 }
@@ -112,7 +117,7 @@ function apply(p: Payload) {
 // l'autre appareil n'a rien changé : on envoie l'état local tel quel (suppressions comprises).
 // Sinon, et seulement si on a aussi des changements, on fusionne les deux.
 const META_KEY = "gb-sync-meta";
-const CHANGE_EVENTS = ["gb-favoris-change", "gb-epingles-change", "gb-collection-change", "gb-notif-prefs-change"];
+const CHANGE_EVENTS = ["gb-favoris-change", "gb-epingles-change", "gb-collection-change", "gb-notif-prefs-change", TRACKER_EVENT];
 let applying = false;
 
 interface Meta {
@@ -147,7 +152,8 @@ export async function syncNow(code = savedCode()): Promise<void> {
     return;
   }
   // L'autre appareil a changé quelque chose.
-  const next = m.dirty ? merge(local(), remote) : merge({ ...EMPTY_PAYLOAD }, remote);
+  // Un envoi sans « suivi » (ancienne version du site) ne doit pas effacer le suivi de cet appareil.
+  const next = m.dirty ? merge(local(), remote) : merge({ ...EMPTY_PAYLOAD, suivi: remote.suivi ? undefined : local().suivi }, remote);
   applying = true;
   apply(next);
   applying = false;
@@ -155,7 +161,7 @@ export async function syncNow(code = savedCode()): Promise<void> {
   else setMeta({ rev: remote.rev, dirty: false });
 }
 
-const EMPTY_PAYLOAD: Payload = { v: 1, favoris: [], epingles: [], collection: { owned: [], wanted: [] }, notif: null };
+const EMPTY_PAYLOAD: Payload = { v: 1, favoris: [], epingles: [], collection: { owned: [], wanted: [] }, notif: null, suivi: { anime: {}, games: {} } };
 
 /** Relie cet appareil à un code (nouveau, ou saisi depuis un autre appareil) : on réunit les deux. */
 export async function linkDevice(code: string) {

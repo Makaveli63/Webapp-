@@ -1,5 +1,5 @@
 import { ExternalLink, PlayCircle } from "lucide-react";
-import { CollectionButtons } from "@/components/collection/CollectionButtons";
+import { EpisodeTracker } from "@/components/tracker/EpisodeTracker";
 import { Countdown } from "@/components/ui/Countdown";
 import { RemoteImage } from "@/components/ui/RemoteImage";
 import { TrailerButton } from "@/components/ui/TrailerButton";
@@ -62,7 +62,7 @@ export function AnimeCard({ anime }: { anime: Anime }) {
               ))}
             </div>
           )}
-          <CollectionButtons game={{ id: anime.id, title: anime.title, image: anime.image }} className="mt-2" />
+          <EpisodeTracker anime={{ id: anime.id, title: anime.title, image: anime.image, total: anime.episodes, next: anime.next }} className="mt-2" />
         </div>
       </div>
     </article>

@@ -47,7 +47,7 @@ export default function LegalPage() {
       <h2 id="confidentialite">Confidentialité</h2>
       <p>
         Ce site ne dépose aucun cookie et n&apos;utilise aucun outil de suivi publicitaire. Vos favoris, vos jeux épinglés,
-        votre thème, votre pseudo et les sujets consultés (pour colorer le fond d&apos;écran) restent enregistrés
+        votre thème, votre pseudo, votre suivi (épisodes vus, avancement des jeux) et les sujets consultés (pour colorer le fond d&apos;écran) restent enregistrés
         uniquement sur votre appareil.
       </p>
       <p>
@@ -59,7 +59,7 @@ export default function LegalPage() {
       <p>
         Sondage de la semaine : un vote par appareil, enregistré avec un identifiant aléatoire et une empreinte chiffrée de la
         connexion (anti-abus), sans donnée personnelle. Synchronisation entre appareils (facultative) : vos favoris, jeux épinglés,
-        collection et réglages de notifications sont stockés à l&apos;aide d&apos;un code secret que vous seul connaissez ; seule une
+        collection, suivi et réglages de notifications sont stockés à l&apos;aide d&apos;un code secret que vous seul connaissez ; seule une
         empreinte chiffrée de ce code est conservée, et les données sont effacées après 13 mois sans utilisation.
       </p>
       <p>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { AnimeCard } from "@/components/anime/AnimeCard";
 import { NewsCard } from "@/components/news/NewsCard";
+import { MyAnimeSection } from "@/components/tracker/MyAnimeSection";
 import { getAnime, thisWeek } from "@/lib/anime";
 import { getArticlesByCategory } from "@/lib/news";
 
@@ -24,6 +25,8 @@ export default async function AnimePage() {
           plateformes officielles (Crunchyroll, ADN, Netflix…).
         </p>
       </header>
+
+      <MyAnimeSection />
 
       {news.length > 0 && (
         <section aria-labelledby="anime-news">

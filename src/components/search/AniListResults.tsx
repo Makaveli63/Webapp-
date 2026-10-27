@@ -2,6 +2,7 @@
 
 import { ExternalLink } from "lucide-react";
 import { useEffect, useState } from "react";
+import { EpisodeTracker } from "@/components/tracker/EpisodeTracker";
 
 interface Media {
   id: number;
@@ -40,7 +41,7 @@ const streaming = (m: Media) =>
     .slice(0, 3);
 
 /** Recherche en direct dans la base d'animes d'AniList (API publique et gratuite). */
-export function AniListResults({ query }: { query: string }) {
+export function AniListResults({ query, onCount }: { query: string; onCount?: (n: number) => void }) {
   const [media, setMedia] = useState<Media[] | null>(null);
 
   useEffect(() => {
@@ -61,6 +62,8 @@ export function AniListResults({ query }: { query: string }) {
     return () => controller.abort();
   }, [query]);
 
+  useEffect(() => onCount?.(media?.length ?? 0), [media, onCount]);
+
   // Pas de section vide : la plupart des recherches portent sur des jeux.
   if (!query || (media && media.length === 0)) return null;
   return (
@@ -79,7 +82,7 @@ export function AniListResults({ query }: { query: string }) {
               m.format && (FORMATS[m.format] ?? m.format),
               m.status && STATUS[m.status],
               m.startDate?.year,
-              m.episodes && `${m.episodes} épisodes`,
+              m.episodes && `${m.episodes} épisode${m.episodes > 1 ? "s" : ""}`,
             ].filter(Boolean);
             return (
               <li key={m.id} className="flex gap-3 rounded-xl glass p-3">
@@ -103,6 +106,16 @@ export function AniListResults({ query }: { query: string }) {
                       Épisode {m.nextAiringEpisode.episode} : {dayFmt.format(new Date(m.nextAiringEpisode.airingAt * 1000))}
                     </p>
                   )}
+                  <EpisodeTracker
+                    anime={{
+                      id: `anilist-${m.id}`,
+                      title: title ?? "",
+                      image: cover,
+                      total: m.episodes ?? undefined,
+                      next: m.nextAiringEpisode ? { episode: m.nextAiringEpisode.episode, at: new Date(m.nextAiringEpisode.airingAt * 1000).toISOString() } : undefined,
+                    }}
+                    className="mt-2"
+                  />
                   {links.length > 0 && (
                     <p className="mt-2 flex flex-wrap gap-1.5">
                       {links.map((l) => (

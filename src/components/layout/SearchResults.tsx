@@ -30,6 +30,7 @@ export function SearchResults() {
   const q = (useSearchParams().get("q") ?? "").trim();
   const [index, setIndex] = useState<SearchIndex | null>(null);
   const [error, setError] = useState(false);
+  const [animeCount, setAnimeCount] = useState(0);
 
   // L'index (actus + jeux) n'est téléchargé que pour la recherche.
   useEffect(() => {
@@ -44,6 +45,7 @@ export function SearchResults() {
   const fixed = runSearch(index, corrected ?? "");
   const { articles, games } = corrected ? fixed : exact;
   const shownQuery = corrected ?? q;
+  const total = articles.length + games.length + animeCount;
 
   if (!q) return <p className="mt-4 text-muted">Recherchez un jeu, une console, un éditeur…</p>;
 
@@ -54,7 +56,7 @@ export function SearchResults() {
           ? "Index de recherche indisponible."
           : !index
             ? "Chargement…"
-            : `${articles.length + games.length} résultat${articles.length + games.length > 1 ? "s" : ""} pour « ${shownQuery} »`}
+            : `${total} résultat${total > 1 ? "s" : ""} pour « ${shownQuery} »`}
       </p>
       {corrected && (
         <p className="mt-1 text-sm text-muted">
@@ -87,7 +89,7 @@ export function SearchResults() {
         </section>
       )}
 
-      <AniListResults query={shownQuery} />
+      <AniListResults query={shownQuery} onCount={setAnimeCount} />
       <WikipediaResults query={shownQuery} />
     </>
   );

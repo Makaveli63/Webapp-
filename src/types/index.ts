@@ -140,6 +140,8 @@ export interface SearchGame {
   genres?: string[];
   /** Autre titre (ex. titre japonais d'un anime), aussi cherché */
   aka?: string;
+  /** Anime : nombre d'épisodes et prochain épisode (suivi des épisodes vus) */
+  anime?: { total?: number; next?: { episode: number; at: string } };
 }
 
 export interface SearchIndex {

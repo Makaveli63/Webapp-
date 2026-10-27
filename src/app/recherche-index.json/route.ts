@@ -40,7 +40,7 @@ export async function GET() {
   // Animes de la saison et à venir (AniList) : « solo leveling » trouve l'anime même sans actu.
   const anime = getAnime();
   for (const a of [...anime.airing, ...anime.upcoming])
-    add({ id: a.id, title: a.title, aka: a.original, image: a.image, date: a.start?.length === 10 ? a.start : undefined, platforms: [], url: "/anime", note: a.format ? `Anime · ${a.format}` : "Anime" });
+    add({ id: a.id, title: a.title, aka: a.original, image: a.image, date: a.start?.length === 10 ? a.start : undefined, platforms: [], url: "/anime", anime: { total: a.episodes, next: a.next }, note: a.format ? `Anime · ${a.format}` : "Anime" });
 
   // Vocabulaire du correcteur : mots des titres de jeux (poids fort), des actus et des tags, avec leur fréquence.
   const vocab: Record<string, number> = {};

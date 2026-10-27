@@ -4,6 +4,8 @@ import { Check, Heart, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { DealCard } from "@/components/deals/DealCard";
 import { NewsCard } from "@/components/news/NewsCard";
+import { GameProgress } from "@/components/tracker/GameProgress";
+import { MyAnimeTracking, MyGameTracking } from "@/components/tracker/MyTracking";
 import { RemoteImage } from "@/components/ui/RemoteImage";
 import { mentions, toggleCollection, useCollection, type CollectionGame } from "@/lib/collection";
 import { loadSearchIndex } from "@/lib/search-index";
@@ -27,7 +29,8 @@ function GameList({ title, icon, games, list }: { title: string; icon: React.Rea
               <div className="aspect-[16/9]">
                 <RemoteImage src={g.image} alt={g.title} theme={themeFor(g.title)} seed={g.id} className="h-full w-full" />
               </div>
-              <p className="line-clamp-2 p-2.5 text-sm font-semibold text-heading">{g.title}</p>
+              <p className="line-clamp-2 p-2.5 pb-0 text-sm font-semibold text-heading">{g.title}</p>
+              <div className="p-2.5">{!g.id.startsWith("anilist-") && <GameProgress game={g} />}</div>
               <button
                 type="button"
                 onClick={() => toggleCollection(list, g)}
@@ -79,6 +82,14 @@ export function CollectionView({ deals }: { deals: Deal[] }) {
           )}
         </section>
       )}
+      <section>
+        <h2 className="text-xl font-bold text-heading">🎮 Mon suivi de jeux</h2>
+        <MyGameTracking empty="Choisis « Mon suivi… » sur un jeu (En cours, Terminé, 100 %…) pour suivre ton avancement." />
+      </section>
+      <section>
+        <h2 className="text-xl font-bold text-heading">📺 Mes animes</h2>
+        <MyAnimeTracking empty="Touche « Suivre les épisodes » sur un anime (onglet Anime ou recherche) pour cocher les épisodes vus." />
+      </section>
       <GameList title="Je le veux" icon={<Heart className="size-5 text-rose-500" aria-hidden />} games={c.wanted} list="wanted" />
       <GameList title="Je l'ai" icon={<Check className="size-5 text-emerald-500" aria-hidden />} games={c.owned} list="owned" />
     </div>
