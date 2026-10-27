@@ -1,4 +1,5 @@
 import Foundation
+import ImageIO
 import UIKit
 
 /// Données publiées par le site pour les widgets (https://makaveli63.github.io/Webapp-/widget.json).
@@ -50,14 +51,22 @@ enum FeedLoader {
         }
     }
 
-    /// Visuel du jeu, réduit pour respecter la mémoire limitée des widgets.
+    /// Visuel du jeu en miniature (~600 px) : décodé directement en petit avec ImageIO, sans jamais
+    /// charger l'image d'origine en mémoire (un widget est coupé par iOS au-delà de ~30 Mo).
     static func image(_ address: String?) async -> UIImage? {
         guard let address, let url = URL(string: address), url.scheme == "https" else { return nil }
-        guard let result = try? await URLSession.shared.data(from: url), let image = UIImage(data: result.0) else { return nil }
-        let width: CGFloat = 700
-        guard image.size.width > width else { return image }
-        let size = CGSize(width: width, height: image.size.height * width / image.size.width)
-        return UIGraphicsImageRenderer(size: size).image { _ in image.draw(in: CGRect(origin: .zero, size: size)) }
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 8
+        guard let result = try? await URLSession.shared.data(for: request), result.0.count < 6_000_000,
+              let source = CGImageSourceCreateWithData(result.0 as CFData, nil) else { return nil }
+        let options: [CFString: Any] = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceShouldCacheImmediately: true,
+            kCGImageSourceThumbnailMaxPixelSize: 600,
+        ]
+        guard let thumb = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else { return nil }
+        return UIImage(cgImage: thumb)
     }
 
     /// Jeux épinglés dans l'app (📌), le plus récent en premier.

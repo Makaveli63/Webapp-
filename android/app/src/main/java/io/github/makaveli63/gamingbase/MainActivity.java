@@ -1,9 +1,12 @@
 package io.github.makaveli63.gamingbase;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
@@ -132,6 +135,35 @@ public class MainActivity extends Activity {
         web.setVisibility(View.VISIBLE);
         if (fullscreenCallback != null) fullscreenCallback.onCustomViewHidden();
         fullscreenCallback = null;
+    }
+
+    // ---------- Notifications des nouveaux articles ----------
+
+    private static final int NOTIF_REQUEST = 42;
+
+    void setNotifications(boolean on) {
+        if (on && Build.VERSION.SDK_INT >= 33
+                && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[] {Manifest.permission.POST_NOTIFICATIONS}, NOTIF_REQUEST);
+            return; // suite dans onRequestPermissionsResult
+        }
+        NewsJob.setEnabled(this, on);
+        notifyPage(on, false);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] results) {
+        super.onRequestPermissionsResult(requestCode, permissions, results);
+        if (requestCode != NOTIF_REQUEST) return;
+        boolean granted = results.length > 0 && results[0] == PackageManager.PERMISSION_GRANTED;
+        NewsJob.setEnabled(this, granted);
+        notifyPage(granted, !granted);
+    }
+
+    /** Informe le site de l'état réel (refus de l'autorisation, par exemple). */
+    private void notifyPage(boolean enabled, boolean denied) {
+        web.evaluateJavascript("window.dispatchEvent(new CustomEvent('gb-notif',{detail:{enabled:" + enabled
+                + ",denied:" + denied + "}}))", null);
     }
 
     @Override

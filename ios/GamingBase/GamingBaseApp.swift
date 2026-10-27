@@ -6,6 +6,8 @@ import WidgetKit
 /// Le contenu vient du site en ligne : l'app est toujours à jour sans réinstallation.
 @main
 struct GamingBaseApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+
     var body: some Scene {
         WindowGroup {
             WebContainer()
@@ -66,7 +68,19 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
 
     func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
         guard message.frameInfo.isMainFrame, Self.isSite(message.frameInfo.request.url ?? Self.home),
-              let body = message.body as? [String: Any], let pins = body["pins"] as? [String] else { return }
+              let body = message.body as? [String: Any] else { return }
+        // Interrupteur « Notifications des nouveaux articles » du site.
+        if let on = body["notifications"] as? Bool {
+            Task { @MainActor [weak self] in
+                let enabled = await NewsAlerts.setEnabled(on)
+                let denied = on && !enabled
+                self?.webView.evaluateJavaScript(
+                    "window.dispatchEvent(new CustomEvent('gb-notif',{detail:{enabled:\(enabled),denied:\(denied)}}))",
+                    completionHandler: nil)
+            }
+            return
+        }
+        guard let pins = body["pins"] as? [String] else { return }
         let clean = pins.prefix(20).filter { $0.range(of: "^[a-z0-9-]{1,80}$", options: .regularExpression) != nil }
         let defaults = AppGroup.defaults
         if defaults?.stringArray(forKey: AppGroup.pinsKey) == Array(clean) { return }

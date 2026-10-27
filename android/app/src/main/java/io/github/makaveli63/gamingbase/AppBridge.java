@@ -11,9 +11,17 @@ import org.json.JSONArray;
  */
 final class AppBridge {
     private final Context ctx;
+    private final MainActivity activity;
 
-    AppBridge(Context ctx) {
-        this.ctx = ctx.getApplicationContext();
+    AppBridge(MainActivity activity) {
+        this.activity = activity;
+        this.ctx = activity.getApplicationContext();
+    }
+
+    /** Interrupteur « Notifications des nouveaux articles » du site. */
+    @JavascriptInterface
+    public void setNotifications(boolean on) {
+        activity.runOnUiThread(() -> activity.setNotifications(on));
     }
 
     @JavascriptInterface

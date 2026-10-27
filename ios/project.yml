@@ -23,6 +23,10 @@ targets:
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         ITSAppUsesNonExemptEncryption: false
+        UIBackgroundModes:
+          - fetch
+        BGTaskSchedulerPermittedIdentifiers:
+          - io.github.makaveli63.gamingbase.news
         CFBundleURLTypes:
           - CFBundleURLName: io.github.makaveli63.gamingbase
             CFBundleURLSchemes:
