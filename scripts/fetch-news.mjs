@@ -21,7 +21,8 @@ const MAX_ITEMS_PER_FEED = 25;
 const MAX_FEED_BYTES = 5 * 1024 * 1024;
 const MAX_AGE_DAYS = 30;
 const MAX_NEW_SUMMARIES = 80; // par build, pour rester dans le quota gratuit
-const BATCH_SIZE = 10;
+const BATCH_SIZE = 5;
+const MAX_RETRIES = 3;
 // Deux API compatibles OpenAI avec une offre gratuite.
 const PROVIDERS = {
   mistral: { url: "https://api.mistral.ai/v1/chat/completions", model: "mistral-small-latest", delayMs: 1500 },
@@ -171,7 +172,11 @@ async function summarizeBatch(articles, apiKey) {
     signal: AbortSignal.timeout(90_000),
   });
   const raw = await res.text();
-  if (!res.ok) throw new Error(`HTTP ${res.status} ${clean(raw, 200)}`);
+  if (!res.ok) {
+    const err = new Error(`HTTP ${res.status} ${clean(raw, 200)}`);
+    err.retryAfterMs = Math.min(Number(res.headers.get("retry-after")) * 1000 || 20_000, 60_000);
+    throw err;
+  }
   let data;
   try {
     data = JSON.parse(raw);
@@ -223,15 +228,28 @@ async function main() {
     let done = 0;
     for (let i = 0; i < todo.length; i += BATCH_SIZE) {
       if (i > 0) await sleep(PROVIDER.delayMs); // limites de débit des offres gratuites
-      try {
-        for (const [slug, text] of await summarizeBatch(todo.slice(i, i + BATCH_SIZE), apiKey)) {
-          cache[slug] = { text, at: new Date().toISOString() };
-          done++;
+      let stop = false;
+      for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+        try {
+          for (const [slug, text] of await summarizeBatch(todo.slice(i, i + BATCH_SIZE), apiKey)) {
+            cache[slug] = { text, at: new Date().toISOString() };
+            done++;
+          }
+          break;
+        } catch (err) {
+          const rateLimited = /HTTP 429/.test(err.message);
+          if (rateLimited && attempt < MAX_RETRIES) {
+            console.log(`[ia] limite de débit atteinte, nouvel essai dans ${err.retryAfterMs / 1000} s.`);
+            await sleep(err.retryAfterMs);
+            continue;
+          }
+          console.log(`[ia] échec d'un lot (${err.message}) : on garde l'extrait de l'éditeur.`);
+          // Clé refusée ou quota épuisé : inutile d'insister, la prochaine mise à jour reprendra.
+          stop = rateLimited || /HTTP (401|403)/.test(err.message);
+          break;
         }
-      } catch (err) {
-        console.log(`[ia] échec d'un lot (${err.message}) : on garde l'extrait de l'éditeur.`);
-        if (/HTTP (401|403|429)/.test(err.message)) break; // quota ou droits : inutile d'insister
       }
+      if (stop) break;
     }
     console.log(`[ia] ${done} nouveaux résumés (${PROVIDER_NAME}/${MODEL}), ${todo.length - done} en attente.`);
   }
