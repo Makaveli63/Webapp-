@@ -1,3 +1,5 @@
+import { LogoMark } from "@/components/ui/Logo";
+
 /**
  * Animation d'ouverture (≈ 2 s, CSS uniquement) : des éléments évoquant chaque plateforme
  * convergent vers le logo. Formes dessinées pour le site, aucun logo de marque.
@@ -61,19 +63,9 @@ export function Splash() {
       </svg>
 
       <div className="splash-logo">
-        <svg viewBox="0 0 512 512" className="splash-logo-icon">
-          <rect width="512" height="512" rx="112" fill="#0b0d12" />
-          <path
-            fill="none"
-            stroke="#7c5cff"
-            strokeWidth="32"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M176 216h64M208 184v64M320 208h.5M352 240h.5M354 136H158a64 64 0 0 0-63.4 55.2L80 296a64 64 0 0 0 109.6 52.8L216 320h80l26.4 28.8A64 64 0 0 0 432 296l-14.6-104.8A64 64 0 0 0 354 136z"
-          />
-        </svg>
+        <LogoMark id="gb-splash" className="splash-logo-icon" />
         <p className="splash-title">
-          Gaming<span>Base</span>
+          Gaming<span className="logo-gradient">Base</span>
         </p>
         <p className="splash-tagline">Toutes les plateformes, un seul endroit</p>
       </div>

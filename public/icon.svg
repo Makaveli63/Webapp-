@@ -1,5 +1,25 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="112" fill="#0b0d12"/>
-  <path fill="none" stroke="#7c5cff" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"
-    d="M176 216h64M208 184v64M320 208h.5M352 240h.5M354 136H158a64 64 0 0 0-63.4 55.2L80 296a64 64 0 0 0 109.6 52.8L216 320h80l26.4 28.8A64 64 0 0 0 432 296l-14.6-104.8A64 64 0 0 0 354 136z"/>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8b5cf6"/>
+      <stop offset=".55" stop-color="#6246ea"/>
+      <stop offset="1" stop-color="#22d3ee"/>
+    </linearGradient>
+    <radialGradient id="shine" cx=".25" cy=".15" r=".7">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".35"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <mask id="pad">
+      <rect width="512" height="512" fill="#000"/>
+      <path fill="#fff" d="M150 153h212a70 70 0 0 1 68 54l26 112a46 46 0 0 1-78 40l-44-46H178l-44 46a46 46 0 0 1-78-40l26-112a70 70 0 0 1 68-54z"/>
+      <rect x="167" y="190" width="24" height="76" rx="6" fill="#000"/>
+      <rect x="141" y="216" width="76" height="24" rx="6" fill="#000"/>
+      <circle cx="330" cy="208" r="15" fill="#000"/>
+      <circle cx="370" cy="244" r="15" fill="#000"/>
+    </mask>
+  </defs>
+  <rect width="512" height="512" rx="120" fill="url(#bg)"/>
+  <rect width="512" height="512" rx="120" fill="url(#shine)"/>
+  <rect width="512" height="512" fill="#ffffff" mask="url(#pad)"/>
+  <ellipse cx="256" cy="398" rx="128" ry="14" fill="#0b0d12" opacity=".22"/>
 </svg>

@@ -137,8 +137,7 @@ html[data-splash="off"] .splash { display: none; }
 .splash-logo-icon {
   width: 96px;
   height: 96px;
-  border-radius: 22px;
-  box-shadow: 0 0 60px color-mix(in srgb, var(--accent) 55%, transparent);
+  filter: drop-shadow(0 10px 30px color-mix(in srgb, var(--accent) 50%, transparent));
 }
 .splash-title {
   margin-top: 16px;
@@ -147,7 +146,6 @@ html[data-splash="off"] .splash { display: none; }
   letter-spacing: -0.02em;
   color: var(--heading);
 }
-.splash-title span { color: var(--accent-2); }
 .splash-tagline { margin-top: 4px; font-size: .9rem; color: var(--muted); }
 
 @keyframes logo-pop {
@@ -159,4 +157,12 @@ html[data-splash="off"] .splash { display: none; }
 @keyframes splash-out {
   0%, 84% { opacity: 1; visibility: visible; }
   100%    { opacity: 0; visibility: hidden; }
+}
+
+/* Texte du logo « Base » en dégradé (assorti au pictogramme) */
+.logo-gradient {
+  background: linear-gradient(90deg, #8b5cf6, #22d3ee);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }

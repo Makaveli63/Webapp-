@@ -1,5 +1,5 @@
-import { Gamepad2 } from "lucide-react";
 import Link from "next/link";
+import { Logo } from "@/components/ui/Logo";
 
 const SECTIONS = [
   {
@@ -37,9 +37,8 @@ export function Footer() {
     <footer className="mt-16 border-t border-border bg-surface/50 pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:mt-20 md:pb-0">
       <div className="mx-auto grid max-w-6xl grid-cols-2 gap-8 px-4 py-10 sm:gap-10 sm:py-12 lg:grid-cols-4">
         <div className="col-span-2 lg:col-span-1">
-          <Link href="/" className="flex items-center gap-2 font-bold text-heading">
-            <Gamepad2 className="size-5 text-accent" aria-hidden />
-            Gaming<span className="-ml-2 text-accent-2">Base</span>
+          <Link href="/" aria-label="GamingBase, accueil">
+            <Logo id="gb-footer" />
           </Link>
           <p className="mt-3 text-sm text-muted">
             L&apos;actualité du jeu vidéo en français : news, tests et nouvelles consoles.
