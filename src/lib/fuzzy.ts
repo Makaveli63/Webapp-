@@ -72,7 +72,6 @@ export function suggestTitles(query: string, titles: string[], limit = 6): strin
   const q = normalize(query);
   if (q.length < 2) return [];
   const words = q.split(" ");
-  const last = words[words.length - 1];
   const scored: [number, string][] = [];
   for (const title of titles) {
     const t = normalize(title);
