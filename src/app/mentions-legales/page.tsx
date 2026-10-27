@@ -35,8 +35,19 @@ export default function LegalPage() {
         peuvent changer à tout moment : vérifiez toujours sur la boutique avant de récupérer un jeu.
       </p>
 
+      <h2 id="commentaires">Commentaires</h2>
+      <p>
+        Les commentaires sont publiés sous la responsabilité de leurs auteurs. Les insultes, propos racistes, haineux ou
+        discriminatoires et les liens sont refusés automatiquement ; un commentaire signalé par plusieurs lecteurs est
+        masqué. L&apos;adresse IP n&apos;est jamais conservée en clair : seule une empreinte chiffrée sert à limiter le
+        spam.
+      </p>
+
       <h2 id="confidentialite">Confidentialité</h2>
-      <p>Ce site ne dépose aucun cookie et n&apos;utilise aucun outil de suivi. [À compléter selon votre hébergement.]</p>
+      <p>
+        Ce site ne dépose aucun cookie et n&apos;utilise aucun outil de suivi. Vos favoris, votre thème, votre pseudo et
+        les sujets consultés (pour colorer le fond d&apos;écran) restent enregistrés uniquement sur votre appareil.
+      </p>
     </article>
   );
 }

@@ -57,6 +57,9 @@ jobs:
         env:
           # GitHub Pages publie le site sous https://<utilisateur>.github.io/<dépôt>/
           NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}
+          # Commentaires / j'aime (facultatif) : variables publiques du projet Supabase
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
           NEXT_TELEMETRY_DISABLED: 1
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:

@@ -52,5 +52,7 @@ src/
 - **Recherche** : index statique `/recherche-index.json` (archive de 4 mois d'actus + jeux : base RAWG des 200 jeux les plus populaires, calendrier, sorties, jeux gratuits) et recherche en direct sur Wikipédia.
 - **Tests** : note du média (« 8/10 ») détectée dans le texte du flux ou relevée par l'IA, affichée sur la carte et dans le résumé.
 - **Favoris** : enregistrés sur l'appareil du visiteur (localStorage), page `/favoris`.
+- **Commentaires et « j'aime »** (Supabase, gratuit) : pseudo sans compte, filtre côté serveur (insultes, propos racistes/haineux, contournements « c0nn4rd », liens), anti-spam par IP hachée, signalement (masqué à 3 signalements), cœurs façon X sur les articles et les commentaires. Mise en place : exécuter `supabase/schema.sql` dans Supabase → SQL Editor, puis ajouter les variables `SUPABASE_URL` et `SUPABASE_ANON_KEY` dans *Settings → Secrets and variables → Actions → Variables*. Sans elles, ces fonctions sont simplement masquées.
+- **Thème** : automatique, clair ou sombre (bouton dans l'en-tête, `public/theme.js`). **Fond d'écran dynamique** dont les couleurs suivent l'onglet, le jeu de l'article lu et, sur l'accueil, les sujets les plus consultés.
 
 Complétez les mentions légales (`src/app/mentions-legales/page.tsx`) avant de faire connaître le site.

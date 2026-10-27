@@ -13,8 +13,20 @@
   --accent-2: #0b7f95;
 }
 
+/* Mode sombre : choisi par le visiteur (data-theme, posé par public/theme.js) ou, sans JavaScript, par l'appareil. */
+:root[data-theme="dark"] {
+  --bg: #0b0d12;
+  --surface: #12151d;
+  --surface-2: #1a1e29;
+  --border: #262b38;
+  --fg: #e6e8ee;
+  --heading: #ffffff;
+  --muted: #8b91a1;
+  --accent: #7c5cff;
+  --accent-2: #22d3ee;
+}
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme]) {
     --bg: #0b0d12;
     --surface: #12151d;
     --surface-2: #1a1e29;
@@ -26,6 +38,9 @@
     --accent-2: #22d3ee;
   }
 }
+
+/* Les classes Tailwind « dark: » suivent le thème choisi, pas seulement celui de l'appareil. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 @theme inline {
   --color-bg: var(--bg);
@@ -43,6 +58,10 @@
 
 html {
   color-scheme: light dark;
+}
+html[data-theme="light"] { color-scheme: light; }
+html[data-theme="dark"] { color-scheme: dark; }
+html {
   -webkit-text-size-adjust: 100%;
 }
 body {
@@ -166,3 +185,40 @@ html[data-splash="off"] .splash { display: none; }
   background-clip: text;
   color: transparent;
 }
+
+/* Petit rebond du cœur « j'aime » */
+@keyframes like-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.45); }
+  100% { transform: scale(1); }
+}
+.like-pop { animation: like-pop .4s ease-out; }
+
+/* ---------- Fond d'écran dynamique ----------
+   Trois halos flous qui dérivent lentement ; leurs couleurs (--dyn-a/b/c) suivent l'onglet,
+   le jeu de l'article consulté et, sur l'accueil, les sujets les plus lus (DynamicBackground.tsx). */
+:root { --dyn-a: #6246ea; --dyn-b: #22d3ee; --dyn-c: #ff6a88; }
+.dyn-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: .22;
+}
+:root[data-theme="dark"] .dyn-bg { opacity: .32; }
+.dyn-blob {
+  position: absolute;
+  width: 60vmax;
+  height: 60vmax;
+  border-radius: 9999px;
+  filter: blur(90px);
+  transition: background-color 1.2s ease;
+}
+.dyn-blob-a { background-color: var(--dyn-a); top: -25vmax; left: -15vmax; animation: dyn-drift-a 26s ease-in-out infinite alternate; }
+.dyn-blob-b { background-color: var(--dyn-b); top: 30vh; right: -25vmax; animation: dyn-drift-b 32s ease-in-out infinite alternate; }
+.dyn-blob-c { background-color: var(--dyn-c); bottom: -30vmax; left: 20vw; animation: dyn-drift-c 38s ease-in-out infinite alternate; }
+@keyframes dyn-drift-a { to { transform: translate(18vw, 14vh) scale(1.15); } }
+@keyframes dyn-drift-b { to { transform: translate(-16vw, -12vh) scale(.9); } }
+@keyframes dyn-drift-c { to { transform: translate(-10vw, -20vh) scale(1.2); } }
+@media (prefers-reduced-motion: reduce) { .dyn-blob { animation: none; } }

@@ -16,6 +16,15 @@ function htmlFiles(dir) {
   });
 }
 
+// Origine Supabase autorisée pour les requêtes (commentaires / j'aime), si configurée au build.
+const SUPABASE_ORIGIN = (() => {
+  try {
+    return new URL(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").origin;
+  } catch {
+    return "";
+  }
+})();
+
 const sha256 = (s) => `'sha256-${createHash("sha256").update(s, "utf8").digest("base64")}'`;
 
 function policy(scriptHashes, styleHashes) {
@@ -30,7 +39,8 @@ function policy(scriptHashes, styleHashes) {
     "frame-src https://www.youtube-nocookie.com",
     "media-src https:",
     // Recherche en direct sur Wikipédia (API publique, sans cookie).
-    "connect-src 'self' https://fr.wikipedia.org",
+    // + Supabase (commentaires et « j'aime ») si configuré.
+    `connect-src 'self' https://fr.wikipedia.org ${SUPABASE_ORIGIN}`.trim(),
     "manifest-src 'self'",
     "base-uri 'none'",
     "form-action 'self'",

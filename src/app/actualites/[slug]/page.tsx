@@ -5,6 +5,9 @@ import { notFound } from "next/navigation";
 import { NewsCard } from "@/components/news/NewsCard";
 import { CategoryBadge, PlatformBadge } from "@/components/ui/Badge";
 import { FavoriteButton } from "@/components/news/FavoriteButton";
+import { Comments } from "@/components/social/Comments";
+import { PageTheme } from "@/components/theme/PageTheme";
+import { LikeButton } from "@/components/social/LikeButton";
 import { RemoteImage } from "@/components/ui/RemoteImage";
 import { VideoPlayer } from "@/components/ui/VideoPlayer";
 import { renderMarkdown } from "@/lib/markdown";
@@ -39,6 +42,7 @@ export default async function ArticlePage({ params }: Props) {
 
   return (
     <div className="mx-auto max-w-2xl">
+      <PageTheme themeId={themeFor(`${article.title} ${article.tags.join(" ")}`, article.platforms).id} />
       <article>
         <Link href="/actualites" className="inline-flex items-center gap-1 text-sm text-muted hover:text-fg">
           <ArrowLeft className="size-4" aria-hidden /> Toutes les actualités
@@ -62,7 +66,10 @@ export default async function ArticlePage({ params }: Props) {
           <time dateTime={article.publishedAt}>{formatDate(article.publishedAt)}</time>
           {" · "}Source : <span className="font-semibold text-fg">{article.source.name}</span>
         </p>
-        <FavoriteButton article={article} withLabel className="shrink-0" />
+        <div className="flex shrink-0 items-center gap-1">
+          <LikeButton type="article" id={article.slug} />
+          <FavoriteButton article={article} withLabel />
+        </div>
         </div>
 
         {article.external ? (
@@ -132,6 +139,7 @@ export default async function ArticlePage({ params }: Props) {
             ))}
           </div>
         )}
+        <Comments slug={article.slug} />
       </article>
 
       {related.length > 0 && (

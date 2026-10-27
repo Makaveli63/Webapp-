@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Bookmark } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Logo } from "@/components/ui/Logo";
 import { activeHref, NAV_LINKS, SEARCH_LINK } from "./nav-links";
 import { SearchBar } from "./SearchBar";
@@ -13,7 +14,7 @@ export function Navbar() {
   const SearchIcon = SEARCH_LINK.icon;
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-bg/85 pt-[env(safe-area-inset-top)] backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-border bg-bg/75 pt-[env(safe-area-inset-top)] backdrop-blur-md">
       <nav className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4 md:h-16">
         <Link href="/" aria-label="GamingBase, accueil">
           <Logo id="gb-nav" className="text-lg" />
@@ -35,10 +36,11 @@ export function Navbar() {
 
         <SearchBar className="ml-auto hidden w-56 lg:block" />
 
+        <ThemeToggle className="-mr-1 ml-auto lg:ml-0" />
         <Link
           href="/favoris"
           aria-label="Mes favoris"
-          className="-mr-1 ml-auto flex size-11 items-center justify-center rounded-full text-muted hover:text-fg lg:ml-0"
+          className="-mr-1 flex size-11 items-center justify-center rounded-full text-muted hover:text-fg"
         >
           <Bookmark className="size-5" aria-hidden />
         </Link>
