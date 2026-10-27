@@ -13,7 +13,7 @@ export function MobileTabBar() {
       aria-label="Navigation principale"
       className="fixed inset-x-0 bottom-0 z-40 glass-bar border-t pb-[env(safe-area-inset-bottom)] md:hidden"
     >
-      <ul className="grid grid-cols-5">
+      <ul className="grid grid-cols-6">
         {NAV_LINKS.filter((l) => l.mobile).map(({ href, label, icon: Icon }) => {
           const current = active === href;
           return (

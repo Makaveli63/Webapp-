@@ -1,12 +1,12 @@
-import { Clapperboard, Heart, Sparkles, Tag, Trophy } from "lucide-react";
+import { Clapperboard, Gamepad2, Heart, Tag, Trophy } from "lucide-react";
 import Link from "next/link";
 
 const LINKS = [
-  { href: "/anime", label: "Anime", icon: Sparkles },
   { href: "/promos", label: "Promos", icon: Tag },
   { href: "/videos", label: "Vidéos", icon: Clapperboard },
   { href: "/collection", label: "Ma collection", icon: Heart },
   { href: "/classement", label: "Classement", icon: Trophy },
+  { href: "/consoles", label: "Consoles", icon: Gamepad2 },
 ];
 
 /** Raccourcis vers les rubriques absentes de la barre d'onglets mobile. */
