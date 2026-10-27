@@ -1,6 +1,7 @@
 # Généré sur le Mac de GitHub
 *.xcodeproj/
 GamingBase/Info.plist
+Widgets/Info.plist
 GamingBase/Assets.xcassets/AppIcon.appiconset/icon-1024.png
 build/
 Payload/

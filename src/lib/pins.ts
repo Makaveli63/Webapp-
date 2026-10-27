@@ -15,12 +15,16 @@ function read(): string[] {
   }
 }
 
-/** Application Android : transmet les épingles au widget « Mon jeu épinglé » (pont fourni par l'app). */
+/** Applications Android et iPhone : transmet les épingles au widget « Mon jeu épinglé ». */
 function syncApp(list: string[]) {
+  const pins = list.slice(0, 20);
+  const w = window as Window & {
+    GamingBaseApp?: { setPins?: (json: string) => void }; // Android
+    webkit?: { messageHandlers?: { gamingbase?: { postMessage: (m: unknown) => void } } }; // iPhone
+  };
   try {
-    (window as Window & { GamingBaseApp?: { setPins?: (json: string) => void } }).GamingBaseApp?.setPins?.(
-      JSON.stringify(list.slice(0, 20)),
-    );
+    w.GamingBaseApp?.setPins?.(JSON.stringify(pins));
+    w.webkit?.messageHandlers?.gamingbase?.postMessage({ pins });
   } catch {
     /* hors application : rien à faire */
   }

@@ -1,0 +1,102 @@
+import Foundation
+import UIKit
+
+/// Données publiées par le site pour les widgets (https://makaveli63.github.io/Webapp-/widget.json).
+struct Feed: Codable {
+    struct Release: Codable, Hashable {
+        let id: String
+        let title: String
+        let atMs: Double
+        let image: String?
+        let path: String
+        var date: Date { Date(timeIntervalSince1970: atMs / 1000) }
+    }
+
+    struct News: Codable, Hashable {
+        let title: String
+        let score: String?
+        let category: String?
+        let path: String
+    }
+
+    struct Free: Codable, Hashable {
+        let title: String
+        let store: String
+    }
+
+    let releases: [Release]
+    let news: [News]
+    let free: [Free]
+    let freePath: String?
+}
+
+enum FeedLoader {
+    private static let url = URL(string: "https://makaveli63.github.io/Webapp-/widget.json")!
+
+    /// Dernières données du site ; sans connexion, la dernière version gardée en mémoire.
+    static func load() async -> Feed? {
+        var request = URLRequest(url: url)
+        request.cachePolicy = .reloadIgnoringLocalCacheData
+        request.timeoutInterval = 10
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw URLError(.badServerResponse) }
+            let feed = try JSONDecoder().decode(Feed.self, from: data)
+            AppGroup.defaults?.set(data, forKey: AppGroup.feedKey)
+            return feed
+        } catch {
+            guard let cached = AppGroup.defaults?.data(forKey: AppGroup.feedKey) else { return nil }
+            return try? JSONDecoder().decode(Feed.self, from: cached)
+        }
+    }
+
+    /// Visuel du jeu, réduit pour respecter la mémoire limitée des widgets.
+    static func image(_ address: String?) async -> UIImage? {
+        guard let address, let url = URL(string: address), url.scheme == "https" else { return nil }
+        guard let result = try? await URLSession.shared.data(from: url), let image = UIImage(data: result.0) else { return nil }
+        let width: CGFloat = 700
+        guard image.size.width > width else { return image }
+        let size = CGSize(width: width, height: image.size.height * width / image.size.width)
+        return UIGraphicsImageRenderer(size: size).image { _ in image.draw(in: CGRect(origin: .zero, size: size)) }
+    }
+
+    /// Jeux épinglés dans l'app (📌), le plus récent en premier.
+    static var pins: [String] { AppGroup.defaults?.stringArray(forKey: AppGroup.pinsKey) ?? [] }
+
+    /// Sortie à afficher : la plus récemment épinglée encore à venir, sinon la plus proche.
+    static func choose(_ feed: Feed?, now: Date = Date()) -> (release: Feed.Release, pinned: Bool)? {
+        guard let releases = feed?.releases else { return nil }
+        let upcoming = releases.filter { $0.date > now.addingTimeInterval(-86_400) }
+        for id in pins {
+            if let r = upcoming.first(where: { $0.id == id }) { return (r, true) }
+        }
+        return upcoming.first.map { ($0, false) }
+    }
+}
+
+enum Countdown {
+    /// « J-23 », « 14 h » ou « Dispo ! ».
+    static func text(to date: Date, now: Date = Date()) -> String {
+        let left = date.timeIntervalSince(now)
+        if left <= 0 { return "Dispo !" }
+        if left < 86_400 { return "\(Int(left / 3600)) h" }
+        return "J-\(Int((left / 86_400).rounded(.up)))"
+    }
+
+    static func day(_ date: Date) -> String {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "fr_FR")
+        f.timeZone = TimeZone(identifier: "Europe/Paris")
+        f.dateFormat = "d MMMM yyyy"
+        return f.string(from: date)
+    }
+}
+
+/// Lien qui ouvre l'app sur une page du site (gamingbase://open?path=/Webapp-/…).
+func appLink(_ path: String?) -> URL {
+    var c = URLComponents()
+    c.scheme = "gamingbase"
+    c.host = "open"
+    c.queryItems = [URLQueryItem(name: "path", value: path ?? "/Webapp-/")]
+    return c.url!
+}
