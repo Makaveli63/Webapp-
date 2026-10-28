@@ -103,6 +103,10 @@ export function Splash() {
       <div className="splash-logo">
         <LogoMark id="gb-splash" className="splash-logo-icon" />
       </div>
+      {/* Le nom tout en bas de l'écran, loin des symboles qui convergent vers la manette. */}
+      <p className="splash-brand">
+        Gaming<span className="logo-gradient">Base</span>
+      </p>
     </div>
   );
 }
