@@ -25,15 +25,21 @@ export function ReleaseCard({ release, pinned = false, compact = false }: { rele
         <div className="absolute inset-0">
           <RemoteImage src={release.image} alt={release.title} theme={theme} seed={release.id} className="h-full w-full" />
         </div>
-        <div className="absolute right-3 top-3 z-10 flex items-center gap-2">
-          {release.video && <TrailerButton video={release.video} title={release.title} />}
-          <FollowButton compact item={{ id: gameFollowId(release.title), kind: "game", title: release.title, href: `/jeux/${gameSlug(release.title)}/` }} titles={[release.short]} />
-          <PinButton id={release.id} title={release.title} />
+        {/* Une seule rangée : l'étiquette « Épinglé » à gauche, les boutons à droite, sans jamais se chevaucher. */}
+        <div className="pointer-events-none absolute inset-x-3 top-3 z-10 flex items-start justify-between gap-2">
+          {pinned ? (
+            <span className="mt-2 shrink-0 rounded-md bg-accent px-2 py-0.5 text-xs font-bold text-white">Épinglé</span>
+          ) : (
+            <span />
+          )}
+          <div className="pointer-events-auto flex shrink-0 items-center gap-2">
+            {release.video && <TrailerButton video={release.video} title={release.title} iconOnly={compact || "mobile"} />}
+            <FollowButton compact item={{ id: gameFollowId(release.title), kind: "game", title: release.title, href: `/jeux/${gameSlug(release.title)}/` }} titles={[release.short]} />
+            <PinButton id={release.id} title={release.title} />
+          </div>
         </div>
-        {pinned && (
-          <span className="absolute left-3 top-3 z-10 rounded-md bg-accent px-2 py-0.5 text-xs font-bold text-white">Épinglé</span>
-        )}
-        <div className={`relative flex h-full flex-col justify-end bg-gradient-to-t from-black/80 via-black/25 to-transparent ${compact ? "p-3" : "p-4"}`}>
+        {/* pt-14 : le titre ne remonte jamais sous la rangée de boutons ; l'image s'allonge si besoin. */}
+        <div className={`relative flex min-h-full flex-col justify-end bg-gradient-to-t from-black/80 via-black/25 to-transparent pt-14 ${compact ? "p-3" : "p-4"}`}>
           <div className="flex flex-wrap gap-1.5">
             {release.platforms.map((p) => (
               <PlatformBadge key={p} platform={p} />
