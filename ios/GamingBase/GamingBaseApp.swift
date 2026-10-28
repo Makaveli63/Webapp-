@@ -110,7 +110,9 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         }
         tabBar.selectedItem = tabBar.items?.first
         tabBar.delegate = self
-        // Masquée pendant l'animation d'ouverture du site ; elle apparaît quand le site le signale (ou après 3,5 s).
+        // Cachée pendant l'animation d'ouverture du site ; elle apparaît quand le site le signale (ou après 3,5 s).
+        // Masquage complet (isHidden) : la barre « Liquid Glass » d'iOS 26 ne respecte pas toujours la transparence.
+        tabBar.isHidden = true
         tabBar.alpha = 0
         DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) { [weak self] in self?.showTabBar() }
         tabBar.translatesAutoresizingMaskIntoConstraints = false
@@ -127,7 +129,8 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
     }
 
     private func showTabBar() {
-        guard tabBar.alpha < 1 else { return }
+        guard tabBar.isHidden else { return }
+        tabBar.isHidden = false
         UIView.animate(withDuration: 0.35) { self.tabBar.alpha = 1 }
     }
 
