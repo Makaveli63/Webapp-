@@ -34,13 +34,22 @@ export interface AniMedia {
   studios?: { nodes: { name: string }[] };
   trailer?: { id?: string; site?: string } | null;
   relations?: { edges: { relationType: string; node: { id: number; type?: string } }[] };
+  isAdult?: boolean;
+  /** Thèmes précis (« Cyberpunk », « Anti-Hero »…) avec leur pertinence (0-100) */
+  tags?: { name: string; rank: number; isMediaSpoiler: boolean; isGeneralSpoiler: boolean; category?: string }[];
+  /** « Si tu as aimé… » : recommandations des utilisateurs d'AniList */
+  recommendations?: { nodes: { rating: number; mediaRecommendation: AniMedia | null }[] };
 }
 
 const FIELDS = `id type title { romaji english } coverImage { large extraLarge } format status episodes duration
   startDate { year month day } nextAiringEpisode { episode airingAt } siteUrl
   relations { edges { relationType node { id type } } }`;
+// Vignette d'un anime recommandé (sans ses propres liens : pas de requête en cascade).
+const CARD = `id type idMal title { romaji english } coverImage { large } format startDate { year } averageScore isAdult`;
 const DETAIL = `${FIELDS} idMal bannerImage description(asHtml: false) genres averageScore
-  studios(isMain: true) { nodes { name } } trailer { id site } externalLinks { site url type language }`;
+  studios(isMain: true) { nodes { name } } trailer { id site } externalLinks { site url type language }
+  tags { name rank isMediaSpoiler isGeneralSpoiler category }
+  recommendations(sort: RATING_DESC, perPage: 12) { nodes { rating mediaRecommendation { ${CARD} } } }`;
 
 async function gql<T>(query: string, variables: Record<string, unknown>, signal?: AbortSignal): Promise<T> {
   const res = await fetch(API, {
@@ -95,6 +104,17 @@ export async function searchAnime(q: string, signal?: AbortSignal): Promise<AniM
 export async function getAnimeDetail(id: number, signal?: AbortSignal): Promise<AniMedia | null> {
   const data = await gql<{ Media: AniMedia | null }>(`query ($id: Int) { Media(id: $id, type: ANIME, isAdult: false) { ${DETAIL} } }`, { id }, signal);
   return data.Media;
+}
+
+/** Animes retrouvés à partir de leurs identifiants MyAnimeList (recommandations des fans de MAL). */
+export async function getByMalIds(ids: number[], signal?: AbortSignal): Promise<AniMedia[]> {
+  if (!ids.length) return [];
+  const data = await gql<{ Page: { media: AniMedia[] } }>(
+    `query ($ids: [Int]) { Page(perPage: 20) { media(idMal_in: $ids, type: ANIME, isAdult: false) { ${CARD} } } }`,
+    { ids: ids.slice(0, 20) },
+    signal,
+  );
+  return data.Page.media;
 }
 
 // Suite chronologique (saisons) : on suit les liens « préquelle » / « suite » ; les autres liens (films, OAV, spin-off)

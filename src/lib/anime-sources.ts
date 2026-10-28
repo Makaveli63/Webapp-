@@ -62,6 +62,15 @@ export interface OtherRatings {
   kitsu?: { score: number; url: string };
 }
 
+/** Recommandations des fans de MyAnimeList (Jikan) : identifiants MAL, du plus voté au moins voté. */
+export async function malRecommendations(malId: number, signal?: AbortSignal): Promise<number[]> {
+  const r = await json<{ data?: { entry?: { mal_id?: number }; votes?: number }[] }>(`https://api.jikan.moe/v4/anime/${malId}/recommendations`, signal);
+  return (r?.data ?? [])
+    .filter((d) => typeof d.entry?.mal_id === "number" && (d.votes ?? 0) >= 2)
+    .slice(0, 12)
+    .map((d) => d.entry!.mal_id!);
+}
+
 /** Notes MyAnimeList (Jikan) et Kitsu, retrouvées grâce à l'identifiant MyAnimeList fourni par AniList. */
 export async function otherRatings(malId: number, signal?: AbortSignal): Promise<OtherRatings> {
   const [mal, kitsu] = await Promise.all([

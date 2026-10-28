@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { FollowButton } from "@/components/app/FollowButton";
+import { AnimeRecommendations, AnimeSeeAlso, AnimeThemes } from "./AnimeExtras";
 import { AnimeFollow } from "@/components/tracker/AnimeFollow";
 import { EpisodeTracker } from "@/components/tracker/EpisodeTracker";
 import { Countdown } from "@/components/ui/Countdown";
@@ -148,10 +149,13 @@ export function AnimeDetail() {
       )}
 
       <Synopsis key={media.id} media={media} english={synopsis} />
+      <AnimeThemes media={media} />
       <Ratings key={`n${media.id}`} media={media} />
 
       <FamilyList title="📺 Toutes les saisons" items={seasons} current={media.id} loading={!family} tracker={tracker} />
       {others.length > 0 && <FamilyList title="🎬 Films, OAV et épisodes spéciaux" items={others} current={media.id} tracker={tracker} />}
+      <AnimeRecommendations key={`r${media.id}`} media={media} />
+      <AnimeSeeAlso media={media} />
 
       <p className="text-xs text-muted">
         Données :{" "}
