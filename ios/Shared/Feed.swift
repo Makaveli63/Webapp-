@@ -38,12 +38,23 @@ struct Feed: Codable {
         var date: Date { Date(timeIntervalSince1970: atMs / 1000) }
     }
 
+    /// Promo en cours (alertes prix sur les jeux « Je le veux »).
+    struct Deal: Codable, Hashable {
+        let id: String
+        let title: String
+        let store: String
+        let discount: Double
+        var price: String? = nil
+        var oldPrice: String? = nil
+    }
+
     let releases: [Release]
     let news: [News]
     let free: [Free]
     let freePath: String?
     /// Absent des anciennes versions du fichier
     let anime: [Episode]?
+    let deals: [Deal]?
 }
 
 enum FeedLoader {

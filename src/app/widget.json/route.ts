@@ -1,6 +1,7 @@
 import { getFreeGames } from "@/lib/free-games";
 import { gameSlug } from "@/lib/games";
 import { getAnime, thisWeek } from "@/lib/anime";
+import { getDeals } from "@/lib/deals";
 import { getArticles } from "@/lib/news";
 import { getUpcomingReleases } from "@/lib/releases";
 
@@ -38,6 +39,10 @@ export async function GET() {
       .map((a) => ({ title: a.title, score: a.score, path: `${BASE}/actualites/${a.slug}/` })),
     free: free.slice(0, 4).map((g) => ({ title: g.title, store: g.store, endDate: g.endDate ?? null })),
     freePath: `${BASE}/jeux-gratuits/`,
+    // Alertes prix : promos en cours, comparées dans l'app aux jeux « Je le veux ».
+    deals: getDeals()
+      .steam.slice(0, 200)
+      .map((d) => ({ id: d.id, title: d.title, store: d.store, discount: d.discount, price: d.price ?? null, oldPrice: d.oldPrice ?? null })),
     // Widget « Prochains épisodes » : les épisodes des 7 prochains jours (les animes suivis passent devant dans l'app).
     anime: thisWeek(getAnime())
       .slice(0, 12)

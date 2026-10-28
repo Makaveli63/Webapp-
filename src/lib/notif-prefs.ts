@@ -13,8 +13,9 @@ export interface Prefs {
   myGames: boolean; // seulement les jeux de Ma collection
   digest: boolean; // un résumé par jour (vers 19 h) au lieu d'une notification par article
   anime: boolean; // inclure l'actu anime
+  priceAlerts: boolean; // promo sur un jeu « Je le veux »
 }
-export const DEFAULT_PREFS: Prefs = { platforms: [], testsOnly: false, myGames: false, digest: false, anime: true };
+export const DEFAULT_PREFS: Prefs = { platforms: [], testsOnly: false, myGames: false, digest: false, anime: true, priceAlerts: true };
 
 export function readPrefs(): Prefs {
   try {
@@ -24,11 +25,12 @@ export function readPrefs(): Prefs {
   }
 }
 
-/** Titres de Ma collection (jeux voulus et possédés) pour le filtre « mes jeux ». */
-function collectionTitles(): string[] {
+/** Titres de Ma collection (jeux voulus et possédés) pour le filtre « mes jeux » ; « wanted » seul pour les alertes prix. */
+function collectionTitles(only?: "wanted"): string[] {
   try {
     const c = JSON.parse(localStorage.getItem("gb-collection") ?? "{}");
-    return [...(c.wanted ?? []), ...(c.owned ?? [])].map((g: { title?: string }) => g.title).filter((t): t is string => typeof t === "string").slice(0, 200);
+    const list = only ? (c.wanted ?? []) : [...(c.wanted ?? []), ...(c.owned ?? [])];
+    return list.map((g: { title?: string }) => g.title).filter((t: unknown): t is string => typeof t === "string").slice(0, 200);
   } catch {
     return [];
   }
@@ -48,6 +50,7 @@ export function sendPrefs(prefs: Prefs = readPrefs()) {
   const payload = {
     ...prefs,
     games: collectionTitles(),
+    wanted: collectionTitles("wanted"),
     follows: follows.map((f) => ({ t: f.title, a: f.aliases })),
     episodes: follows
       .filter((f) => f.next && Date.parse(f.next.at) > now - 86_400_000)

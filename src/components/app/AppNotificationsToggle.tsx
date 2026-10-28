@@ -159,6 +159,12 @@ export function AppNotificationsToggle() {
             )}
           </div>
           <Option
+            label="💸 Alertes prix"
+            hint="Une notification quand un jeu « Je le veux » de Ma bibliothèque passe en promo (Steam)."
+            checked={prefs.priceAlerts}
+            onChange={(v) => update({ priceAlerts: v })}
+          />
+          <Option
             label="Résumé du soir"
             hint="Une seule notification par jour, vers 19 h, au lieu d'une par article."
             checked={prefs.digest}

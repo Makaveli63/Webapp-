@@ -197,6 +197,19 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
             }
             return
         }
+        // « Écouter les actus » : lecture à voix haute.
+        if let list = body["speak"] as? [[String: Any]] {
+            NewsReader.shared.onState = { [weak self] index, state in
+                self?.webView.evaluateJavaScript(
+                    "window.dispatchEvent(new CustomEvent('gb-speak',{detail:{index:\(index),state:'\(state)'}}))", completionHandler: nil)
+            }
+            NewsReader.shared.start(list)
+            return
+        }
+        if let cmd = body["speakControl"] as? String, ["pause", "resume", "next", "previous", "stop"].contains(cmd) {
+            NewsReader.shared.control(cmd)
+            return
+        }
         // Image à partager (récap du mois) : feuille de partage d'iOS (story, Photos, Messages…).
         if let base64 = body["shareImage"] as? String {
             guard base64.count < 8_000_000, let data = Data(base64Encoded: base64), let image = UIImage(data: data) else { return }

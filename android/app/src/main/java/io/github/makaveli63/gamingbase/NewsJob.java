@@ -47,6 +47,38 @@ public class NewsJob extends JobService {
         scheduleEpisodes(ctx);
     }
 
+    /** 💸 Promo sur un jeu « Je le veux » : une notification par promo (3 au plus à la fois). */
+    static void notifyDeals(Context ctx, JSONObject data, JSONObject p) {
+        JSONArray wanted = p.optJSONArray("wanted");
+        JSONArray deals = data != null ? data.optJSONArray("deals") : null;
+        if (!p.optBoolean("priceAlerts", true) || wanted == null || wanted.length() == 0 || deals == null || !canNotify(ctx)) return;
+        List<String> names = new ArrayList<>();
+        for (int i = 0; i < wanted.length(); i++) {
+            String n = norm(wanted.optString(i));
+            if (n.length() >= 6) names.add(n);
+        }
+        SharedPreferences prefs = ctx.getSharedPreferences(PREFS, MODE_PRIVATE);
+        Set<String> done = new LinkedHashSet<>(prefs.getStringSet("deals", new HashSet<>()));
+        int sent = 0;
+        for (int i = 0; i < deals.length() && sent < 3; i++) {
+            JSONObject d = deals.optJSONObject(i);
+            if (d == null || done.contains(d.optString("id"))) continue;
+            String title = norm(d.optString("title"));
+            boolean match = false;
+            for (String n : names) if (title.contains(n)) match = true;
+            if (!match) continue;
+            done.add(d.optString("id"));
+            String price = d.isNull("price") ? "En promo" : d.optString("price") + (d.isNull("oldPrice") ? "" : " au lieu de " + d.optString("oldPrice"));
+            int id = ("deal" + d.optString("id")).hashCode();
+            channel(ctx).notify(id, build(ctx, "💸 Prix en baisse : " + d.optString("title"),
+                    price + " sur " + d.optString("store") + " (−" + Math.round(d.optDouble("discount")) + " %)", "/Webapp-/promos/", id));
+            sent++;
+        }
+        Set<String> keep = new LinkedHashSet<>();
+        for (String k : done) if (keep.size() < 300) keep.add(k);
+        prefs.edit().putStringSet("deals", keep).apply();
+    }
+
     /** Nom du jeu ou de l'anime suivi (🔔) dont parle l'article, sinon null. */
     static String followed(JSONObject a, JSONObject p) {
         JSONArray follows = p.optJSONArray("follows");
@@ -238,6 +270,7 @@ public class NewsJob extends JobService {
     static void check(Context ctx, boolean notify) {
         if (!isEnabled(ctx)) return;
         JSONObject data = WidgetData.load(ctx);
+        if (notify) notifyDeals(ctx, data, prefs(ctx));
         JSONArray news = data != null ? data.optJSONArray("news") : null;
         if (news == null) return;
         SharedPreferences prefs = ctx.getSharedPreferences(PREFS, MODE_PRIVATE);

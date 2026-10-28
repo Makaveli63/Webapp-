@@ -1,6 +1,7 @@
 import { FreeGamesTeaser } from "@/components/free/FreeGamesTeaser";
 import { AnimeTeaser } from "@/components/home/AnimeTeaser";
 import { ForYou } from "@/components/home/ForYou";
+import { ListenNews } from "@/components/home/ListenNews";
 import { PromosTeaser } from "@/components/home/PromosTeaser";
 import { QuickLinks } from "@/components/home/QuickLinks";
 import { VideosTeaser } from "@/components/home/VideosTeaser";
@@ -31,6 +32,12 @@ export default async function HomePage() {
 
       <QuickLinks />
       <UpcomingReleases />
+      <ListenNews
+        items={latest
+          .filter((a) => a.category !== "Anime")
+          .slice(0, 8)
+          .map((a) => ({ title: a.title, text: `${a.title}. ${(a.aiSummary ?? a.excerpt).replace(/[#*_>`]/g, "").slice(0, 900)}` }))}
+      />
       {/* Sans le texte complet des articles : la page reste légère. */}
       <ForYou articles={latest.slice(0, 120).map((a) => ({ ...a, content: "", aiSummary: undefined }))} />
       <NewsSection id="latest-title" title="Dernières actualités" href="/actualites" articles={latest.filter((a) => a.category !== "Anime").slice(0, 6)} />

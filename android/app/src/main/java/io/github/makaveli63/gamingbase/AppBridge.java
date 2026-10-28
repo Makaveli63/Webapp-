@@ -107,4 +107,18 @@ final class AppBridge {
             return false;
         }
     }
+
+    /** « Écouter les actus » : liste [{text}] lue à voix haute. */
+    @JavascriptInterface
+    public void speak(String json) {
+        if (json == null || json.length() > 100_000) return;
+        activity.runOnUiThread(() -> activity.reader().start(json));
+    }
+
+    /** pause, resume, next, previous ou stop. */
+    @JavascriptInterface
+    public void speakControl(String cmd) {
+        if (cmd == null || !cmd.matches("pause|resume|next|previous|stop")) return;
+        activity.runOnUiThread(() -> activity.reader().control(cmd));
+    }
 }

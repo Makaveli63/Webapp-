@@ -2,6 +2,8 @@
 name: GamingBase
 options:
   bundleIdPrefix: io.github.makaveli63
+  # Français : langue des phrases Siri (« Quand sort … dans GamingBase ») et des textes système.
+  developmentLanguage: fr
   deploymentTarget:
     iOS: "16.0"
 targets:
@@ -27,6 +29,7 @@ targets:
         NSSupportsLiveActivities: true
         UIBackgroundModes:
           - fetch
+          - audio # « Écouter les actus » continue écran verrouillé
         # Domaines de l'app : nécessaires au mode hors connexion (service worker) dans la vue web.
         WKAppBoundDomains:
           - makaveli63.github.io

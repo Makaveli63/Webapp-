@@ -221,8 +221,20 @@ public class MainActivity extends Activity {
         else super.onBackPressed();
     }
 
+    private NewsReader reader;
+
+    /** « Écouter les actus » : lecteur créé au premier usage. */
+    NewsReader reader() {
+        if (reader == null) {
+            reader = new NewsReader(this, (index, state) -> runOnUiThread(() -> web.evaluateJavascript(
+                    "window.dispatchEvent(new CustomEvent('gb-speak',{detail:{index:" + index + ",state:'" + state + "'}}))", null)));
+        }
+        return reader;
+    }
+
     @Override
     protected void onDestroy() {
+        if (reader != null) reader.shutdown();
         web.destroy();
         super.onDestroy();
     }

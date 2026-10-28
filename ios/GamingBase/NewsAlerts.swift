@@ -87,6 +87,9 @@ enum NewsAlerts {
         var follows: [Follow]? = []
         /// Prochains épisodes des animes suivis.
         var episodes: [Episode]? = []
+        /// Jeux « Je le veux » et alertes prix
+        var wanted: [String]? = []
+        var priceAlerts: Bool? = true
     }
 
     struct Follow: Codable {
@@ -125,6 +128,33 @@ enum NewsAlerts {
             ids.append(id)
         }
         defaults.set(ids, forKey: episodeIdsKey)
+    }
+
+    private static let dealsKey = "notif.deals"
+
+    /// 💸 Promo sur un jeu « Je le veux » : une notification par promo (3 au plus à la fois).
+    static func notifyDeals(_ feed: Feed) async {
+        let p = prefs
+        guard p.priceAlerts ?? true, let wanted = p.wanted, !wanted.isEmpty else { return }
+        let names = wanted.map(norm).filter { $0.count >= 6 }
+        var done = Set(defaults.stringArray(forKey: dealsKey) ?? [])
+        let center = UNUserNotificationCenter.current()
+        var sent = 0
+        for deal in feed.deals ?? [] where !done.contains(deal.id) && sent < 3 {
+            let title = norm(deal.title)
+            guard names.contains(where: { title.contains($0) }) else { continue }
+            done.insert(deal.id)
+            let content = UNMutableNotificationContent()
+            content.title = "💸 Prix en baisse : \(deal.title)"
+            let price = [deal.price, deal.oldPrice.map { "au lieu de \($0)" }].compactMap { $0 }.joined(separator: " ")
+            content.body = "\(price.isEmpty ? "En promo" : price) sur \(deal.store) (−\(Int(deal.discount)) %)"
+            content.sound = .default
+            content.threadIdentifier = "deals" // regroupées sur l'iPhone et l'Apple Watch
+            content.userInfo = ["path": "/Webapp-/promos/"]
+            try? await center.add(UNNotificationRequest(identifier: "deal-\(deal.id)", content: content, trigger: nil))
+            sent += 1
+        }
+        defaults.set(Array(done.prefix(300)), forKey: dealsKey)
     }
 
     /// Nom du jeu ou de l'anime suivi dont parle l'article, s'il y en a un.
@@ -218,6 +248,7 @@ enum NewsAlerts {
     /// Compare les derniers articles à ceux déjà vus et notifie les nouveaux.
     static func check(notify: Bool) async -> Int {
         guard enabled, let feed = await FeedLoader.load() else { return 0 }
+        if notify { await notifyDeals(feed) }
         let seen = Set(defaults.stringArray(forKey: seenKey) ?? [])
         let unseen = feed.news.filter { !seen.contains($0.path) }
         defaults.set(Array((feed.news.map(\.path) + seen).prefix(200)), forKey: seenKey)
@@ -284,6 +315,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
         NewsAlerts.register()
         UNUserNotificationCenter.current().delegate = self
         NewsAlerts.schedule()
+        GamingBaseShortcuts.updateAppShortcutParameters() // Siri apprend le nom des jeux (« Quand sort GTA 6 sur GamingBase »)
         return true
     }
 
