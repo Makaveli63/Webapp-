@@ -3,14 +3,18 @@ import SwiftUI
 import UIKit
 import WidgetKit
 
-private let liveAccent = Color(red: 0.55, green: 0.42, blue: 1.0)
+private let liveAccent = Color(red: 0.486, green: 0.361, blue: 1.0) // violet GamingBase (#7c5cff)
 
 /// Temps restant, recalculé à chaque affichage :
 /// jours (« 21 j ») et/ou minuteur heures : minutes : secondes qui défile tout seul.
 /// Sans les jours, le minuteur compte toutes les heures restantes (« 525:12:33 »).
 struct LiveCountdownText: View {
+    enum Part { case all, days, clock }
+
     let state: ReleaseActivityAttributes.ContentState
     var compact = false
+    /// Dynamic Island agrandie : les jours en haut, le minuteur en bas (pour ne jamais couper la ligne).
+    var part: Part = .all
 
     var body: some View {
         let now = Date()
@@ -33,14 +37,19 @@ struct LiveCountdownText: View {
             }
         } else {
             HStack(spacing: 6) {
-                if showDays && days > 0 {
+                if showDays && days > 0 && part != .clock {
                     Text("\(days) j")
+                        .lineLimit(1)
+                        .fixedSize()
+                } else if days == 0 && !showClock && part != .clock {
+                    Text("Aujourd'hui").lineLimit(1).fixedSize()
                 }
-                if showClock {
+                if showClock && part != .days {
                     Text(timerInterval: now...max(boundary, now.addingTimeInterval(1)), countsDown: true)
                         .monospacedDigit()
+                        .lineLimit(1)
                         .multilineTextAlignment(.trailing)
-                        .frame(maxWidth: 104, alignment: .trailing)
+                        .frame(minWidth: 70, maxWidth: 120, alignment: .trailing)
                 }
             }
         }
@@ -90,6 +99,8 @@ struct LiveLockScreenView: View {
             LiveCountdownText(state: context.state)
                 .font(.title3.bold())
                 .foregroundStyle(liveAccent)
+                .minimumScaleFactor(0.7)
+                .layoutPriority(1)
         }
         .padding(14)
     }
@@ -109,8 +120,8 @@ struct ReleaseLiveActivity: Widget {
                     LiveGameImage(data: context.attributes.image, width: 44, height: 58)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    LiveCountdownText(state: context.state)
-                        .font(.title3.bold())
+                    LiveCountdownText(state: context.state, part: .days)
+                        .font(.title2.bold())
                         .foregroundStyle(liveAccent)
                 }
                 DynamicIslandExpandedRegion(.center) {
@@ -119,9 +130,16 @@ struct ReleaseLiveActivity: Widget {
                         .lineLimit(1)
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    Text("Sortie le \(context.state.day)")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    HStack(alignment: .firstTextBaseline) {
+                        Text("Sortie le \(context.state.day)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                        Spacer(minLength: 8)
+                        LiveCountdownText(state: context.state, part: .clock)
+                            .font(.title3.bold())
+                            .foregroundStyle(liveAccent)
+                    }
                 }
             } compactLeading: {
                 LiveGameImage(data: context.attributes.image, width: 22, height: 22, corner: 11)
