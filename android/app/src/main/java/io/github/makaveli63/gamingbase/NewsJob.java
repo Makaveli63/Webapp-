@@ -325,12 +325,19 @@ public class NewsJob extends JobService {
     @SuppressWarnings("deprecation")
     private static Notification build(Context ctx, String title, String text, String path, int id) {
         Notification.Builder b = Build.VERSION.SDK_INT >= 26 ? new Notification.Builder(ctx, CHANNEL) : new Notification.Builder(ctx);
+        PendingIntent open = WidgetData.open(ctx, path, id);
+        // Montre connectée (Wear OS, Galaxy Watch) : la notification y est recopiée, avec « Ouvrir sur le téléphone ».
+        Notification.Action onPhone = new Notification.Action.Builder(
+                android.graphics.drawable.Icon.createWithResource(ctx, R.drawable.ic_notif), "Ouvrir sur le téléphone", open).build();
         return b.setSmallIcon(R.drawable.ic_notif)
                 .setContentTitle(title)
                 .setContentText(text)
                 .setStyle(new Notification.BigTextStyle().bigText(text))
                 .setAutoCancel(true)
-                .setContentIntent(WidgetData.open(ctx, path, id))
+                .setContentIntent(open)
+                .setGroup("gamingbase")
+                .setCategory(Notification.CATEGORY_RECOMMENDATION)
+                .extend(new Notification.WearableExtender().addAction(onPhone))
                 .build();
     }
 }

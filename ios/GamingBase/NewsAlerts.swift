@@ -32,6 +32,7 @@ enum NewsAlerts {
         for (index, id) in digestIds.enumerated() {
             guard let day = cal.date(byAdding: .day, value: index, to: fire) else { continue }
             let content = UNMutableNotificationContent()
+            content.threadIdentifier = "digest" // regroupées sur l'iPhone et l'Apple Watch
             if index == 0, !pending.isEmpty {
                 content.title = "🌙 Ton résumé du soir : \(pending.count) actu\(pending.count > 1 ? "s" : "")"
                 content.body = pending.prefix(4).map { "• \($0.news.title)" }.joined(separator: "\n")
@@ -112,6 +113,7 @@ enum NewsAlerts {
             let at = Date(timeIntervalSince1970: ep.atMs / 1000)
             guard at > now, ep.path.hasPrefix("/Webapp-/") else { continue }
             let content = UNMutableNotificationContent()
+            content.threadIdentifier = "episodes" // regroupées sur l'iPhone et l'Apple Watch
             content.title = "▶️ Nouvel épisode : \(ep.title)"
             content.body = "L'épisode \(ep.episode) est disponible."
             content.sound = .default
@@ -224,6 +226,7 @@ enum NewsAlerts {
         for article in unseen {
             guard let name = followed(article, p) else { continue }
             let content = UNMutableNotificationContent()
+            content.threadIdentifier = "follows" // regroupées sur l'iPhone et l'Apple Watch
             content.title = "🔔 \(name)"
             content.body = article.title
             content.sound = .default
@@ -250,6 +253,7 @@ enum NewsAlerts {
 
         if fresh.count > 3 {
             let content = UNMutableNotificationContent()
+            content.threadIdentifier = "news" // regroupées sur l'iPhone et l'Apple Watch
             content.title = "🎮 \(fresh.count) nouvelles actus"
             content.body = fresh.prefix(3).map(\.title).joined(separator: " · ")
             content.sound = .default
@@ -258,6 +262,7 @@ enum NewsAlerts {
         } else {
             for article in fresh {
                 let content = UNMutableNotificationContent()
+                content.threadIdentifier = "news" // regroupées sur l'iPhone et l'Apple Watch
                 content.title = article.category == "Test" ? "⭐ Nouveau test\(article.score.map { " · \($0)" } ?? "")" : "📰 Nouvelle actu"
                 content.body = article.title
                 content.sound = .default
