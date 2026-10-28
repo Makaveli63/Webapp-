@@ -123,6 +123,20 @@ export interface CalendarData {
   database: (Omit<CalendarGame, "date"> & { date?: string; playtime?: number; genres?: string[] })[];
   /** Grande base de jeux (plusieurs milliers, RAWG), uniquement pour la recherche */
   searchGames: (Omit<CalendarGame, "date"> & { date?: string })[];
+  /** Jeux les plus attendus selon RAWG (date précise), ajoutés aux grosses sorties */
+  anticipated: Release[];
+}
+
+/** Jeu attendu sans date précise (« Prévu en 2028 ») : pas de compte à rebours. */
+export interface AnnouncedRelease {
+  id: string;
+  title: string;
+  short?: string;
+  /** Période annoncée par l'éditeur, ex. « 2028 » ou « fin 2027 » */
+  window: string;
+  platforms: Platform[];
+  source: string;
+  image?: string;
 }
 
 /** Jeu affiché dans la recherche (base RAWG, calendrier, sorties, jeux gratuits). */

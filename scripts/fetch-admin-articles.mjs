@@ -24,8 +24,40 @@ function safeMarkdown(md) {
 
 const plain = (md) => String(md).replace(/[#*_>`\[\]()!-]/g, " ").replace(/\s+/g, " ").trim();
 
+const RELEASES_FILE = path.resolve(".cache/news/admin-releases.json");
+
+/** Grosses sorties ajoutées dans le tableau de bord (fonction publique get_admin_releases, admin.sql). */
+async function adminReleases() {
+  try {
+    const res = await fetch(`${URL_BASE}/rest/v1/rpc/get_admin_releases`, {
+      method: "POST",
+      headers: { apikey: KEY, ...(KEY.startsWith("eyJ") ? { Authorization: `Bearer ${KEY}` } : {}), "Content-Type": "application/json" },
+      body: "{}",
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!res.ok) return console.log(`[admin] sorties indisponibles (HTTP ${res.status}) — admin.sql exécuté ?`);
+    const rows = await res.json();
+    const list = (Array.isArray(rows) ? rows : [])
+      .filter((r) => r && typeof r.title === "string" && /^\d{4}-\d{2}-\d{2}$/.test(r.date ?? ""))
+      .map((r) => ({
+        id: `admin-${String(r.id).slice(0, 8)}`,
+        title: r.title.slice(0, 120),
+        date: r.date,
+        platforms: (Array.isArray(r.platforms) ? r.platforms : []).filter((p) => PLATFORMS.includes(p)).slice(0, 5),
+        image: typeof r.image === "string" && r.image.startsWith("https://") ? r.image : undefined,
+        source: typeof r.source === "string" && r.source.startsWith("https://") ? r.source : `${SITE}/sorties/`,
+      }));
+    writeFileSync(`${RELEASES_FILE}.tmp`, JSON.stringify(list));
+    renameSync(`${RELEASES_FILE}.tmp`, RELEASES_FILE);
+    console.log(`[admin] ${list.length} grosse(s) sortie(s) ajoutée(s) dans le tableau de bord.`);
+  } catch (err) {
+    console.log(`[admin] sorties indisponibles (${err.message})`);
+  }
+}
+
 async function main() {
   if (!URL_BASE || !KEY) return console.log("[admin] Supabase non configuré : pas d'articles de l'admin.");
+  await adminReleases();
   const res = await fetch(`${URL_BASE}/rest/v1/rpc/get_published_articles`, {
     method: "POST",
     headers: { apikey: KEY, ...(KEY.startsWith("eyJ") ? { Authorization: `Bearer ${KEY}` } : {}), "Content-Type": "application/json" },

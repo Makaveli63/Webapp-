@@ -31,7 +31,10 @@ const SQL_FILES: Record<string, string> = {
   admin_set_notifications: "notifications.sql",
   sync_save: "extras.sql", sync_load: "extras.sql",
   toggle_dislike: "dislikes.sql", get_dislikes: "dislikes.sql",
-  check_pseudo: "profiles.sql", save_player: "profiles.sql", merge_player: "profiles.sql", get_player: "profiles.sql", get_players: "profiles.sql",
+  check_pseudo: "profiles.sql", save_player: "profiles.sql", merge_player: "profiles.sql",
+  admin_register_device: "admin.sql", admin_list_devices: "admin.sql", admin_forget_device: "admin.sql", admin_device_status: "admin.sql",
+  admin_community: "admin.sql", admin_add_source: "admin.sql", admin_delete_source: "admin.sql", get_sources: "admin.sql",
+  admin_add_release: "admin.sql", admin_delete_release: "admin.sql", get_admin_releases: "admin.sql", get_player: "profiles.sql", get_players: "profiles.sql",
   rate_game: "community.sql", get_game_rating: "community.sql", predict_game: "community.sql", get_predictions: "community.sql",
   get_my_activity: "community.sql", get_author_badges: "community.sql", admin_publish_article: "community.sql",
   admin_delete_article: "community.sql", get_published_articles: "community.sql",
@@ -132,6 +135,10 @@ export function clearAdminSession() {
 }
 
 export const ADMIN_ERRORS: Record<string, string> = {
+  TROP_DE_SOURCES: "40 sources ajoutées au maximum : retire-en une avant d'en ajouter.",
+  SOURCE_EXISTANTE: "Cette source est déjà dans la liste.",
+  SOURCE_INVALIDE: "Source refusée : vérifie le nom (2 à 60 caractères) et l'adresse du flux (https://…).",
+  SORTIE_INVALIDE: "Sortie refusée : vérifie le titre, la date et les adresses (https://…).",
   ACCES_REFUSE: "Mot de passe incorrect.",
   TROP_DE_TENTATIVES: "Trop de tentatives : réessayez dans 15 minutes.",
   ARTICLE_INVALIDE: "Article refusé : vérifie le titre, le texte, l'image (https://) et la note (ex. 16/20).",

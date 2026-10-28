@@ -91,6 +91,31 @@ function getFeeds() {
     .map(([name, url]) => ({ name, url }));
 }
 
+/**
+ * Sources ajoutées dans le tableau de bord (fonction publique get_sources, supabase/admin.sql), en plus de feeds.json.
+ * Une source déjà présente (même adresse) n'est pas lue deux fois.
+ */
+async function adminFeeds() {
+  const base = (process.env.SUPABASE_URL ?? "").trim().replace(/\/+$/, "").replace(/\/rest\/v1$/, "");
+  const key = (process.env.SUPABASE_ANON_KEY ?? "").trim();
+  if (!base || !key) return [];
+  try {
+    const res = await fetch(`${base}/rest/v1/rpc/get_sources`, {
+      method: "POST",
+      headers: { apikey: key, ...(key.startsWith("eyJ") ? { Authorization: `Bearer ${key}` } : {}), "Content-Type": "application/json" },
+      body: "{}",
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!res.ok) return [];
+    const rows = await res.json();
+    return (Array.isArray(rows) ? rows : [])
+      .filter((r) => r && typeof r.name === "string" && typeof r.url === "string" && r.url.startsWith("https://"))
+      .map((r) => ({ name: r.name.slice(0, 60), url: r.url, ...(r.category === "Anime" ? { category: "Anime" } : {}) }));
+  } catch {
+    return []; // service absent : seules les sources de feeds.json sont lues
+  }
+}
+
 function detectPlatforms(text) {
   const found = PLATFORM_KEYWORDS.filter(([, re]) => re.test(text)).map(([p]) => p);
   return found.length ? found : ["Multi"];
@@ -554,7 +579,11 @@ function writeJson(file, data) {
 async function main() {
   mkdirSync(CACHE_DIR, { recursive: true });
 
-  const feeds = getFeeds();
+  const base = getFeeds();
+  const known = new Set(base.map((f) => f.url));
+  const extra = (await adminFeeds()).filter((f) => !known.has(f.url));
+  if (extra.length) console.log(`[rss] sources ajoutées dans le tableau de bord : ${extra.map((f) => f.name).join(", ")}`);
+  const feeds = [...base, ...extra];
   const results = await Promise.allSettled(feeds.map(fetchFeed));
   results.forEach((r, i) =>
     console.log(`[rss] ${feeds[i].name}: ${r.status === "fulfilled" ? `${r.value.length} articles` : `échec (${r.reason?.message})`}`),

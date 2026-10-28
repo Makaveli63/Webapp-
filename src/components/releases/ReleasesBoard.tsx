@@ -1,9 +1,12 @@
 "use client";
 
-import { CalendarDays, SlidersHorizontal } from "lucide-react";
+import { CalendarDays, ExternalLink, SlidersHorizontal } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import type { CalendarGame, Release } from "@/types";
+import { PlatformBadge } from "@/components/ui/Badge";
+import { RemoteImage } from "@/components/ui/RemoteImage";
+import { themeFor } from "@/lib/themes";
+import type { AnnouncedRelease, CalendarGame, Release } from "@/types";
 import { CalendarSection } from "./CalendarSection";
 import { PinnedReleaseGrid } from "./PinnedReleaseGrid";
 
@@ -25,6 +28,8 @@ const matches = (platforms: readonly string[], chosen: ConsoleId[]) =>
 
 interface Props {
   releases: (Release & { at: string })[];
+  /** Jeux attendus sans date précise */
+  announced: AnnouncedRelease[];
   week: CalendarGame[];
   month: CalendarGame[];
   nextMonth: CalendarGame[];
@@ -34,7 +39,7 @@ interface Props {
 }
 
 /** Page Sorties : « Mon calendrier », filtre des consoles (retenu sur l'appareil), puis les sorties filtrées. */
-export function ReleasesBoard({ releases, week, month, nextMonth, today, monthTitle, nextTitle }: Props) {
+export function ReleasesBoard({ releases, announced, week, month, nextMonth, today, monthTitle, nextTitle }: Props) {
   const [chosen, setChosen] = useState<ConsoleId[]>([]);
   // Choix retenu : lu après l'affichage (la page publiée montre toutes les consoles).
   useEffect(() => {
@@ -58,11 +63,12 @@ export function ReleasesBoard({ releases, week, month, nextMonth, today, monthTi
   const f = useMemo(
     () => ({
       releases: releases.filter((r) => matches(r.platforms, chosen)),
+      announced: announced.filter((r) => matches(r.platforms, chosen)),
       week: week.filter((g) => matches(g.platforms, chosen)),
       month: month.filter((g) => matches(g.platforms, chosen)),
       nextMonth: nextMonth.filter((g) => matches(g.platforms, chosen)),
     }),
-    [releases, week, month, nextMonth, chosen],
+    [releases, announced, week, month, nextMonth, chosen],
   );
   const chip = (on: boolean) =>
     `shrink-0 rounded-full px-3 py-1.5 text-sm font-semibold ring-1 ring-inset transition-colors ${on ? "bg-accent text-white ring-accent" : "glass-pill text-heading ring-border"}`;
@@ -90,6 +96,32 @@ export function ReleasesBoard({ releases, week, month, nextMonth, today, monthTi
         <section aria-labelledby="big-title">
           <h2 id="big-title" className="text-xl font-bold text-heading">Les plus attendus</h2>
           <PinnedReleaseGrid releases={f.releases} className="scroll-row -mx-4 mt-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 lg:grid-cols-3" />
+        </section>
+      )}
+
+      {f.announced.length > 0 && (
+        <section aria-labelledby="announced-title">
+          <h2 id="announced-title" className="text-xl font-bold text-heading">Annoncés, date à venir</h2>
+          <p className="mt-1 text-sm text-muted">Pas encore de date précise : le compte à rebours démarrera dès qu&apos;elle sera officielle.</p>
+          <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {f.announced.map((r) => (
+              <li key={r.id} className="glass flex overflow-hidden rounded-xl">
+                <RemoteImage src={r.image} alt={r.title} theme={themeFor(r.title, r.platforms)} seed={r.id} className="w-28 shrink-0 sm:w-32" />
+                <div className="flex min-w-0 flex-1 flex-col gap-1.5 p-3">
+                  <p className="font-bold leading-tight text-heading">{r.title}</p>
+                  <p className="text-sm font-semibold text-accent">Prévu en {r.window}</p>
+                  <p className="flex flex-wrap gap-1">
+                    {r.platforms.map((p) => (
+                      <PlatformBadge key={p} platform={p} />
+                    ))}
+                  </p>
+                  <a href={r.source} target="_blank" rel="noopener noreferrer" className="mt-auto inline-flex items-center gap-1 text-xs text-muted underline underline-offset-2 hover:text-fg">
+                    Source de l&apos;annonce <ExternalLink className="size-3" aria-hidden />
+                  </a>
+                </div>
+              </li>
+            ))}
+          </ul>
         </section>
       )}
 

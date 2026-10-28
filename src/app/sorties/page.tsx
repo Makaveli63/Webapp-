@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { ReleasesBoard } from "@/components/releases/ReleasesBoard";
 import { getCalendar, groupCalendar } from "@/lib/calendar";
-import { getUpcomingReleases } from "@/lib/releases";
+import { getAnnouncedReleases, getUpcomingReleases } from "@/lib/releases";
 
 export const metadata: Metadata = {
   title: "Sorties jeux vidéo de la semaine et du mois",
@@ -28,6 +28,7 @@ export default function ReleasesPage() {
 
       <ReleasesBoard
         releases={releases}
+        announced={getAnnouncedReleases()}
         week={week}
         month={month}
         nextMonth={nextMonth}

@@ -2,12 +2,23 @@
 
 import { ShieldCheck } from "lucide-react";
 import Link from "next/link";
-import { useSyncExternalStore } from "react";
-import { isAdminDevice, onAdminDeviceChange } from "@/lib/social";
+import { useEffect, useSyncExternalStore } from "react";
+import { clearAdminSession, isAdminDevice, onAdminDeviceChange, rpc, setAdminDevice, voterId } from "@/lib/social";
 
 /** Onglet « Admin » : affiché uniquement sur les appareils où l'administrateur s'est déjà connecté. */
 export function AdminLink({ active }: { active: boolean }) {
   const show = useSyncExternalStore(onAdminDeviceChange, isAdminDevice, () => false);
+  // Appareil oublié depuis le tableau de bord d'un autre appareil : l'onglet disparaît.
+  useEffect(() => {
+    if (!show) return;
+    rpc<string>("admin_device_status", { p_voter: voterId() })
+      .then((status) => {
+        if (status !== "revoked") return;
+        clearAdminSession();
+        setAdminDevice(false);
+      })
+      .catch(() => {});
+  }, [show]);
   if (!show) return null;
   return (
     <Link

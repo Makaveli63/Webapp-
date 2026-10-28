@@ -1,7 +1,7 @@
 import "server-only";
 import fs from "node:fs";
 import path from "node:path";
-import type { CalendarData, CalendarGame } from "@/types";
+import type { CalendarData, CalendarGame, Release } from "@/types";
 
 /** Écrit par scripts/fetch-calendar.mjs (`npm run news`) avant le build. */
 const FILE = path.join(process.cwd(), ".cache", "news", "calendar.json");
@@ -21,9 +21,12 @@ export function getCalendar(): CalendarData {
       database: (Array.isArray(data.database) ? data.database : []).filter((g) => !!g && typeof g.title === "string"),
       searchGames: (Array.isArray(data.searchGames) ? data.searchGames : []).filter((g) => !!g && typeof g.title === "string"),
       consolePhotos: data.consolePhotos ?? {},
+      anticipated: (Array.isArray(data.anticipated) ? data.anticipated : []).filter(
+        (r): r is Release => !!r && typeof r.title === "string" && /^\d{4}-\d{2}-\d{2}$/.test(r.date ?? ""),
+      ),
     };
   } catch {
-    return { games: [], releaseImages: {}, releaseVideos: {}, database: [], searchGames: [], consolePhotos: {} };
+    return { games: [], releaseImages: {}, releaseVideos: {}, database: [], searchGames: [], consolePhotos: {}, anticipated: [] };
   }
 }
 

@@ -105,6 +105,31 @@ async function fromRawg() {
   return games;
 }
 
+// Plateformes des grosses sorties (le compte à rebours ne connaît que les grandes familles).
+const BIG_PLATFORMS = { PS5: "PS5", "Xbox Series": "Xbox", "Switch 2": "Switch 2", PC: "PC", iOS: "Mobile", Android: "Mobile" };
+
+/**
+ * Jeux les plus attendus selon RAWG (les plus ajoutés aux listes des joueurs), avec une date de sortie précise
+ * dans les 18 prochains mois. Les dates « 31 décembre » sont des estimations de RAWG (« sortie en 2027 ») : écartées.
+ */
+async function anticipatedFromRawg() {
+  const today = new Date();
+  const from = today.toISOString().slice(0, 10);
+  const to = new Date(today.getTime() + 548 * 86_400_000).toISOString().slice(0, 10);
+  const data = await get(`${RAWG_BASE}/api/games?key=${encodeURIComponent(RAWG_KEY)}&dates=${from},${to}&ordering=-added&page_size=40`);
+  return (data?.results ?? [])
+    .filter((g) => g?.name && !g.tba && /^\d{4}-\d{2}-\d{2}$/.test(g.released ?? "") && !/-12-31$/.test(g.released) && (g.added ?? 0) >= 150)
+    .slice(0, 10)
+    .map((g) => ({
+      id: `rawg-${g.id}`,
+      title: clean(g.name, 120),
+      date: g.released,
+      platforms: [...new Set(platformLabels((g.platforms ?? []).map((p) => p?.platform?.name ?? "")).map((p) => BIG_PLATFORMS[p]).filter(Boolean))],
+      image: httpsUrl(g.background_image),
+      source: httpsUrl(`https://rawg.io/games/${g.slug}`),
+    }));
+}
+
 /** Première bande-annonce Steam lisible directement (MP4 ou WebM). */
 function steamVideo(movies) {
   for (const m of Array.isArray(movies) ? movies : []) {
@@ -177,7 +202,8 @@ async function ogImage(pageUrl) {
 }
 
 async function releaseMedia() {
-  const releases = JSON.parse(readFileSync("src/data/releases.json", "utf8"));
+  // Grosses sorties datées et jeux annoncés sans date : même recherche de visuel et de bande-annonce.
+  const releases = [...JSON.parse(readFileSync("src/data/releases.json", "utf8")), ...JSON.parse(readFileSync("src/data/announced.json", "utf8"))];
   const images = {};
   const videos = {};
   for (const r of releases) {
@@ -380,6 +406,15 @@ async function main() {
     console.log(`[recherche] base de jeux indisponible (${err.message})`);
   }
   const { images, videos } = await releaseMedia();
+  let anticipated = [];
+  if (RAWG_KEY) {
+    try {
+      anticipated = await anticipatedFromRawg();
+      console.log(`[sorties] jeux les plus attendus (RAWG) : ${anticipated.map((g) => g.title).join(", ") || "aucun"}`);
+    } catch (err) {
+      console.log(`[sorties] jeux attendus indisponibles (${err.message})`);
+    }
+  }
   const photos = await consolePhotos();
   console.log(`[sorties] photos libres des consoles : ${Object.keys(photos).join(", ") || "aucune"}`);
   console.log(
@@ -394,6 +429,7 @@ async function main() {
     games: games.filter((g) => !seen.has(g.id) && seen.add(g.id)).sort((a, b) => a.date.localeCompare(b.date)),
     releaseImages: images,
     releaseVideos: videos,
+    anticipated,
     database,
     searchGames: searchGames.map((g) => ({ id: g.id, title: g.title, date: g.date, platforms: g.platforms, image: g.image, url: g.url, rating: g.rating })),
     consolePhotos: photos,

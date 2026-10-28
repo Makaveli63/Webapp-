@@ -49,5 +49,30 @@
     ],
     "source": "https://engadget.com/2250355/final-fantasy-vii-revelation-launches-on-april-8-2027/",
     "theme": "ff"
+  },
+  {
+    "id": "tomb-raider-legacy-of-atlantis",
+    "title": "Tomb Raider: Legacy of Atlantis",
+    "short": "Tomb Raider",
+    "subtitle": "Remake du premier Tomb Raider",
+    "date": "2027-02-12",
+    "platforms": [
+      "PS5",
+      "Xbox",
+      "Switch 2",
+      "PC"
+    ],
+    "source": "https://gameinformer.com/state-of-play/2026/06/02/tomb-raider-legacy-of-atlantis-gets-february-2027-release-date-in-new"
+  },
+  {
+    "id": "fable-2027",
+    "title": "Fable",
+    "date": "2027-02-23",
+    "platforms": [
+      "Xbox",
+      "PC",
+      "PS5"
+    ],
+    "source": "https://www.gamespot.com/articles/fable-release-date-announced-with-a-look-at-new-and-old-villains/"
   }
 ]

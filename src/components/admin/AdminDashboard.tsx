@@ -5,9 +5,10 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { loadSearchIndex } from "@/lib/search-index";
 import { setPageGlow } from "@/lib/background";
-import { ADMIN_ERRORS, ADMIN_SESSION_KEY, rpc, setAdminDevice, socialEnabled, timeAgo } from "@/lib/social";
+import { ADMIN_ERRORS, ADMIN_SESSION_KEY, rpc, setAdminDevice, socialEnabled, timeAgo, voterId } from "@/lib/social";
 import { AdminArticles } from "./AdminArticles";
 import { AdminStatus } from "./AdminStatus";
+import { AdminCommunity, AdminDevices, AdminReleases, AdminSources, deviceLabel } from "./AdminTools";
 import { BarList, DailyChart, type DailyPoint } from "./charts";
 
 interface Stats {
@@ -107,6 +108,8 @@ export function AdminDashboard() {
         setPassword(pwd);
         sessionStorage.setItem(SESSION_KEY, pwd);
         setAdminDevice(true); // affiche l'onglet « Admin » sur cet appareil
+        // Liste des appareils admin (supabase/admin.sql) : cet appareil y est (ré)inscrit.
+        rpc("admin_register_device", { p_password: pwd, p_voter: voterId(), p_label: deviceLabel() }).catch(() => {});
       }
     } catch (err) {
       setError((err as Error).message);
@@ -134,6 +137,19 @@ export function AdminDashboard() {
 
   // Session déjà ouverte dans cet onglet ; titres des articles pour les classements.
   useEffect(() => {
+    // Appareil « oublié » depuis un autre : plus d'onglet Admin, plus de session ni de mot de passe enregistré.
+    rpc<string>("admin_device_status", { p_voter: voterId() })
+      .then((status) => {
+        if (status !== "revoked") return;
+        sessionStorage.removeItem(SESSION_KEY);
+        setAdminDevice(false);
+        vault("forget");
+        setVaultSaved((v) => (v === null ? null : false));
+        setStats(null);
+        setPassword("");
+        setError("Cet appareil a été oublié depuis le tableau de bord : reconnecte-toi avec le mot de passe.");
+      })
+      .catch(() => {}); // service pas encore installé
     const saved = sessionStorage.getItem(SESSION_KEY);
     if (saved) load(saved, 30);
     loadSearchIndex()
@@ -272,6 +288,8 @@ export function AdminDashboard() {
       </div>
 
       <AdminStatus />
+      <AdminCommunity password={password} titles={titles} />
+      <AdminDevices password={password} />
 
       <section className="rounded-xl glass p-4">
         <div className="flex items-center justify-between gap-3">
@@ -345,6 +363,8 @@ export function AdminDashboard() {
       </section>
 
       <AdminArticles password={password} />
+      <AdminSources password={password} />
+      <AdminReleases password={password} />
 
       <section className="rounded-xl glass p-4">
         <h2 className="mb-1 flex items-center gap-2 font-semibold text-heading">
