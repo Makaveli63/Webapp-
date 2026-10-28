@@ -45,6 +45,9 @@ export function ReleaseBannerContent({ releases }: { releases: Item[] }) {
       anim.current?.cancel();
       const from = el.getBoundingClientRect();
       const frame = (r: DOMRect, radius: number) => ({ width: `${r.width}px`, height: `${r.height}px`, borderRadius: `${radius}px` });
+      // Fondu de la fermeture précédente : à retirer, sinon le contenu resterait invisible.
+      const content = el.querySelector<HTMLElement>(".island-panel > div");
+      content?.getAnimations().forEach((a) => a.cancel());
       if (target) {
         collapsed.current = from;
         flushSync(() => setOpen(true));
@@ -56,12 +59,18 @@ export function ReleaseBannerContent({ releases }: { releases: Item[] }) {
       } else {
         const to = collapsed.current ?? from;
         // Le contenu s'efface d'abord en fondu, puis l'île se rétracte autour du nom (resté centré).
-        el.querySelector(".island-panel > div")?.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 160, easing: "ease-out", fill: "forwards" });
-        anim.current = el.animate([frame(from, 30), { ...frame(from, 30), offset: 0.3 }, frame(to, to.height / 2)], {
+        const fade = content?.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 160, easing: "ease-out", fill: "forwards" });
+        const shrink = el.animate([frame(from, 30), { ...frame(from, 30), offset: 0.3 }, frame(to, to.height / 2)], {
           duration: 440,
           easing: "cubic-bezier(.4, 0, .2, 1)",
+          fill: "forwards", // garde la petite taille jusqu'à ce que l'île soit vraiment refermée
         });
-        anim.current.onfinish = () => setOpen(false);
+        anim.current = shrink;
+        shrink.onfinish = () => {
+          flushSync(() => setOpen(false));
+          shrink.cancel();
+          fade?.cancel();
+        };
       }
     },
     [open],

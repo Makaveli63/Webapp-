@@ -555,9 +555,10 @@ html[data-splash="off"] .splash { display: none; }
     backdrop-filter: blur(28px) saturate(220%);
     box-shadow: inset 0 1px 0 var(--glass-hi), 0 16px 40px -12px rgb(0 0 0 / .5);
   }
-  :root[data-style="capsule"] .tabbar a { height: 3.4rem; border-radius: 9999px; font-size: 10.5px; font-weight: 600; color: var(--heading); }
-  :root[data-style="capsule"] .tabbar a[aria-current="page"] { color: var(--accent); background: rgb(120 120 128 / .16); }
-  :root[data-style="capsule"][data-theme="dark"] .tabbar a[aria-current="page"] { background: rgb(118 118 128 / .24); }
+  :root[data-style="capsule"] .tabbar a { height: 3.4rem; border-radius: 9999px; font-size: 10.5px; font-weight: 600; }
+  :root[data-style="capsule"] .tabbar a.text-muted { color: var(--heading); }
+  :root[data-style="capsule"] .tab-lens { background: rgb(120 120 128 / .16); }
+  :root[data-style="capsule"][data-theme="dark"] .tab-lens { background: rgb(118 118 128 / .26); }
 
 }
 
@@ -668,3 +669,30 @@ html[data-splash="off"] .splash { display: none; }
 /* Le nom reste centré en haut, ouvert comme fermé : rien ne saute pendant l'animation. */
 :root[data-style="capsule"] .island-bar { width: auto; max-width: min(92vw, 30rem); margin: 0 auto; }
 :root[data-style="capsule"] .island-chevron { margin-left: .25rem; }
+
+/* ---------- Barre d'onglets : bulle qui suit le doigt ----------
+   Au repos, pastille sous l'onglet actif ; en glissant, loupe de verre plus grosse, liseré irisé. */
+.tab-lens {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 0;
+  border-radius: 9999px;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  transition: transform .5s cubic-bezier(.2, .9, .3, 1.25), width .3s ease, opacity .2s, background .2s, box-shadow .2s;
+}
+.tab-lens-drag {
+  transition: transform .14s cubic-bezier(.2, .8, .3, 1), width .3s ease, background .2s, box-shadow .2s;
+  background: rgb(255 255 255 / .1);
+  -webkit-backdrop-filter: blur(1.5px) saturate(2) brightness(1.08);
+  backdrop-filter: blur(1.5px) saturate(2) brightness(1.08);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / .55),
+    inset 3px 0 6px -2px rgb(255 64 160 / .45),
+    inset -3px 0 6px -2px rgb(56 200 255 / .45),
+    inset 0 3px 6px -3px rgb(255 230 120 / .4),
+    0 10px 24px -8px rgb(0 0 0 / .45);
+}
+@media (prefers-reduced-motion: reduce) { .tab-lens, .tab-lens-drag { transition: none; } }
