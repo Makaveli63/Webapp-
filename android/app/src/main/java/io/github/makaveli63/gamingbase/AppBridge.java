@@ -115,6 +115,12 @@ final class AppBridge {
         activity.runOnUiThread(() -> activity.reader().start(json));
     }
 
+    /** Réglages : voix françaises du téléphone (réponse par l'événement « gb-voices »). */
+    @JavascriptInterface
+    public void speakVoices() {
+        activity.runOnUiThread(() -> activity.reader().sendVoices());
+    }
+
     /** pause, resume, next, previous ou stop. */
     @JavascriptInterface
     public void speakControl(String cmd) {

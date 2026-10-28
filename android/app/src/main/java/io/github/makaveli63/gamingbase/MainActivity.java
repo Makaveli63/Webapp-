@@ -226,8 +226,18 @@ public class MainActivity extends Activity {
     /** « Écouter les actus » : lecteur créé au premier usage. */
     NewsReader reader() {
         if (reader == null) {
-            reader = new NewsReader(this, (index, state) -> runOnUiThread(() -> web.evaluateJavascript(
-                    "window.dispatchEvent(new CustomEvent('gb-speak',{detail:{index:" + index + ",state:'" + state + "'}}))", null)));
+            reader = new NewsReader(this, new NewsReader.Listener() {
+                @Override
+                public void onState(int index, String state) {
+                    runOnUiThread(() -> web.evaluateJavascript(
+                            "window.dispatchEvent(new CustomEvent('gb-speak',{detail:{index:" + index + ",state:'" + state + "'}}))", null));
+                }
+
+                @Override
+                public void onVoices(String json) {
+                    runOnUiThread(() -> web.evaluateJavascript("window.dispatchEvent(new CustomEvent('gb-voices',{detail:" + json + "}))", null));
+                }
+            });
         }
         return reader;
     }

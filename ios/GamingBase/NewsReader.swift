@@ -19,6 +19,33 @@ final class NewsReader: NSObject, AVSpeechSynthesizerDelegate {
         synth.delegate = self
     }
 
+    /// Voix choisie dans les réglages du site (identifiant iOS), sinon la plus naturelle installée ; vitesse 0,8 à 1,3.
+    var voiceId: String?
+    var rate: Float = 1
+
+    /// Voix françaises de l'iPhone, les plus naturelles d'abord (Premium, puis Améliorée, puis standard).
+    static func frenchVoices() -> [AVSpeechSynthesisVoice] {
+        AVSpeechSynthesisVoice.speechVoices()
+            .filter { $0.language.hasPrefix("fr") }
+            .sorted { a, b in
+                a.quality.rawValue != b.quality.rawValue ? a.quality.rawValue > b.quality.rawValue
+                    : (a.language == "fr-FR") != (b.language == "fr-FR") ? a.language == "fr-FR" : a.name < b.name
+            }
+    }
+
+    static func voiceList() -> [[String: Any]] {
+        frenchVoices().map { v in
+            let quality = v.quality == .premium ? "Premium" : v.quality == .enhanced ? "Améliorée" : "Standard"
+            let region = v.language == "fr-FR" ? "France" : v.language == "fr-CA" ? "Canada" : v.language
+            return ["id": v.identifier, "name": v.name, "detail": "\(quality) · \(region)", "natural": v.quality != .default]
+        }
+    }
+
+    private var voice: AVSpeechSynthesisVoice? {
+        if let id = voiceId, let chosen = AVSpeechSynthesisVoice(identifier: id) { return chosen }
+        return Self.frenchVoices().first ?? AVSpeechSynthesisVoice(language: "fr-FR")
+    }
+
     func start(_ list: [[String: Any]]) {
         items = list.prefix(20).compactMap { item in
             guard let text = item["text"] as? String, !text.isEmpty else { return nil }
@@ -48,8 +75,10 @@ final class NewsReader: NSObject, AVSpeechSynthesizerDelegate {
         guard items.indices.contains(i) else { return stop() }
         index = i
         let utterance = AVSpeechUtterance(string: items[i].text)
-        utterance.voice = AVSpeechSynthesisVoice(language: "fr-FR")
-        utterance.rate = AVSpeechUtteranceDefaultSpeechRate
+        utterance.voice = voice
+        utterance.rate = min(AVSpeechUtteranceMaximumSpeechRate, AVSpeechUtteranceDefaultSpeechRate * max(0.7, min(rate, 1.4)))
+        utterance.pitchMultiplier = 1
+        utterance.postUtteranceDelay = 0.35 // petite respiration entre deux actus
         synth.speak(utterance)
         MPNowPlayingInfoCenter.default().nowPlayingInfo = [
             MPMediaItemPropertyTitle: items[i].title,

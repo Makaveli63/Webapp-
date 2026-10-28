@@ -3,6 +3,7 @@
 import { Headphones, Pause, Play, SkipBack, SkipForward, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { browserVoice, readVoice } from "@/lib/voice";
 
 export interface SpokenItem {
   title: string;
@@ -59,8 +60,10 @@ export function ListenNews({ items }: { items: SpokenItem[] }) {
     web.current = { i };
     const u = new SpeechSynthesisUtterance(items[i].text);
     u.lang = "fr-FR";
-    const voice = speechSynthesis.getVoices().find((v) => v.lang.startsWith("fr"));
+    const prefs = readVoice();
+    const voice = browserVoice(prefs.voice);
     if (voice) u.voice = voice;
+    u.rate = prefs.rate;
     u.onend = () => web.current?.i === i && speakWeb(i + 1);
     speechSynthesis.speak(u);
     setIndex(i);
@@ -70,8 +73,9 @@ export function ListenNews({ items }: { items: SpokenItem[] }) {
   const start = () => {
     const kind = native();
     const w = window as AppWindow;
-    if (kind === "android") w.GamingBaseApp?.speak?.(JSON.stringify(items));
-    else if (kind === "ios") w.webkit?.messageHandlers?.gamingbase?.postMessage({ speak: items });
+    const prefs = readVoice();
+    if (kind === "android") w.GamingBaseApp?.speak?.(JSON.stringify({ items, voice: prefs.voice, rate: prefs.rate }));
+    else if (kind === "ios") w.webkit?.messageHandlers?.gamingbase?.postMessage({ speak: items, speakVoice: prefs.voice, speakRate: prefs.rate });
     else if (typeof speechSynthesis !== "undefined") return speakWeb(0);
     setIndex(0);
     setState("playing");

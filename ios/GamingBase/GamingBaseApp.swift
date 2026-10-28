@@ -262,7 +262,16 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
             return
         }
         // « Écouter les actus » : lecture à voix haute.
+        // Réglages : liste des voix françaises de l'iPhone.
+        if body["speakVoices"] as? Bool == true {
+            guard let data = try? JSONSerialization.data(withJSONObject: NewsReader.voiceList()),
+                  let json = String(data: data, encoding: .utf8) else { return }
+            webView.evaluateJavaScript("window.dispatchEvent(new CustomEvent('gb-voices',{detail:\(json)}))", completionHandler: nil)
+            return
+        }
         if let list = body["speak"] as? [[String: Any]] {
+            NewsReader.shared.voiceId = (body["speakVoice"] as? String).flatMap { $0.isEmpty ? nil : $0 }
+            NewsReader.shared.rate = (body["speakRate"] as? NSNumber)?.floatValue ?? 1
             NewsReader.shared.onState = { [weak self] index, state in
                 self?.webView.evaluateJavaScript(
                     "window.dispatchEvent(new CustomEvent('gb-speak',{detail:{index:\(index),state:'\(state)'}}))", completionHandler: nil)

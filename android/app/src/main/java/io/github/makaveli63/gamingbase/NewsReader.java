@@ -3,11 +3,13 @@ package io.github.makaveli63.gamingbase;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
+import android.speech.tts.Voice;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
@@ -18,7 +20,14 @@ import java.util.Locale;
 final class NewsReader {
     interface Listener {
         void onState(int index, String state);
+
+        /** Voix françaises du téléphone (JSON), pour les réglages du site. */
+        void onVoices(String json);
     }
+
+    private String voiceName;
+    private float rate = 1f;
+    private boolean voicesWanted;
 
     private final Listener listener;
     private final List<String> texts = new ArrayList<>();
@@ -36,6 +45,7 @@ final class NewsReader {
                 return;
             }
             tts.setLanguage(Locale.FRANCE);
+            if (voicesWanted) sendVoices();
             tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
                 @Override
                 public void onStart(String id) {
@@ -57,10 +67,55 @@ final class NewsReader {
         });
     }
 
+    /** Voix françaises, les plus naturelles d'abord (qualité « très haute », puis sur l'appareil). */
+    private List<Voice> frenchVoices() {
+        List<Voice> out = new ArrayList<>();
+        try {
+            for (Voice v : tts.getVoices()) {
+                if (v.getLocale() != null && "fr".equals(v.getLocale().getLanguage()) && !v.getFeatures().contains("notInstalled")) out.add(v);
+            }
+        } catch (Exception ignored) {
+            // moteur sans liste de voix
+        }
+        Collections.sort(out, (a, b) -> a.getQuality() != b.getQuality() ? b.getQuality() - a.getQuality()
+                : a.isNetworkConnectionRequired() != b.isNetworkConnectionRequired() ? (a.isNetworkConnectionRequired() ? 1 : -1)
+                : a.getName().compareTo(b.getName()));
+        return out;
+    }
+
+    void sendVoices() {
+        if (!ready) {
+            voicesWanted = true;
+            return;
+        }
+        voicesWanted = false;
+        JSONArray list = new JSONArray();
+        int n = 0;
+        for (Voice v : frenchVoices()) {
+            try {
+                String quality = v.getQuality() >= Voice.QUALITY_VERY_HIGH ? "Très naturelle" : v.getQuality() >= Voice.QUALITY_HIGH ? "Naturelle" : "Standard";
+                String where = v.isNetworkConnectionRequired() ? "en ligne" : "sur le téléphone";
+                String region = "CA".equals(v.getLocale().getCountry()) ? "Canada" : "BE".equals(v.getLocale().getCountry()) ? "Belgique" : "France";
+                list.put(new JSONObject().put("id", v.getName()).put("name", "Voix " + (++n) + " · " + region)
+                        .put("detail", quality + " · " + where).put("natural", v.getQuality() >= Voice.QUALITY_HIGH));
+            } catch (Exception ignored) {
+                // voix ignorée
+            }
+        }
+        listener.onVoices(list.toString());
+    }
+
     void start(String json) {
         texts.clear();
         try {
-            JSONArray items = new JSONArray(json);
+            JSONArray items;
+            if (json.trim().startsWith("{")) {
+                JSONObject o = new JSONObject(json);
+                items = o.optJSONArray("items");
+                voiceName = o.optString("voice", "");
+                rate = (float) Math.max(0.7, Math.min(1.4, o.optDouble("rate", 1)));
+                if (items == null) items = new JSONArray();
+            } else items = new JSONArray(json);
             for (int i = 0; i < items.length() && i < 20; i++) {
                 JSONObject it = items.optJSONObject(i);
                 String text = it != null ? it.optString("text") : "";
@@ -105,6 +160,15 @@ final class NewsReader {
             return;
         }
         index = i;
+        Voice chosen = null;
+        for (Voice v : frenchVoices()) {
+            if (voiceName == null || voiceName.isEmpty() || v.getName().equals(voiceName)) {
+                chosen = v; // la voix choisie, sinon la plus naturelle
+                break;
+            }
+        }
+        if (chosen != null) tts.setVoice(chosen);
+        tts.setSpeechRate(rate);
         tts.speak(texts.get(i), TextToSpeech.QUEUE_FLUSH, new Bundle(), String.valueOf(i));
     }
 
