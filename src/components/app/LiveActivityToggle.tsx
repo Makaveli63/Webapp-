@@ -47,7 +47,10 @@ export function LiveActivityToggle() {
   const [format, setFormat] = useState<Format>({ days: true, clock: true });
 
   useEffect(() => {
-    const app = navigator.userAgent.includes("GamingBaseApp");
+    const ua = navigator.userAgent;
+    // Pas de Live Activities sur iPad : le réglage n'est proposé que sur iPhone et Android.
+    const iPad = /iPad/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+    const app = ua.includes("GamingBaseApp") && !iPad;
     setInApp(app);
     if (!app) return;
     try {

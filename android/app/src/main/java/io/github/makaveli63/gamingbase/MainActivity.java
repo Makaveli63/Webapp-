@@ -61,6 +61,8 @@ public class MainActivity extends Activity {
         s.setSupportZoom(false);
         s.setBuiltInZoomControls(false);
         s.setDisplayZoomControls(false);
+        // Pas d'étirement natif (il emporterait l'en-tête) : c'est le site qui étire la page, avec un rebond.
+        web.setOverScrollMode(View.OVER_SCROLL_NEVER);
         s.setUserAgentString(s.getUserAgentString() + " GamingBaseApp/" + BuildConfig.VERSION_NAME);
         web.addJavascriptInterface(new AppBridge(this), "GamingBaseApp");
 

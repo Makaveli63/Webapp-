@@ -63,6 +63,8 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
 
     override func loadView() {
         let config = WKWebViewConfiguration()
+        // Sur iPad aussi : version tactile du site (et non la version « ordinateur » de Safari).
+        config.defaultWebpagePreferences.preferredContentMode = .mobile
         config.allowsInlineMediaPlayback = true
         // Domaines de l'app (Info.plist) : active le service worker → lecture hors connexion.
         config.limitsNavigationsToAppBoundDomains = true
@@ -161,6 +163,12 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
     }
 
     func viewForZooming(in scrollView: UIScrollView) -> UIView? { nil }
+
+    // Pas de rebond natif en haut (il emporterait l'en-tête) : c'est le site qui étire la page sous l'en-tête.
+    // Le rebond en bas de page reste.
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        if scrollView.contentOffset.y < 0 { scrollView.contentOffset.y = 0 }
+    }
 
     func scrollViewWillBeginZooming(_ scrollView: UIScrollView, with view: UIView?) {
         scrollView.pinchGestureRecognizer?.isEnabled = false

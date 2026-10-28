@@ -453,35 +453,76 @@ html[data-splash="off"] .splash { display: none; }
   .score-glass { background: var(--tint); }
 }
 
-/* ---------- Tirer pour actualiser (app installée) ---------- */
+/* ---------- Tirer pour actualiser (applis et app installée) ---------- */
+/* Le rebond natif emporterait l'en-tête : la page s'étire seule, sous l'en-tête qui reste en place. */
+html[data-ptr] { overscroll-behavior-y: none; }
+html[data-ptr] body { overscroll-behavior-y: none; }
+.ptr-spring { transition: transform .6s cubic-bezier(.3, 1.45, .5, 1); }
 .ptr {
   position: fixed;
   left: 50%;
   top: calc(env(safe-area-inset-top) + 3.5rem);
-  z-index: 45;
+  z-index: 35;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2.75rem;
-  height: 2.75rem;
+  width: 2.5rem;
+  height: 2.5rem;
   border-radius: 9999px;
   color: var(--muted);
   pointer-events: none;
   opacity: 0;
-  transform: translate(-50%, calc(var(--pull, 0px) - 3.5rem)) scale(.8);
-  transition: transform .3s ease, opacity .3s ease, color .2s;
+  transform: translate(-50%, calc(var(--pull, 0px) / 2 - 1.25rem)) scale(.5);
+  transition: transform .6s cubic-bezier(.3, 1.45, .5, 1), opacity .3s ease, color .2s;
   background: color-mix(in srgb, var(--surface) 70%, transparent);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   backdrop-filter: blur(20px) saturate(180%);
   border: 1px solid var(--glass-edge);
   box-shadow: inset 0 1px 0 var(--glass-hi), 0 8px 24px -8px rgb(0 0 0 / .35);
 }
-.ptr[data-dragging="1"] { transition: opacity .2s; }
-.ptr[data-on="1"] { opacity: 1; transform: translate(-50%, calc(var(--pull, 0px) - 3.5rem)) scale(1); }
-.ptr[data-ready="1"] { color: var(--accent); }
+.ptr[data-dragging="1"] { transition: opacity .2s, color .2s; }
+.ptr[data-on="1"] { opacity: 1; transform: translate(-50%, calc(var(--pull, 0px) / 2 - 1.25rem)) scale(1); }
+.ptr[data-ready="1"] { color: var(--accent); transform: translate(-50%, calc(var(--pull, 0px) / 2 - 1.25rem)) scale(1.08); }
 .ptr-icon { transform: rotate(var(--pull-turn, 0deg)); }
 .ptr[data-loading="1"] .ptr-icon { animation: ptr-spin .7s linear infinite; }
 @keyframes ptr-spin { to { transform: rotate(360deg); } }
+@media (min-width: 768px) { .ptr { top: calc(env(safe-area-inset-top) + 4rem); } }
+
+/* Lueur colorée qui fait le tour de l'écran pendant qu'on tire (façon assistant vocal). */
+@property --ptr-a { syntax: "<angle>"; inherits: true; initial-value: 0deg; }
+.ptr-glow {
+  --glow: 0;
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .5s ease;
+  animation: ptr-glow-turn 4s linear infinite;
+  animation-play-state: paused;
+}
+.ptr-glow[data-on="1"] { opacity: var(--glow); transition: opacity .15s linear; animation-play-state: running; }
+.ptr-glow[data-loading="1"] { opacity: 1; animation-duration: 1.6s; }
+.ptr-glow-soft { position: absolute; inset: 0; filter: blur(14px); opacity: .85; }
+/* Anneau : dégradé tournant découpé en bordure (le flou est appliqué au parent, après la découpe). */
+.ptr-glow-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: clamp(0px, 9vw, 48px);
+  background: conic-gradient(from var(--ptr-a), #ff5fa2, #ff9f4a, #ffd84d, #4de1c1, #4aa8ff, #8c6bff, #ff5fa2);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+.ptr-glow-line { padding: calc(1px + var(--glow) * 3px); }
+.ptr-glow-soft > .ptr-glow-ring { padding: calc(6px + var(--glow) * 14px); }
+.ptr-glow[data-loading="1"] .ptr-glow-soft { animation: ptr-glow-breathe 1.2s ease-in-out infinite alternate; }
+@keyframes ptr-glow-turn { to { --ptr-a: 360deg; } }
+@keyframes ptr-glow-breathe { from { opacity: .55; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .ptr-glow, .ptr-glow-soft { animation: none !important; }
+  .ptr-spring { transition-timing-function: ease; }
+}
 
 /* Graphique « Ma bibliothèque » : couleurs des séries (jeux, anime), réglées pour chaque thème. */
 :root { --viz-games: #2a78d6; --viz-anime: #eb6834; }
@@ -733,6 +774,8 @@ html[data-vt] .page-in-forward, html[data-vt] .page-in-back { animation: none; }
 
 /* App iPhone : la vraie barre d'onglets d'iOS (Liquid Glass) remplace celle du site. */
 html[data-native-tabs] .tabbar { display: none; }
+/* iPad : les onglets sont déjà dans la barre native en bas, l'en-tête ne garde que les autres rubriques. */
+html[data-native-tabs] .topbar li[data-tab] { display: none; }
 
 /* Android (Chrome) : la bulle réfracte vraiment ce qu'il y a dessous (filtre SVG #gb-lens), comme le verre liquide. */
 html[data-refract] .tab-lens-drag {
