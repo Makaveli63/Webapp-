@@ -10,10 +10,10 @@ const CHOICES: { id: Choice; label: string; icon: typeof Sun }[] = [
   { id: "dark", label: "Sombre", icon: Moon },
 ];
 
-type Style = "gamingbase" | "ios";
+type Style = "gamingbase" | "capsule";
 const STYLES: { id: Style; label: string; hint: string; icon: typeof Sun }[] = [
   { id: "gamingbase", label: "GamingBase", hint: "Verre coloré, fond dynamique", icon: Sparkles },
-  { id: "ios", label: "iOS Music", hint: "Noir profond, accent rose, barre flottante", icon: Smartphone },
+  { id: "capsule", label: "Capsule", hint: "Noir profond, accent rose, barres flottantes", icon: Smartphone },
 ];
 
 /** Choix du style et du thème (appliqués par public/theme.js), dans les réglages. */
@@ -22,7 +22,7 @@ export function ThemePicker() {
   const [style, setStyle] = useState<Style>("gamingbase");
   useEffect(() => {
     setChoice((document.documentElement.getAttribute("data-theme-choice") as Choice) || "system");
-    setStyle(document.documentElement.getAttribute("data-style") === "ios" ? "ios" : "gamingbase");
+    setStyle(document.documentElement.getAttribute("data-style") === "capsule" ? "capsule" : "gamingbase");
   }, []);
 
   const chooseStyle = (next: Style) => {
@@ -60,7 +60,7 @@ export function ThemePicker() {
               aria-pressed={style === id}
               className={`flex items-center gap-3 rounded-2xl p-3 text-left ring-1 ring-inset ${style === id ? "ring-2 ring-accent" : "ring-border"}`}
             >
-              <span className={`flex size-10 shrink-0 items-center justify-center rounded-xl text-white ${id === "ios" ? "bg-gradient-to-br from-[#fa2d48] to-[#a01a2c]" : "bg-gradient-to-br from-[#8b5cf6] to-[#22d3ee]"}`}>
+              <span className={`flex size-10 shrink-0 items-center justify-center rounded-xl text-white ${id === "capsule" ? "bg-gradient-to-br from-[#fa2d48] to-[#a01a2c]" : "bg-gradient-to-br from-[#8b5cf6] to-[#22d3ee]"}`}>
                 <Icon className="size-5" aria-hidden />
               </span>
               <span className="min-w-0 flex-1">

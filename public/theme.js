@@ -18,10 +18,11 @@
       return "violet";
     }
   }
-  // Style complet du site : « gamingbase » (par défaut) ou « ios » (inspiré d'Apple Music sur iOS).
+  // Style complet du site : « gamingbase » (par défaut) ou « capsule » (l'ancien nom « ios » est repris).
   function style() {
     try {
-      return localStorage.getItem("gb-style") || "gamingbase";
+      var v = localStorage.getItem("gb-style");
+      return v === "ios" ? "capsule" : v || "gamingbase";
     } catch {
       return "gamingbase";
     }
@@ -29,14 +30,14 @@
   function apply() {
     root.setAttribute("data-accent", accent());
     var st = style();
-    if (st === "ios") root.setAttribute("data-style", "ios");
+    if (st === "capsule") root.setAttribute("data-style", "capsule");
     else root.removeAttribute("data-style");
     var c = choice();
     var dark = c === "dark" || (c === "system" && media.matches);
     root.setAttribute("data-theme", dark ? "dark" : "light");
     root.setAttribute("data-theme-choice", c);
     document.querySelectorAll('meta[name="theme-color"]').forEach(function (m) {
-      m.setAttribute("content", st === "ios" ? (dark ? "#000000" : "#f2f2f7") : dark ? "#0b0d12" : "#f6f7fb");
+      m.setAttribute("content", st === "capsule" ? (dark ? "#000000" : "#f2f2f7") : dark ? "#0b0d12" : "#f6f7fb");
     });
   }
   apply();

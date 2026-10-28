@@ -9,11 +9,14 @@ export function PinnedReleaseGrid({
   releases,
   className,
   onlyPinned = false,
+  compact = false,
 }: {
   releases: (Release & { at: string })[];
   className: string;
   /** N'afficher que les jeux épinglés (page Favoris) */
   onlyPinned?: boolean;
+  /** Cartes réduites (accueil) */
+  compact?: boolean;
 }) {
   const pins = usePins();
   const list = onlyPinned ? releases.filter((r) => pins?.includes(r.id)) : pinnedFirst(releases, pins);
@@ -23,8 +26,8 @@ export function PinnedReleaseGrid({
   return (
     <div className={className}>
       {list.map((r) => (
-        <div key={r.id} className={onlyPinned ? "" : "w-[78%] shrink-0 snap-start sm:w-auto"}>
-          <ReleaseCard release={r} pinned={!!pins?.includes(r.id)} />
+        <div key={r.id} className={onlyPinned ? "" : `${compact ? "w-[72%]" : "w-[78%]"} shrink-0 snap-start sm:w-auto`}>
+          <ReleaseCard release={r} pinned={!!pins?.includes(r.id)} compact={compact} />
         </div>
       ))}
     </div>

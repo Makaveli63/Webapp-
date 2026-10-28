@@ -1,19 +1,16 @@
-import Link from "next/link";
 import { getUpcomingReleases } from "@/lib/releases";
+import { titleKey } from "@/lib/text";
 import { ReleaseBannerContent } from "./ReleaseBannerContent";
+
+const gameSlug = (title: string) => titleKey(title).replace(/\s+/g, "-").slice(0, 80);
 
 /** Bandeau en tête de toutes les pages : compte à rebours du jeu épinglé, sinon de la prochaine grosse sortie. */
 export function ReleaseBanner() {
-  const releases = getUpcomingReleases();
+  const releases = getUpcomingReleases().map((r) => ({ ...r, href: `/jeux/${gameSlug(r.title)}` }));
   if (!releases.length) return null;
   return (
-    <Link
-      href="/sorties"
-      className="release-banner block border-b border-border bg-gradient-to-r from-accent/15 via-accent/5 to-transparent hover:from-accent/25"
-    >
-      <div className="mx-auto flex max-w-6xl items-center gap-2 px-4 py-2 text-sm">
-        <ReleaseBannerContent releases={releases} />
-      </div>
-    </Link>
+    <div className="release-banner border-b border-border bg-gradient-to-r from-accent/15 via-accent/5 to-transparent">
+      <ReleaseBannerContent releases={releases} />
+    </div>
   );
 }

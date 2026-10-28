@@ -15,7 +15,7 @@ export function UpcomingReleases() {
           Tout voir <ArrowRight className="size-4" aria-hidden />
         </Link>
       </div>
-      <PinnedReleaseGrid releases={releases} className="scroll-row -mx-4 mt-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 lg:grid-cols-4" />
+      <PinnedReleaseGrid releases={releases} compact className="scroll-row -mx-4 mt-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 lg:grid-cols-4" />
     </section>
   );
 }
