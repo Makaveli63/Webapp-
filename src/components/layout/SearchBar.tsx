@@ -1,6 +1,6 @@
 "use client";
 
-import { Gamepad2, Mic, Newspaper, Search } from "lucide-react";
+import { CircleX, Gamepad2, Mic, Newspaper, Search } from "lucide-react";
 import { FlowerIcon } from "@/components/ui/FlowerIcon";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useMemo, useState, type FormEvent, type KeyboardEvent } from "react";
@@ -196,10 +196,21 @@ export function SearchBar({
         aria-label="Rechercher"
         className={`w-full text-base placeholder:text-muted focus:outline-none ${
           spotlight
-            ? "spotlight-input rounded-full border-0 bg-surface-2 py-2.5 pl-9"
+            ? "spotlight-input rounded-full border-0 py-2.5 pl-9"
             : "rounded-lg border border-border bg-surface py-2.5 pl-9 focus:border-accent md:py-2 md:text-sm"
-        } ${canSpeak ? "pr-10" : "pr-3"}`}
+        } ${canSpeak ? (spotlight ? "pr-16" : "pr-10") : spotlight ? "pr-9" : "pr-3"}`}
       />
+      {spotlight && q && (
+        <button
+          type="button"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => setQ("")}
+          aria-label="Effacer"
+          className={`absolute top-1/2 flex size-7 -translate-y-1/2 items-center justify-center text-muted ${canSpeak ? "right-9" : "right-2"}`}
+        >
+          <CircleX className="size-[18px]" fill="currentColor" stroke="var(--surface)" aria-hidden />
+        </button>
+      )}
       {canSpeak && (
         <button
           type="button"

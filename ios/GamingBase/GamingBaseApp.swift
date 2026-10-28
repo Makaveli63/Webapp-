@@ -57,6 +57,25 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         ("Gratuits", "gift", "/jeux-gratuits"),
     ]
 
+    /// Pas de barre « ^ v ✓ » au-dessus du clavier (les applis d'Apple n'en ont pas) : la vue de contenu
+    /// de WebKit reçoit une sous-classe qui ne propose aucune barre d'accessoires.
+    private func removeKeyboardBar() {
+        guard let content = webView.scrollView.subviews.first(where: { String(describing: type(of: $0)).hasPrefix("WKContent") }),
+              let base: AnyClass = object_getClass(content) else { return }
+        let name = "\(NSStringFromClass(base))_GBNoBar"
+        var cls: AnyClass? = NSClassFromString(name)
+        if cls == nil, let made = objc_allocateClassPair(base, name, 0) {
+            let selector = #selector(getter: UIResponder.inputAccessoryView)
+            let none: @convention(block) (AnyObject) -> AnyObject? = { _ in nil }
+            if let method = class_getInstanceMethod(UIResponder.self, selector) {
+                class_addMethod(made, selector, imp_implementationWithBlock(none), method_getTypeEncoding(method))
+            }
+            objc_registerClassPair(made)
+            cls = made
+        }
+        if let cls { object_setClass(content, cls) }
+    }
+
     /// Fleur de cerisier (même dessin que sur le site), au trait comme les symboles d'iOS.
     private static func flowerIcon() -> UIImage {
         let size = CGSize(width: 26, height: 26)
@@ -161,6 +180,7 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         ])
         view = root
         Self.current = self
+        removeKeyboardBar()
         webView.load(URLRequest(url: Self.pending ?? Self.home))
         Self.pending = nil
     }

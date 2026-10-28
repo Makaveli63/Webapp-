@@ -930,17 +930,19 @@ html[data-native-tabs] .listen-player { bottom: calc(env(safe-area-inset-bottom)
   gap: .75rem;
   padding-inline: 1rem;
 }
-.hs-field { animation: hs-grow .42s cubic-bezier(.2, .9, .25, 1) backwards; } /* sans rester découpé : les résultats débordent dessous */
+.hs-field { transform-origin: right center; animation: hs-grow .38s cubic-bezier(.2, .9, .25, 1) backwards; }
 .hs-cancel { animation: hs-fade .3s ease .12s both; }
-@keyframes hs-grow { from { clip-path: inset(0 0 0 calc(100% - 2.75rem) round 999px); opacity: .6; } to { clip-path: inset(0 0 0 0 round 999px); opacity: 1; } }
+@keyframes hs-grow { from { opacity: 0; transform: translateX(28px) scaleX(.94); } }
 @keyframes hs-fade { from { opacity: 0; transform: translateX(8px); } }
 /* Le reste de l'en-tête s'efface pendant la recherche */
 .topbar nav > :not(.header-search) { transition: opacity .2s ease; }
 html[data-search] .topbar nav > :not(.header-search) { opacity: 0; pointer-events: none; }
 html[data-search="closing"] .header-search { opacity: 0; transition: opacity .2s ease; }
 html[data-search="closing"] .topbar nav > :not(.header-search) { opacity: 1; }
-.spotlight-input { box-shadow: inset 0 0 0 1px var(--border); }
-.spotlight-input:focus { box-shadow: inset 0 0 0 2px var(--accent); }
+/* Champ façon iOS : capsule grise pleine, sans contour, curseur à la couleur de l'appli */
+.spotlight-input { background: color-mix(in srgb, var(--muted) 16%, var(--surface)); box-shadow: none; caret-color: var(--accent); -webkit-appearance: none; appearance: none; }
+.spotlight-input:focus { outline: none; box-shadow: none; }
+.spotlight-input::-webkit-search-cancel-button { display: none; }
 .search-scrim {
   position: fixed;
   inset: 0;
