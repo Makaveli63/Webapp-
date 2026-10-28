@@ -26,16 +26,18 @@ export function aliasesOf(...titles: (string | null | undefined)[]): string[] {
     if (after.length >= 8) add(after);
     const words = title.split(/[\s:–—-]+/).filter(Boolean);
     const last = words[words.length - 1]?.toLowerCase() ?? "";
-    const num = ROMAN[last] ? last : ARABIC[last] ? last : /^\d+$/.test(last) ? last : "";
-    const swap = (n: string) => ROMAN[n] ?? ARABIC[n];
-    if (num && swap(num)) add([...words.slice(0, -1), swap(num).toUpperCase()].join(" "));
+    // Object.hasOwn : un dernier mot comme « constructor » ne doit pas trouver une méthode d'objet.
+    const swap = (n: string): string | undefined => (Object.hasOwn(ROMAN, n) ? ROMAN[n] : Object.hasOwn(ARABIC, n) ? ARABIC[n] : undefined);
+    const num = swap(last) || /^\d+$/.test(last) ? last : "";
+    const other = num ? swap(num) : undefined;
+    if (other) add([...words.slice(0, -1), other.toUpperCase()].join(" "));
     // Sigle des mots principaux + numéro : « GTA 6 », « GTA VI ».
     const main = (num ? words.slice(0, -1) : words).filter((w) => !SMALL.has(w.toLowerCase()) && /^\p{Lu}/u.test(w));
     if (main.length >= 3) {
       const initials = main.map((w) => w[0]).join("").toUpperCase();
       if (num) {
         add(`${initials} ${num.toUpperCase()}`);
-        if (swap(num)) add(`${initials} ${swap(num).toUpperCase()}`);
+        if (other) add(`${initials} ${other.toUpperCase()}`);
       }
     }
   }

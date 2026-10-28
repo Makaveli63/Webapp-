@@ -21,7 +21,7 @@ export const canon = (s: string) =>
     .replace(/([a-z])(\d)/g, "$1 $2")
     .replace(/(\d)([a-z])/g, "$1 $2")
     .split(" ")
-    .map((w) => ROMAN_WORDS[w] ?? w)
+    .map((w) => (Object.hasOwn(ROMAN_WORDS, w) ? ROMAN_WORDS[w] : w))
     .join(" ");
 
 /**

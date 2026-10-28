@@ -44,7 +44,7 @@ function parseQuery(query: string) {
   const platforms: RegExp[] = [];
   const words: string[] = [];
   all.forEach((w, i) => {
-    if (PLATFORM_WORDS[w]) platforms.push(w === "switch" && all[i + 1] === "2" ? /^Switch 2$/ : PLATFORM_WORDS[w]);
+    if (Object.hasOwn(PLATFORM_WORDS, w)) platforms.push(w === "switch" && all[i + 1] === "2" ? /^Switch 2$/ : PLATFORM_WORDS[w]);
     else if (w === "2" && all[i - 1] === "switch") return;
     else if (!STOP_WORDS.has(w) || all.length === 1) words.push(w);
   });
