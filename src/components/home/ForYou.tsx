@@ -3,11 +3,12 @@
 import { Bell, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { NewsCard } from "@/components/news/NewsCard";
+import { RemoteImage } from "@/components/ui/RemoteImage";
 import { aliasesOf } from "@/lib/aliases";
 import { useFollows } from "@/lib/follows";
 import { canon } from "@/lib/fuzzy";
 import { readPrefs } from "@/lib/notif-prefs";
+import { themeFor } from "@/lib/themes";
 import { useTracker } from "@/lib/tracker";
 import type { Article } from "@/types";
 
@@ -70,7 +71,7 @@ export function ForYou({ articles }: { articles: Article[] }) {
       if (best) out.push({ article: a, ...best });
     }
     // Les plus pertinentes d'abord, puis les plus récentes (la liste arrive déjà triée par date).
-    return out.sort((x, y) => y.score - x.score).slice(0, 6);
+    return out.sort((x, y) => y.score - x.score).slice(0, 10);
   }, [follows, tracker, extra, articles]);
 
   if (!picks) return null;
@@ -78,23 +79,37 @@ export function ForYou({ articles }: { articles: Article[] }) {
 
   return (
     <section aria-labelledby="foryou-title">
-      <div className="flex items-end justify-between gap-4">
-        <h2 id="foryou-title" className="flex items-center gap-2 text-xl font-bold text-heading">
-          <Sparkles className="size-5 text-accent" aria-hidden /> Pour toi
-        </h2>
-        {picks.length > 0 && <span className="text-xs text-muted">Selon tes suivis, ta bibliothèque et tes plateformes</span>}
-      </div>
+      <h2 id="foryou-title" className="flex items-center gap-2 text-xl font-bold text-heading">
+        <Sparkles className="size-5 text-accent" aria-hidden /> Pour toi
+      </h2>
+      <p className="mt-0.5 text-sm text-muted">Selon tes suivis, ta bibliothèque et tes plateformes</p>
       {picks.length > 0 ? (
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
+        <ul className="scroll-row -mx-4 mt-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
           {picks.map(({ article, reason }) => (
-            <div key={article.slug} className="flex flex-col gap-1.5">
-              <span className="truncate px-1 text-xs font-bold text-accent">{reason}</span>
-              <NewsCard article={article} />
-            </div>
+            <li key={article.slug} className="w-[78%] shrink-0 snap-start sm:w-72">
+              <Link href={`/actualites/${article.slug}`} className="glass group flex h-full flex-col overflow-hidden rounded-2xl">
+                <div className="relative">
+                  <RemoteImage
+                    src={article.image}
+                    alt=""
+                    theme={themeFor(`${article.title} ${article.tags.join(" ")}`, article.platforms)}
+                    seed={article.slug}
+                    className="aspect-[16/9] w-full"
+                  />
+                  <span className="foryou-reason absolute left-2.5 top-2.5 max-w-[85%] truncate rounded-full px-2.5 py-1 text-[11px] font-semibold text-white">{reason}</span>
+                </div>
+                <div className="flex flex-1 flex-col p-3.5">
+                  <h3 className="line-clamp-3 text-[15px] font-semibold leading-snug text-heading">{article.title}</h3>
+                  <p className="mt-auto pt-2 text-xs text-muted">
+                    {article.source.name} · {ago(article.publishedAt)}
+                  </p>
+                </div>
+              </Link>
+            </li>
           ))}
-        </div>
+        </ul>
       ) : (
-        <div className="glass mt-4 flex items-start gap-3 rounded-xl p-4">
+        <div className="glass mt-4 flex items-start gap-3 rounded-2xl p-4">
           <Bell className="mt-0.5 size-5 shrink-0 text-accent" aria-hidden />
           <p className="text-sm text-muted">
             {hasSignals ? "Rien de neuf sur tes jeux et animes pour l'instant." : "Touche la cloche 🔔 sur un jeu ou un anime pour voir ici toutes ses actus."}{" "}
@@ -106,4 +121,13 @@ export function ForYou({ articles }: { articles: Article[] }) {
       )}
     </section>
   );
+}
+
+/** « il y a 2 h », « hier », « il y a 3 j » */
+function ago(iso: string): string {
+  const h = Math.max(0, (Date.now() - Date.parse(iso)) / 3_600_000);
+  if (h < 1) return "à l'instant";
+  if (h < 24) return `il y a ${Math.floor(h)} h`;
+  if (h < 48) return "hier";
+  return `il y a ${Math.floor(h / 24)} j`;
 }

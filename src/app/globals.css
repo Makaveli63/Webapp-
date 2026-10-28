@@ -916,3 +916,6 @@ html[data-native-tabs] .listen-player { bottom: calc(env(safe-area-inset-bottom)
 /* Images distantes : fondu doux à leur arrivée (aucun fondu pour celles déjà vues) */
 .remote-img { transition: opacity .35s ease, transform .3s ease; }
 .remote-img-pending { opacity: 0; }
+
+/* « Pour toi » : raison de la suggestion en pastille de verre fumé sur l'image */
+.foryou-reason { background: rgb(14 14 18 / .62); -webkit-backdrop-filter: blur(12px) saturate(160%); backdrop-filter: blur(12px) saturate(160%); }
