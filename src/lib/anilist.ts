@@ -27,6 +27,8 @@ export interface AniMedia {
   siteUrl?: string;
   externalLinks?: { site: string; url: string; type?: string; language?: string | null }[];
   description?: string | null;
+  /** Identifiant MyAnimeList (autres bases de données) */
+  idMal?: number | null;
   genres?: string[];
   averageScore?: number | null;
   studios?: { nodes: { name: string }[] };
@@ -37,7 +39,7 @@ export interface AniMedia {
 const FIELDS = `id type title { romaji english } coverImage { large extraLarge } format status episodes duration
   startDate { year month day } nextAiringEpisode { episode airingAt } siteUrl
   relations { edges { relationType node { id type } } }`;
-const DETAIL = `${FIELDS} bannerImage description(asHtml: false) genres averageScore
+const DETAIL = `${FIELDS} idMal bannerImage description(asHtml: false) genres averageScore
   studios(isMain: true) { nodes { name } } trailer { id site } externalLinks { site url type language }`;
 
 async function gql<T>(query: string, variables: Record<string, unknown>, signal?: AbortSignal): Promise<T> {

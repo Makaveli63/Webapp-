@@ -45,3 +45,4 @@ next-env.d.ts
 # actus récupérées au build
 /.cache/
 public/calendrier/
+public/anime-fr/

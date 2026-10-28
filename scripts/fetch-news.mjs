@@ -681,6 +681,14 @@ async function main() {
   console.log(`[rss] ${final.length} articles du jour, ${all.length} avec l'archive (${ARCHIVE_DAYS} jours).`);
 }
 
+/** Connexion à l'IA pour un autre script (traduction des résumés d'anime) ; null sans AI_API_KEY. */
+export function createAi() {
+  const apiKey = process.env.AI_API_KEY?.trim();
+  if (!apiKey) return null;
+  return { apiKey, provider: withName(EXPLICIT_PROVIDER || GUESSED_PROVIDER), switched: !!EXPLICIT_PROVIDER, jsonMode: true, calls: 0 };
+}
+export { callAi, runBatches };
+
 // Lancé directement (npm run news) ; importé, il expose seulement ses fonctions (tests).
 if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) main().catch((err) => {
   // Ne jamais bloquer la publication : le site retombe sur les articles de démonstration.

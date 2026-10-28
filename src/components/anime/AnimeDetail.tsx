@@ -23,6 +23,7 @@ import {
   titleOf,
   type AniMedia,
 } from "@/lib/anilist";
+import { frenchSynopsis, otherRatings, type FrenchSynopsis, type OtherRatings } from "@/lib/anime-sources";
 import { airedEpisodes, useTracker } from "@/lib/tracker";
 
 const SEASON_FORMATS = new Set(["TV", "TV_SHORT", "ONA"]);
@@ -141,13 +142,8 @@ export function AnimeDetail() {
         </p>
       )}
 
-      {synopsis && (
-        <section className="glass rounded-2xl p-4 sm:p-5">
-          <h2 className="text-xl font-bold text-heading">Synopsis</h2>
-          <p className="mt-1 text-xs text-muted">Résumé AniList (en anglais).</p>
-          <p lang="en" className="mt-2 whitespace-pre-line text-fg">{synopsis.length > 1200 ? `${synopsis.slice(0, 1199)}…` : synopsis}</p>
-        </section>
-      )}
+      <Synopsis key={media.id} media={media} english={synopsis} />
+      <Ratings key={`n${media.id}`} media={media} />
 
       <FamilyList title="📺 Toutes les saisons" items={seasons} current={media.id} loading={!family} tracker={tracker} />
       {others.length > 0 && <FamilyList title="🎬 Films, OAV et épisodes spéciaux" items={others} current={media.id} tracker={tracker} />}
@@ -157,7 +153,7 @@ export function AnimeDetail() {
         <a href={https(media.siteUrl) ?? `https://anilist.co/anime/${media.id}`} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
           AniList
         </a>
-        . Liens vers les plateformes officielles uniquement.
+        , MyAnimeList (Jikan), Kitsu et Wikipédia. Liens vers les plateformes officielles uniquement.
       </p>
     </div>
   );
@@ -210,6 +206,103 @@ function FamilyList({ title, items, current, loading, tracker }: { title: string
           })}
         </ol>
       )}
+    </section>
+  );
+}
+
+const clip = (t: string) => (t.length > 1200 ? `${t.slice(0, 1199)}…` : t);
+
+/** Résumé en français : traduction du site, sinon Wikipédia ; en dernier recours, l'anglais d'AniList (signalé). */
+function Synopsis({ media, english }: { media: AniMedia; english: string }) {
+  const [fr, setFr] = useState<FrenchSynopsis | null | undefined>(undefined);
+  useEffect(() => {
+    const controller = new AbortController();
+    frenchSynopsis(media.id, media.idMal, controller.signal).then((r) => {
+      if (!controller.signal.aborted) setFr(r);
+    });
+    return () => controller.abort();
+  }, [media.id, media.idMal]);
+
+  if (fr === undefined && !english) return null;
+  return (
+    <section className="glass rounded-2xl p-4 sm:p-5">
+      <h2 className="text-xl font-bold text-heading">Synopsis</h2>
+      {fr === undefined ? (
+        <p className="mt-2 text-sm text-muted">Recherche du résumé en français…</p>
+      ) : fr ? (
+        <>
+          <p className="mt-2 whitespace-pre-line text-fg">{clip(fr.text)}</p>
+          <p className="mt-2 text-xs text-muted">
+            {fr.source === "wikipedia" ? (
+              <>
+                Résumé :{" "}
+                <a href={fr.url} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
+                  Wikipédia
+                </a>
+                , licence CC BY-SA.
+              </>
+            ) : (
+              "Résumé AniList traduit en français automatiquement."
+            )}
+          </p>
+        </>
+      ) : english ? (
+        <>
+          <p className="mt-1 text-xs text-muted">Pas encore de résumé en français pour cet anime : voici celui d&apos;AniList, en anglais. La traduction arrive au fil des mises à jour.</p>
+          <p lang="en" className="mt-2 whitespace-pre-line text-fg">{clip(english)}</p>
+        </>
+      ) : (
+        <p className="mt-2 text-sm text-muted">Pas de résumé disponible.</p>
+      )}
+    </section>
+  );
+}
+
+const compact = new Intl.NumberFormat("fr-FR", { notation: "compact", maximumFractionDigits: 1 });
+
+/** Notes de plusieurs bases de données d'anime : AniList, MyAnimeList, Kitsu. */
+function Ratings({ media }: { media: AniMedia }) {
+  const [other, setOther] = useState<OtherRatings | null>(null);
+  useEffect(() => {
+    if (!media.idMal) return;
+    const controller = new AbortController();
+    otherRatings(media.idMal, controller.signal).then((r) => {
+      if (!controller.signal.aborted) setOther(r);
+    });
+    return () => controller.abort();
+  }, [media.idMal]);
+
+  const items = [
+    typeof media.averageScore === "number" && {
+      name: "AniList",
+      value: `${media.averageScore}/100`,
+      detail: undefined as string | undefined,
+      url: https(media.siteUrl) ?? `https://anilist.co/anime/${media.id}`,
+    },
+    other?.mal && {
+      name: "MyAnimeList",
+      value: `${other.mal.score.toFixed(2).replace(".", ",")}/10`,
+      detail: [other.mal.rank && `n°${other.mal.rank}`, other.mal.members && `${compact.format(other.mal.members)} membres`].filter(Boolean).join(" · ") || undefined,
+      url: other.mal.url,
+    },
+    other?.kitsu && { name: "Kitsu", value: `${Math.round(other.kitsu.score)}/100`, detail: undefined, url: other.kitsu.url },
+  ].filter(Boolean) as { name: string; value: string; detail?: string; url: string }[];
+  if (!items.length) return null;
+
+  return (
+    <section>
+      <h2 className="text-xl font-bold text-heading">⭐ Notes des bases de données</h2>
+      <ul className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+        {items.map((i) => (
+          <li key={i.name}>
+            <a href={i.url} target="_blank" rel="noopener noreferrer" className="glass flex h-full flex-col rounded-2xl p-3 hover:border-accent/60">
+              <span className="text-xs font-semibold text-muted">{i.name}</span>
+              <span className="text-xl font-black text-heading">{i.value}</span>
+              {i.detail && <span className="text-xs text-muted">{i.detail}</span>}
+            </a>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }

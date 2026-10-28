@@ -40,7 +40,7 @@ function policy(scriptHashes, styleHashes) {
     "media-src https:",
     // Recherche en direct sur Wikipédia (API publique, sans cookie).
     // + Supabase (commentaires et « j'aime ») si configuré.
-    `connect-src 'self' https://fr.wikipedia.org https://graphql.anilist.co ${SUPABASE_ORIGIN}`.trim(),
+    `connect-src 'self' https://fr.wikipedia.org https://www.wikidata.org https://graphql.anilist.co https://api.jikan.moe https://kitsu.app ${SUPABASE_ORIGIN}`.trim(),
     "manifest-src 'self'",
     "base-uri 'none'",
     "form-action 'self'",
