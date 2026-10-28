@@ -103,6 +103,13 @@ body {
 
 /* Typographie des articles rendus depuis Markdown */
 .prose-article { line-height: 1.75; font-size: 1.05rem; }
+/* Taille du texte des articles (bouton « Aa », retenue pour tous les articles) */
+html[data-text-size="s"] .prose-article { font-size: .95rem; }
+html[data-text-size="l"] .prose-article { font-size: 1.2rem; line-height: 1.8; }
+html[data-text-size="xl"] .prose-article { font-size: 1.38rem; line-height: 1.85; }
+/* Lecture épurée : le texte seul, plus aéré */
+html[data-zen] .zen-hide, html[data-zen] article img, html[data-zen] article video, html[data-zen] article iframe { display: none !important; }
+html[data-zen] .prose-article { max-width: 38rem; margin-inline: auto; line-height: 1.9; }
 .prose-article > * + * { margin-top: 1.1em; }
 .prose-article h2 { font-size: 1.4rem; font-weight: 700; margin-top: 2em; color: var(--heading); }
 .prose-article h3 { font-size: 1.15rem; font-weight: 600; margin-top: 1.6em; color: var(--heading); }
@@ -888,3 +895,11 @@ html:not([data-splash="off"]) .tabbar { animation: tabbar-in .4s ease-out 1.9s b
 }
 @media (min-width: 768px) { .listen-player { bottom: 1.5rem; } }
 html[data-native-tabs] .listen-player { bottom: calc(env(safe-area-inset-bottom) + 4.2rem); }
+
+/* Anti-spoiler : verre dépoli posé sur la carte */
+.spoiler-cover {
+  border-radius: inherit;
+  background: color-mix(in srgb, var(--surface) 55%, transparent);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(18px) saturate(140%);
+}

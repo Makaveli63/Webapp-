@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { AppNotificationsToggle } from "@/components/app/AppNotificationsToggle";
 import { LiveActivityToggle } from "@/components/app/LiveActivityToggle";
+import { SpoilerToggle } from "@/components/settings/SpoilerToggle";
 import { ThemePicker } from "@/components/settings/ThemePicker";
 import { SyncPanel } from "@/components/sync/SyncPanel";
 
@@ -15,6 +16,7 @@ export default function SettingsPage() {
       </header>
       <AppNotificationsToggle />
       <LiveActivityToggle />
+      <SpoilerToggle />
       <SyncPanel />
       <ThemePicker />
     </div>

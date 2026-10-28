@@ -90,11 +90,15 @@ enum NewsAlerts {
         /// Jeux « Je le veux » et alertes prix
         var wanted: [String]? = []
         var priceAlerts: Bool? = true
+        /// Bouclier anti-spoiler : titre des actus anime masqué dans les notifications
+        var spoilerShield: Bool? = true
     }
 
     struct Follow: Codable {
         let t: String
         let a: [String]
+        /// « game » ou « anime »
+        var k: String? = nil
     }
 
     struct Episode: Codable {
@@ -158,12 +162,9 @@ enum NewsAlerts {
     }
 
     /// Nom du jeu ou de l'anime suivi dont parle l'article, s'il y en a un.
-    static func followed(_ a: Feed.News, _ p: Prefs) -> String? {
+    static func followed(_ a: Feed.News, _ p: Prefs) -> Follow? {
         let title = norm(a.title)
-        for f in p.follows ?? [] where f.a.contains(where: { let n = norm($0); return n.count >= 6 && title.contains(n) }) {
-            return f.t
-        }
-        return nil
+        return (p.follows ?? []).first { f in f.a.contains(where: { let n = norm($0); return n.count >= 6 && title.contains(n) }) }
     }
 
     static func savePrefs(_ raw: [String: Any]) {
@@ -258,11 +259,12 @@ enum NewsAlerts {
         // Jeux et animes suivis (🔔) : notifiés tout de suite, même hors des filtres et du résumé du soir.
         var hits = 0
         for article in unseen {
-            guard let name = followed(article, p) else { continue }
+            guard let follow = followed(article, p) else { continue }
             let content = UNMutableNotificationContent()
             content.threadIdentifier = "follows" // regroupées sur l'iPhone et l'Apple Watch
-            content.title = "🔔 \(name)"
-            content.body = article.title
+            content.title = "🔔 \(follow.t)"
+            // Anime : le titre de l'actu peut dévoiler la suite, il reste masqué.
+            content.body = follow.k == "anime" && (p.spoilerShield ?? true) ? "Nouvelle actu : touche pour la lire (titre masqué, sans spoiler)." : article.title
             content.sound = .default
             content.userInfo = ["path": article.path]
             try? await center.add(UNNotificationRequest(identifier: article.path, content: content, trigger: nil))

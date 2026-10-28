@@ -5,6 +5,7 @@ import { RemoteImage } from "@/components/ui/RemoteImage";
 import { ScoreBadge } from "@/components/ui/ScoreBadge";
 import { formatDate } from "@/lib/format";
 import { FavoriteButton } from "./FavoriteButton";
+import { SpoilerCover } from "./SpoilerCover";
 import { themeFor } from "@/lib/themes";
 import type { Article } from "@/types";
 
@@ -21,6 +22,7 @@ export function NewsCard({ article }: { article: Article }) {
         imgClassName="transition-transform duration-300 group-hover:scale-[1.03]"
         credit={article.imageCredit ? "Wikimedia Commons" : article.image ? article.source.name : undefined}
       />
+      {article.category === "Anime" && <SpoilerCover text={`${article.title} ${article.excerpt} ${article.tags.join(" ")}`} />}
       {article.score && (
         <ScoreBadge score={article.score} className="absolute right-2 top-2" />
       )}

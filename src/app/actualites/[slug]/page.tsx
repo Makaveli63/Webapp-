@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import { NewsCard } from "@/components/news/NewsCard";
 import { CategoryBadge, PlatformBadge } from "@/components/ui/Badge";
 import { FavoriteButton } from "@/components/news/FavoriteButton";
+import { ReadingControls } from "@/components/news/ReadingControls";
 import { ShareButton } from "@/components/share/ShareButton";
 import { Comments } from "@/components/social/Comments";
 import { PageTheme } from "@/components/theme/PageTheme";
@@ -93,8 +94,11 @@ export default async function ArticlePage({ params }: Props) {
           {article.author !== article.source.name && <>Par {article.author} · </>}
           <time dateTime={article.publishedAt}>{formatDate(article.publishedAt)}</time>
           {" · "}Source : <span className="font-semibold text-fg">{article.source.name}</span>
+          {" · "}
+          {Math.max(1, Math.round(`${article.aiSummary ?? ""} ${article.content}`.split(/\s+/).length / 220))} min de lecture
         </p>
         <div className="flex shrink-0 items-center gap-1">
+          <ReadingControls />
           <LikeButton type="article" id={article.slug} />
           <ShareButton title={article.title} path={`/actualites/${article.slug}/`} />
           <FavoriteButton article={article} withLabel />
@@ -185,7 +189,7 @@ export default async function ArticlePage({ params }: Props) {
       </article>
 
       {related.length > 0 && (
-        <section aria-labelledby="related-title" className="mt-12">
+        <section aria-labelledby="related-title" className="zen-hide mt-12">
           <h2 id="related-title" className="text-lg font-bold text-heading">À lire aussi</h2>
           <div className="mt-4 grid gap-4">
             {related.map((a) => <NewsCard key={a.slug} article={a} />)}

@@ -30,6 +30,7 @@
     root.setAttribute("data-accent", accent());
     root.setAttribute("data-tint", read("gb-tint", "gamingbase"));
     root.setAttribute("data-glass", read("gb-glass", "verre"));
+    root.setAttribute("data-text-size", read("gb-text-size", "m"));
     // Un seul style : Capsule (l'ancien style « GamingBase » a été retiré).
     root.setAttribute("data-style", "capsule");
     var c = choice();

@@ -1,6 +1,7 @@
 "use client";
 
 import { readFollows } from "@/lib/follows";
+import { spoilerShield } from "@/lib/spoilers";
 
 export const NOTIF_KEY = "gb-notif";
 export const PREFS_KEY = "gb-notif-prefs";
@@ -51,7 +52,8 @@ export function sendPrefs(prefs: Prefs = readPrefs()) {
     ...prefs,
     games: collectionTitles(),
     wanted: collectionTitles("wanted"),
-    follows: follows.map((f) => ({ t: f.title, a: f.aliases })),
+    follows: follows.map((f) => ({ t: f.title, a: f.aliases, k: f.kind })),
+    spoilerShield: spoilerShield(),
     episodes: follows
       .filter((f) => f.next && Date.parse(f.next.at) > now - 86_400_000)
       .map((f) => ({ title: f.title, episode: f.next!.episode, atMs: Date.parse(f.next!.at), path: `/Webapp-${f.href}` })),

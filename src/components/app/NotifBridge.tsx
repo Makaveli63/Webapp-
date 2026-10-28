@@ -30,10 +30,10 @@ export function NotifBridge() {
       .catch(() => {
         /* hors connexion : les dates connues restent */
       });
-    for (const e of [FOLLOWS_EVENT, PREFS_EVENT, "gb-collection-change"]) window.addEventListener(e, send);
+    for (const e of [FOLLOWS_EVENT, PREFS_EVENT, "gb-collection-change", "gb-spoiler-change"]) window.addEventListener(e, send);
     return () => {
       controller.abort();
-      for (const e of [FOLLOWS_EVENT, PREFS_EVENT, "gb-collection-change"]) window.removeEventListener(e, send);
+      for (const e of [FOLLOWS_EVENT, PREFS_EVENT, "gb-collection-change", "gb-spoiler-change"]) window.removeEventListener(e, send);
     };
   }, []);
   return null;

@@ -80,7 +80,7 @@ public class NewsJob extends JobService {
     }
 
     /** Nom du jeu ou de l'anime suivi (🔔) dont parle l'article, sinon null. */
-    static String followed(JSONObject a, JSONObject p) {
+    static JSONObject followed(JSONObject a, JSONObject p) {
         JSONArray follows = p.optJSONArray("follows");
         String title = norm(a.optString("title"));
         for (int i = 0; follows != null && i < follows.length(); i++) {
@@ -88,7 +88,7 @@ public class NewsJob extends JobService {
             JSONArray aliases = f != null ? f.optJSONArray("a") : null;
             for (int j = 0; aliases != null && j < aliases.length(); j++) {
                 String n = norm(aliases.optString(j));
-                if (n.length() >= 6 && title.contains(n)) return f.optString("t");
+                if (n.length() >= 6 && title.contains(n)) return f;
             }
         }
         return null;
@@ -292,11 +292,14 @@ public class NewsJob extends JobService {
         List<JSONObject> matched = new ArrayList<>();
         for (JSONObject a : fresh) {
             // Jeux et animes suivis (🔔) : notifiés tout de suite, même hors des filtres et du résumé du soir.
-            String name = followed(a, p);
-            if (name != null) {
+            JSONObject follow = followed(a, p);
+            if (follow != null) {
                 if (canNotify(ctx)) {
                     String path = a.optString("path");
-                    channel(ctx).notify(path.hashCode(), build(ctx, "🔔 " + name, a.optString("title"), path, path.hashCode()));
+                    // Anime : le titre de l'actu peut dévoiler la suite, il reste masqué.
+                    boolean hide = "anime".equals(follow.optString("k")) && p.optBoolean("spoilerShield", true);
+                    String text = hide ? "Nouvelle actu : touche pour la lire (titre masqué, sans spoiler)." : a.optString("title");
+                    channel(ctx).notify(path.hashCode(), build(ctx, "🔔 " + follow.optString("t"), text, path, path.hashCode()));
                 }
             } else if (matches(a, p)) matched.add(a);
         }
