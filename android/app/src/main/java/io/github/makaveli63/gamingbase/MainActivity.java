@@ -183,6 +183,7 @@ public class MainActivity extends Activity {
         super.onResume();
         LiveCountdown.refreshAsync(this); // à chaque retour dans l'app
         AppShortcuts.refreshAsync(this); // menu de l'appui long sur l'icône
+        NewsJob.scheduleEvening(this); // résumé du soir toujours programmé
     }
 
     @Override

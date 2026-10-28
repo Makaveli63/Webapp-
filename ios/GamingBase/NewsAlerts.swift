@@ -13,7 +13,6 @@ enum NewsAlerts {
     private static let pendingKey = "notif.pending"
     private static let digestFireKey = "notif.digestFire"
     private static let digestCutKey = "notif.digestCut"
-    private static let digestId = "digest"
 
     /// Article en attente du résumé du soir, avec la date à laquelle il a été trouvé.
     struct Pending: Codable {
@@ -21,24 +20,57 @@ enum NewsAlerts {
         let at: Date
     }
 
-    /// (Re)programme la notification du résumé pour le prochain 19 h avec les articles en attente.
+    /// (Re)programme le résumé du soir : le prochain 19 h avec les articles en attente, puis un rappel
+    /// les 6 soirs suivants. iOS réveille rarement l'app en arrière-plan : sans ces rappels programmés
+    /// à l'avance, le résumé ne partirait pas les jours où l'app n'a rien pu mettre de côté.
     static func scheduleDigest(_ pending: [Pending], now: Date) async {
         let center = UNUserNotificationCenter.current()
-        center.removePendingNotificationRequests(withIdentifiers: [digestId])
-        guard !pending.isEmpty else { return }
+        center.removePendingNotificationRequests(withIdentifiers: digestIds)
         let cal = Calendar.current
         var fire = cal.date(bySettingHour: 19, minute: 0, second: 0, of: now) ?? now
         if fire <= now { fire = cal.date(byAdding: .day, value: 1, to: fire) ?? fire }
-        let content = UNMutableNotificationContent()
-        content.title = "🌙 Ton résumé du soir : \(pending.count) actu\(pending.count > 1 ? "s" : "")"
-        content.body = pending.prefix(4).map { "• \($0.news.title)" }.joined(separator: "\n")
-        content.sound = .default
-        content.userInfo = ["path": "/Webapp-/actualites/"]
-        let parts = cal.dateComponents([.year, .month, .day, .hour, .minute], from: fire)
-        let trigger = UNCalendarNotificationTrigger(dateMatching: parts, repeats: false)
-        try? await center.add(UNNotificationRequest(identifier: digestId, content: content, trigger: trigger))
+        for (index, id) in digestIds.enumerated() {
+            guard let day = cal.date(byAdding: .day, value: index, to: fire) else { continue }
+            let content = UNMutableNotificationContent()
+            if index == 0, !pending.isEmpty {
+                content.title = "🌙 Ton résumé du soir : \(pending.count) actu\(pending.count > 1 ? "s" : "")"
+                content.body = pending.prefix(4).map { "• \($0.news.title)" }.joined(separator: "\n")
+            } else {
+                content.title = "🌙 Ton résumé du soir"
+                content.body = "Les actus du jour t'attendent : touche pour voir ce qui est sorti aujourd'hui."
+            }
+            content.sound = .default
+            content.userInfo = ["path": "/Webapp-/actualites/"]
+            let parts = cal.dateComponents([.year, .month, .day, .hour, .minute], from: day)
+            let trigger = UNCalendarNotificationTrigger(dateMatching: parts, repeats: false)
+            try? await center.add(UNNotificationRequest(identifier: id, content: content, trigger: trigger))
+        }
         defaults.set(fire, forKey: digestFireKey)
         defaults.set(now, forKey: digestCutKey)
+    }
+
+    private static let digestIds = (0..<7).map { $0 == 0 ? "digest" : "digest-\($0)" }
+
+    /// Articles en attente du résumé (ceux déjà partis dans un résumé sont retirés).
+    private static func pendingDigest(now: Date) -> [Pending] {
+        var pending = (defaults.data(forKey: pendingKey).flatMap { try? JSONDecoder().decode([Pending].self, from: $0) }) ?? []
+        if let fire = defaults.object(forKey: digestFireKey) as? Date, fire <= now {
+            let cut = defaults.object(forKey: digestCutKey) as? Date ?? .distantPast
+            pending = pending.filter { $0.at > cut }
+            defaults.removeObject(forKey: digestFireKey)
+            defaults.set(try? JSONEncoder().encode(pending), forKey: pendingKey)
+        }
+        return pending
+    }
+
+    /// À l'ouverture de l'app et quand le réglage change : le résumé reste programmé pour les soirs à venir.
+    static func refreshDigest() async {
+        guard enabled, prefs.digest else {
+            UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: digestIds)
+            return
+        }
+        let now = Date()
+        await scheduleDigest(pendingDigest(now: now), now: now)
     }
 
     /// Réglages envoyés par le site : plateformes, tests seulement, jeux de Ma collection, résumé du soir.
@@ -55,9 +87,7 @@ enum NewsAlerts {
         guard JSONSerialization.isValidJSONObject(raw), let data = try? JSONSerialization.data(withJSONObject: raw),
               data.count < 20_000, (try? JSONDecoder().decode(Prefs.self, from: data)) != nil else { return }
         defaults.set(data, forKey: prefsKey)
-        if raw["digest"] as? Bool != true {
-            UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [digestId])
-        }
+        Task { await refreshDigest() } // programmé (ou retiré) tout de suite
     }
 
     private static var prefs: Prefs {
@@ -93,7 +123,7 @@ enum NewsAlerts {
         guard on else {
             defaults.set(false, forKey: enabledKey)
             BGTaskScheduler.shared.cancel(taskRequestWithIdentifier: taskId)
-            UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [digestId])
+            UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: digestIds)
             return false
         }
         let granted = (try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge])) ?? false
@@ -101,6 +131,7 @@ enum NewsAlerts {
         if granted {
             _ = await check(notify: false) // mémorise les articles actuels : pas d'avalanche au départ
             schedule()
+            await refreshDigest()
         }
         return granted
     }
@@ -140,13 +171,8 @@ enum NewsAlerts {
         // (iOS l'affiche à l'heure pile, même si l'app n'est pas réveillée à ce moment-là).
         if p.digest {
             let now = Date()
-            var pending = (defaults.data(forKey: pendingKey).flatMap { try? JSONDecoder().decode([Pending].self, from: $0) }) ?? []
-            // Résumé déjà parti : on retire les articles qu'il contenait.
-            if let fire = defaults.object(forKey: digestFireKey) as? Date, fire <= now {
-                let cut = defaults.object(forKey: digestCutKey) as? Date ?? .distantPast
-                pending = pending.filter { $0.at > cut }
-                defaults.removeObject(forKey: digestFireKey)
-            }
+            // Résumé déjà parti : les articles qu'il contenait sont retirés.
+            var pending = pendingDigest(now: now)
             let known = Set(pending.map(\.news.path))
             pending += fresh.filter { !known.contains($0.path) }.map { Pending(news: $0, at: now) }
             pending = Array(pending.suffix(50))

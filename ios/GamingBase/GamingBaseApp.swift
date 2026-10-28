@@ -17,7 +17,10 @@ struct GamingBaseApp: App {
                 .onChange(of: scenePhase) { phase in
                     // À chaque ouverture : nouvelles actus vérifiées, résumé du soir mis à jour.
                     if phase == .active {
-                        Task { _ = await NewsAlerts.check(notify: true) }
+                        Task {
+                            _ = await NewsAlerts.check(notify: true)
+                            await NewsAlerts.refreshDigest() // résumé du soir programmé pour les soirs à venir
+                        }
                         Task { await LiveActivities.refresh() }
                         Task { await QuickActions.refresh() }
                     }

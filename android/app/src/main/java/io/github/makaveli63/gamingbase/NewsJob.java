@@ -1,15 +1,19 @@
 package io.github.makaveli63.gamingbase;
 
 import android.Manifest;
+import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.job.JobInfo;
 import android.app.job.JobParameters;
 import android.app.job.JobScheduler;
 import android.app.job.JobService;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -36,6 +40,47 @@ public class NewsJob extends JobService {
 
     static void savePrefs(Context ctx, String json) {
         ctx.getSharedPreferences(PREFS, MODE_PRIVATE).edit().putString("prefs", json).apply();
+        scheduleEvening(ctx);
+    }
+
+    /**
+     * Résumé du soir : réveil à 19 h, même téléphone en veille (la vérification toutes les 30 min
+     * peut être repoussée de plusieurs heures par Android). Reprogrammé chaque soir pour le lendemain.
+     */
+    static void scheduleEvening(Context ctx) {
+        AlarmManager am = ctx.getSystemService(AlarmManager.class);
+        PendingIntent pi = PendingIntent.getBroadcast(ctx, 4244, new Intent(ctx, Evening.class),
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        if (am == null) return;
+        if (!isEnabled(ctx) || !prefs(ctx).optBoolean("digest")) {
+            am.cancel(pi);
+            return;
+        }
+        Calendar at = Calendar.getInstance();
+        at.set(Calendar.HOUR_OF_DAY, 19);
+        at.set(Calendar.MINUTE, 0);
+        at.set(Calendar.SECOND, 0);
+        at.set(Calendar.MILLISECOND, 0);
+        if (at.getTimeInMillis() <= System.currentTimeMillis()) at.add(Calendar.DAY_OF_YEAR, 1);
+        // Réveil approximatif autorisé en veille : pas besoin de l'autorisation d'alarme exacte.
+        am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at.getTimeInMillis(), pi);
+    }
+
+    /** Réveil de 19 h : vérifie le site et envoie le résumé, puis programme celui du lendemain. */
+    public static class Evening extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context ctx, Intent intent) {
+            PendingResult result = goAsync();
+            Context app = ctx.getApplicationContext();
+            new Thread(() -> {
+                try {
+                    check(app, true);
+                } finally {
+                    scheduleEvening(app);
+                    result.finish();
+                }
+            }).start();
+        }
     }
 
     private static JSONObject prefs(Context ctx) {
@@ -88,6 +133,7 @@ public class NewsJob extends JobService {
     static void setEnabled(Context ctx, boolean on) {
         ctx.getSharedPreferences(PREFS, MODE_PRIVATE).edit().putBoolean("enabled", on).apply();
         JobScheduler js = ctx.getSystemService(JobScheduler.class);
+        scheduleEvening(ctx);
         if (!on) {
             js.cancel(JOB_ID);
             return;
@@ -104,6 +150,7 @@ public class NewsJob extends JobService {
     public boolean onStartJob(JobParameters params) {
         new Thread(() -> {
             check(getApplicationContext(), true);
+            scheduleEvening(getApplicationContext()); // aussi après un redémarrage du téléphone
             WidgetData.refreshAll(getApplicationContext()); // les widgets profitent des nouvelles données
             jobFinished(params, false);
         }).start();
