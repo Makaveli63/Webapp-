@@ -7,6 +7,29 @@ import { activeHref, NAV_LINKS } from "./nav-links";
 
 const ITEMS = NAV_LINKS.filter((l) => l.mobile);
 
+// Carte de déplacement de la loupe : rouge = décalage horizontal, vert = vertical, gris neutre au centre.
+// Les bords dévient la lumière (réfraction), le centre reste net, comme le verre liquide.
+const svg = (body: string) => `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none">${body}</svg>`)}`;
+const MAP_X = svg('<defs><linearGradient id="a"><stop offset="0" stop-color="#f00"/><stop offset="1" stop-color="#000"/></linearGradient></defs><rect width="100" height="100" fill="url(#a)"/>');
+const MAP_Y = svg('<defs><linearGradient id="a" x2="0" y2="1"><stop offset="0" stop-color="#0f0"/><stop offset="1" stop-color="#000"/></linearGradient></defs><rect width="100" height="100" fill="url(#a)"/>');
+const MAP_CENTER = svg('<defs><filter id="b"><feGaussianBlur stdDeviation="7"/></filter></defs><rect x="16" y="20" width="68" height="60" rx="26" fill="#808080" filter="url(#b)"/>');
+
+/** Filtre SVG de réfraction utilisé par la bulle (navigateurs Chrome / Android, qui savent l'appliquer). */
+function LensFilter() {
+  return (
+    <svg width="0" height="0" aria-hidden className="pointer-events-none absolute">
+      <filter id="gb-lens" x="0" y="0" width="100%" height="100%" colorInterpolationFilters="sRGB">
+        <feImage href={MAP_X} preserveAspectRatio="none" result="rx" />
+        <feImage href={MAP_Y} preserveAspectRatio="none" result="gy" />
+        <feComposite in="rx" in2="gy" operator="arithmetic" k2="1" k3="1" result="map0" />
+        <feImage href={MAP_CENTER} preserveAspectRatio="none" result="center" />
+        <feComposite in="center" in2="map0" operator="over" result="map" />
+        <feDisplacementMap in="SourceGraphic" in2="map" scale="26" xChannelSelector="R" yChannelSelector="G" />
+      </filter>
+    </svg>
+  );
+}
+
 /**
  * Barre d'onglets fixe en bas d'écran, à portée de pouce (mobile uniquement).
  * On peut glisser le doigt dessus : une bulle de verre suit le doigt et l'onglet est ouvert au lâcher.
@@ -29,6 +52,12 @@ export function MobileTabBar() {
   // Onglet choisi dont la page n'est pas encore affichée : la bulle y va tout de suite.
   const [pending, setPending] = useState<number | null>(null);
   const [width, setWidth] = useState(0);
+
+  // Réfraction réelle seulement là où le navigateur l'applique au fond (Chrome, Android) ; Safari garde le flou.
+  useEffect(() => {
+    const ua = navigator.userAgent;
+    if (/Chrome\//.test(ua) && !/iPhone|iPad|Edg\//.test(ua)) document.documentElement.setAttribute("data-refract", "1");
+  }, []);
 
   // Les pages des onglets sont préchargées : elles s'ouvrent sans attendre le réseau.
   useEffect(() => {
@@ -116,6 +145,7 @@ export function MobileTabBar() {
       aria-label="Navigation principale"
       className="tabbar fixed inset-x-0 bottom-0 z-40 glass-bar border-t pb-[env(safe-area-inset-bottom)] md:hidden"
     >
+      <LensFilter />
       <ul
         ref={list}
         className="relative grid touch-none select-none grid-cols-5"

@@ -31,7 +31,8 @@ struct WebContainer: UIViewControllerRepresentable {
     func updateUIViewController(_ controller: WebViewController, context: Context) {}
 }
 
-final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler, UIScrollViewDelegate {
+final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler, UIScrollViewDelegate,
+    UITabBarDelegate {
     private static let home = URL(string: "https://makaveli63.github.io/Webapp-/")!
     private static let host = "makaveli63.github.io"
     private static let path = "/Webapp-"
@@ -39,6 +40,17 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
     private static weak var current: WebViewController?
     private static var pending: URL?
     private var webView: WKWebView!
+
+    /// Vraie barre d'onglets d'iOS : effet « Liquid Glass » d'Apple et bulle qui suit le doigt (iOS 26 et plus).
+    /// Elle remplace celle du site, masquée dans l'app (attribut data-native-tabs).
+    private let tabBar = UITabBar()
+    private static let tabs: [(title: String, icon: String, path: String)] = [
+        ("Accueil", "house", "/"),
+        ("Tests", "star", "/tests"),
+        ("Sorties", "calendar", "/sorties"),
+        ("Anime", "sparkles", "/anime"),
+        ("Gratuits", "gift", "/jeux-gratuits"),
+    ]
 
     /// gamingbase://open?path=/Webapp-/actualites/… (widgets) → page correspondante du site.
     static func open(_ link: URL) {
@@ -60,6 +72,9 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         // Le site transmet ses jeux épinglés (📌) pour le widget « Mon jeu épinglé ».
         config.userContentController.add(WeakHandler(self), name: "gamingbase")
         // Pas de zoom (pincement ni double tap) dans l'app, comme une app native.
+        // Le site masque sa propre barre d'onglets : c'est celle d'iOS qui s'affiche.
+        let nativeTabs = "document.documentElement.setAttribute('data-native-tabs', '1');"
+        config.userContentController.addUserScript(WKUserScript(source: nativeTabs, injectionTime: .atDocumentStart, forMainFrameOnly: true))
         let noZoom = """
         (function () {
           var m = document.querySelector('meta[name="viewport"]');
@@ -85,10 +100,45 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
             : UIColor(red: 0.965, green: 0.969, blue: 0.984, alpha: 1) }
         webView.backgroundColor = background
         webView.scrollView.backgroundColor = background
-        view = webView
+        let root = UIView()
+        root.backgroundColor = background
+        webView.frame = root.bounds
+        webView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        root.addSubview(webView)
+        tabBar.items = Self.tabs.enumerated().map { index, tab in
+            UITabBarItem(title: tab.title, image: UIImage(systemName: tab.icon), tag: index)
+        }
+        tabBar.selectedItem = tabBar.items?.first
+        tabBar.delegate = self
+        tabBar.translatesAutoresizingMaskIntoConstraints = false
+        root.addSubview(tabBar)
+        NSLayoutConstraint.activate([
+            tabBar.leadingAnchor.constraint(equalTo: root.leadingAnchor),
+            tabBar.trailingAnchor.constraint(equalTo: root.trailingAnchor),
+            tabBar.bottomAnchor.constraint(equalTo: root.bottomAnchor),
+        ])
+        view = root
         Self.current = self
         webView.load(URLRequest(url: Self.pending ?? Self.home))
         Self.pending = nil
+    }
+
+    // Onglet touché : le site change de page sans se recharger (navigation de l'app web).
+    func tabBar(_ tabBar: UITabBar, didSelect item: UITabBarItem) {
+        guard Self.tabs.indices.contains(item.tag) else { return }
+        let path = Self.tabs[item.tag].path
+        webView.evaluateJavaScript(
+            "window.gbNavigate ? window.gbNavigate('\(path)') : (location.href = '\(Self.path)\(path)/'.replace('//', '/'))",
+            completionHandler: nil)
+    }
+
+    /// Page affichée par le site → onglet correspondant sélectionné.
+    private func selectTab(for route: String) {
+        let page = route.hasPrefix(Self.path) ? String(route.dropFirst(Self.path.count)) : route
+        let match = Self.tabs.enumerated()
+            .filter { $0.element.path == "/" ? (page == "/" || page.isEmpty || page.hasPrefix("/actualites")) : page.hasPrefix($0.element.path) }
+            .max { $0.element.path.count < $1.element.path.count }
+        tabBar.selectedItem = match.flatMap { tabBar.items?[$0.offset] }
     }
 
     func viewForZooming(in scrollView: UIScrollView) -> UIView? { nil }
@@ -114,6 +164,11 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
                     "window.dispatchEvent(new CustomEvent('gb-notif',{detail:{enabled:\(enabled),denied:\(denied)}}))",
                     completionHandler: nil)
             }
+            return
+        }
+        // Changement de page sur le site : la barre d'onglets suit.
+        if let route = body["route"] as? String {
+            selectTab(for: route)
             return
         }
         // Affichage du compte à rebours en direct : jours et/ou heures : minutes : secondes.

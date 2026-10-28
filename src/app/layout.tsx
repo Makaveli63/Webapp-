@@ -5,6 +5,7 @@ import { MobileTabBar } from "@/components/layout/MobileTabBar";
 import { Navbar } from "@/components/layout/Navbar";
 import { ReleaseBanner } from "@/components/releases/ReleaseBanner";
 import { PageTransition } from "@/components/layout/PageTransition";
+import { NativeTabsBridge } from "@/components/app/NativeTabsBridge";
 import { Splash } from "@/components/splash/Splash";
 import { DynamicBackground } from "@/components/theme/DynamicBackground";
 import { Tracker } from "@/components/analytics/Tracker";
@@ -75,6 +76,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         </main>
         <Footer />
         <MobileTabBar />
+        <NativeTabsBridge />
         <Tracker />
         <PullToRefresh />
         <AutoSync />

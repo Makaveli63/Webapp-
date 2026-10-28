@@ -16,7 +16,8 @@ struct LiveCountdownText: View {
         let now = Date()
         let left = state.releaseAt.timeIntervalSince(now)
         let days = max(0, Int(left / 86_400))
-        let showDays = state.showDays || !state.showClock
+        let showClock = state.showClock ?? true
+        let showDays = (state.showDays ?? true) || !showClock
         // Fin du jour en cours du compte à rebours (quand « 21 j » passera à « 20 j »).
         let boundary = showDays ? state.releaseAt.addingTimeInterval(-Double(days) * 86_400) : state.releaseAt
         if left <= 0 {
@@ -35,7 +36,7 @@ struct LiveCountdownText: View {
                 if showDays && days > 0 {
                     Text("\(days) j")
                 }
-                if state.showClock {
+                if showClock {
                     Text(timerInterval: now...max(boundary, now.addingTimeInterval(1)), countsDown: true)
                         .monospacedDigit()
                         .multilineTextAlignment(.trailing)

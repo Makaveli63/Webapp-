@@ -729,3 +729,12 @@ html[data-splash="off"] .splash { display: none; }
 
 /* Dans l'île (fond foncé), la couleur d'accent est éclaircie pour rester lisible, en clair comme en sombre. */
 :root[data-style="capsule"] .island .text-accent { color: color-mix(in srgb, var(--accent) 55%, #fff); }
+
+/* App iPhone : la vraie barre d'onglets d'iOS (Liquid Glass) remplace celle du site. */
+html[data-native-tabs] .tabbar { display: none; }
+
+/* Android (Chrome) : la bulle réfracte vraiment ce qu'il y a dessous (filtre SVG #gb-lens), comme le verre liquide. */
+html[data-refract] .tab-lens-drag {
+  -webkit-backdrop-filter: url(#gb-lens) saturate(1.8) brightness(1.08);
+  backdrop-filter: url(#gb-lens) saturate(1.8) brightness(1.08);
+}
