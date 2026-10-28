@@ -12,6 +12,7 @@ import { Comments } from "@/components/social/Comments";
 import { PageTheme } from "@/components/theme/PageTheme";
 import { DislikeButton } from "@/components/social/DislikeButton";
 import { ReadXp } from "@/components/player/ReadXp";
+import { NotInterestedButton } from "@/components/app/NotInterestedButton";
 import { LikeButton } from "@/components/social/LikeButton";
 import { RemoteImage } from "@/components/ui/RemoteImage";
 import { VideoPlayer } from "@/components/ui/VideoPlayer";
@@ -62,7 +63,8 @@ export default async function ArticlePage({ params }: Props) {
   // Fiche du jeu testé (ou du jeu dont parle l'article), si elle existe.
   const games = await getGames();
   const tested = article.category === "Test" ? testedGame(article.title) : "";
-  const gamePage = (games.find((g) => g.key === tested) ?? games.find((g) => g.key.length >= 4 && aboutGame(article.title, g)))?.slug;
+  const aboutThis = games.find((g) => g.key === tested) ?? games.find((g) => g.key.length >= 4 && aboutGame(article.title, g));
+  const gamePage = aboutThis?.slug;
   // Actu anime : d'autres actus anime ; actu jeu vidéo : même plateforme, jamais d'anime.
   const isAnime = article.category === "Anime";
   const related = all
@@ -106,6 +108,7 @@ export default async function ArticlePage({ params }: Props) {
           <DislikeButton type="article" id={article.slug} className="glass-pill h-[30px] ring-1 ring-inset ring-border" />
           <ShareButton title={article.title} path={`/actualites/${article.slug}/`} />
           <FavoriteButton article={article} withLabel />
+          {aboutThis && <NotInterestedButton title={aboutThis.title} />}
         </div>
         </div>
 

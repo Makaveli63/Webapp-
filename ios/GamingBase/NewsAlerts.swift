@@ -115,6 +115,8 @@ enum NewsAlerts {
         var priceAlerts: Bool? = true
         /// Bouclier anti-spoiler : titre des actus anime masqué dans les notifications
         var spoilerShield: Bool? = true
+        /// Licences « Pas intéressé » : aucune notification pour leurs actus
+        var muted: [String]? = []
     }
 
     struct Follow: Codable {
@@ -252,6 +254,8 @@ enum NewsAlerts {
     }
 
     static func matches(_ a: Feed.News, _ p: Prefs) -> Bool {
+        let words = norm(a.title)
+        if (p.muted ?? []).contains(where: { let m = norm($0); return m.count >= 4 && words.contains(m) }) { return false }
         let anime = a.category == "Anime"
         if anime && (!(p.anime ?? true) || p.testsOnly) { return false }
         if !anime && !p.platforms.isEmpty { // l'anime n'a pas de plateforme de jeu

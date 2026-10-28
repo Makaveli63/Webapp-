@@ -949,6 +949,8 @@ html:not([data-splash="off"]) .tabbar { animation: tabbar-in .4s ease-out 1.9s b
 /* Badge « Fondateur » : doré, lisible en clair comme en sombre. */
 .role-badge { color: #7a4b00; background: linear-gradient(135deg, #f8d77a, #e9a91e); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .35); }
 :root[data-theme="dark"] .role-badge { color: #3a2400; }
+/* Badge « Soutien » : rose-violet, dans la famille des couleurs de l'appli. */
+.role-badge-support { color: #fff; background: linear-gradient(135deg, #ec4899, #8b5cf6); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .25); }
 /* Île de l'XP : pastille du niveau, dorée quand on monte de niveau. */
 .xp-toast-level {
   display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
@@ -1068,4 +1070,5 @@ html[data-search] .release-banner { opacity: 0; pointer-events: none; transition
 
 /* Menu « Aa » : sous le bouton, sans jamais sortir de l'écran */
 .reading-panel { position: absolute; left: 0; top: 2.5rem; scroll-margin: 5rem 0 calc(6rem + env(safe-area-inset-bottom)); width: min(16rem, calc(100vw - 2rem)); background: color-mix(in srgb, var(--surface) 97%, transparent); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); }
+.reading-panel-right { left: auto; right: 0; }
 .share-menu { background: color-mix(in srgb, var(--surface) 97%, transparent) !important; }

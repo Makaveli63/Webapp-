@@ -44,6 +44,8 @@ export interface PlayerState {
   pseudo: string;
   avatar: number;
   xp: number;
+  /** Badge attribué par l'admin (« Soutien »), lu sur le serveur */
+  role?: string | null;
   /** Jour (AAAA-MM-JJ, heure de Paris) → nombre de gains par action ce jour-là (seul le jour courant est gardé) */
   today: { day: string; counts: Partial<Record<XpAction, number>> };
   streak: { last: string; days: number };
@@ -210,6 +212,7 @@ export function mergePlayers(a: Partial<PlayerState> | null, b: Partial<PlayerSt
   return {
     pseudo: lead.pseudo,
     avatar: lead.avatar,
+    role: lead.role ?? x.role ?? y.role ?? null,
     xp: Math.max(x.xp, y.xp),
     today,
     streak,
@@ -246,17 +249,22 @@ export async function savePlayer(pseudo: string, avatar: number): Promise<void> 
 }
 
 /** Niveau des auteurs de commentaires (clé : pseudo en minuscules). */
-export async function playersLevels(pseudos: string[]): Promise<Record<string, { xp: number; avatar: number }>> {
+export async function playersLevels(pseudos: string[]): Promise<Record<string, { xp: number; avatar: number; role?: string | null }>> {
   if (!socialEnabled || !pseudos.length) return {};
-  return rpc<Record<string, { xp: number; avatar: number }>>("get_players", { p_pseudos: [...new Set(pseudos)] }).catch(() => ({}));
+  return rpc<Record<string, { xp: number; avatar: number; role?: string | null }>>("get_players", { p_pseudos: [...new Set(pseudos)] }).catch(() => ({}));
 }
 
-/** Profil enregistré sur le serveur pour cet appareil (après un nettoyage du stockage du site). */
+/**
+ * Profil enregistré sur le serveur pour cet appareil : retrouvé après un nettoyage du stockage du site,
+ * et badge attribué par l'admin (« Soutien ») mis à jour à chaque ouverture.
+ */
 export async function restorePlayer(): Promise<void> {
-  if (!socialEnabled || readPlayer().pseudo) return;
-  const r = await rpc<{ pseudo: string; avatar: number; xp: number } | null>("get_player", { p_voter: voterId() }).catch(() => null);
-  if (r?.pseudo) {
-    write({ ...readPlayer(), pseudo: r.pseudo, avatar: r.avatar, xp: Math.max(r.xp, readPlayer().xp) });
-    emit(null);
-  }
+  if (!socialEnabled) return;
+  const r = await rpc<{ pseudo: string; avatar: number; xp: number; role?: string | null } | null>("get_player", { p_voter: voterId() }).catch(() => null);
+  if (!r?.pseudo) return;
+  const me = readPlayer();
+  if (!me.pseudo) write({ ...me, pseudo: r.pseudo, avatar: r.avatar, xp: Math.max(r.xp, me.xp), role: r.role ?? null });
+  else if ((me.role ?? null) !== (r.role ?? null)) write({ ...me, role: r.role ?? null });
+  else return;
+  emit(null);
 }

@@ -11,6 +11,8 @@ create table if not exists public.players (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+-- Badge attribué par l'admin (« Soutien »), affiché à côté du pseudo.
+alter table public.players add column if not exists role text check (role is null or role in ('Soutien'));
 alter table public.players enable row level security;
 revoke all on public.players from anon, authenticated;
 
@@ -55,14 +57,14 @@ end $$;
 create or replace function public.get_player(p_voter text)
 returns json
 language sql stable security definer set search_path = public, extensions as $$
-  select json_build_object('pseudo', pseudo, 'avatar', avatar, 'xp', xp) from public.players where voter = p_voter
+  select json_build_object('pseudo', pseudo, 'avatar', avatar, 'xp', xp, 'role', role) from public.players where voter = p_voter
 $$;
 
--- Niveau et avatar des auteurs d'une liste de commentaires : { "kenji": { "xp": 120, "avatar": 2 } }.
+-- Niveau, avatar et badge des auteurs d'une liste de commentaires : { "kenji": { "xp": 120, "avatar": 2, "role": null } }.
 create or replace function public.get_players(p_pseudos text[])
 returns json
 language sql stable security definer set search_path = public, extensions as $$
-  select coalesce(json_object_agg(pseudo_key, json_build_object('xp', xp, 'avatar', avatar)), '{}'::json)
+  select coalesce(json_object_agg(pseudo_key, json_build_object('xp', xp, 'avatar', avatar, 'role', role)), '{}'::json)
   from public.players where pseudo_key = any (select lower(x) from unnest(p_pseudos[1:60]) as x)
 $$;
 

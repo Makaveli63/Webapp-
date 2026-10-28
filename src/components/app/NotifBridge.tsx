@@ -60,12 +60,12 @@ export function NotifBridge() {
       .catch(() => {
         /* hors connexion : les dates connues restent */
       });
-    for (const e of [FOLLOWS_EVENT, PREFS_EVENT, "gb-collection-change", "gb-spoiler-change"]) window.addEventListener(e, send);
+    for (const e of [FOLLOWS_EVENT, PREFS_EVENT, "gb-collection-change", "gb-spoiler-change", "gb-masques-change"]) window.addEventListener(e, send);
     return () => {
       controller.abort();
       document.removeEventListener("visibilitychange", pull);
       window.removeEventListener(TRACKER_EVENT, send);
-      for (const e of [FOLLOWS_EVENT, PREFS_EVENT, "gb-collection-change", "gb-spoiler-change"]) window.removeEventListener(e, send);
+      for (const e of [FOLLOWS_EVENT, PREFS_EVENT, "gb-collection-change", "gb-spoiler-change", "gb-masques-change"]) window.removeEventListener(e, send);
     };
   }, []);
   return null;

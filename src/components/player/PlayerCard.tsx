@@ -158,7 +158,7 @@ function Profile({ player, onEdit }: { player: PlayerState; onEdit: () => void }
             <h2 id="player-title" className="truncate text-xl font-bold text-heading">{player.pseudo}</h2>
           </div>
           <span className="mt-1.5 flex flex-wrap items-center gap-1.5">
-            <RoleBadge pseudo={player.pseudo} className="text-xs" />
+            <RoleBadge pseudo={player.pseudo} role={player.role} className="text-xs" />
             <span className="inline-flex rounded-full bg-accent/12 px-2.5 py-0.5 text-xs font-semibold text-accent">{titleOf(level)}</span>
           </span>
           <p className="mt-1.5 text-sm text-muted tabular-nums">

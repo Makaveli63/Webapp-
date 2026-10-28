@@ -1,6 +1,7 @@
 "use client";
 
 import { FOLLOWS_EVENT, FOLLOWS_KEY } from "@/lib/follows";
+import { MUTED_EVENT, MUTED_KEY } from "@/lib/muted";
 import { mergePlayers, reloadPlayer, type PlayerState } from "@/lib/player";
 import { rpc } from "@/lib/social";
 import { cleanTracker, mergeTrackers, TRACKER_EVENT, TRACKER_KEY, type Tracker } from "@/lib/tracker";
@@ -30,6 +31,8 @@ interface Payload {
   joueur?: PlayerState | null;
   /** Identifiant anonyme commun aux appareils liés : même pseudo réservé, mêmes j'aime */
   voter?: string | null;
+  /** Licences « Pas intéressé » */
+  masques?: string[];
 }
 
 // Clés des réglages d'affichage synchronisés (public/theme.js les lit au chargement de chaque page).
@@ -100,6 +103,7 @@ function local(): Payload {
     affichage: displayLocal(),
     suivis: readJson<Item[]>(FOLLOWS_KEY, []),
     joueur: readJson<PlayerState | null>("gb-joueur", null),
+    masques: readJson<string[]>(MUTED_KEY, []),
     voter: rawVoter(),
   };
 }
@@ -134,6 +138,7 @@ function merge(mine: Payload, theirs: Partial<Payload> | null): Payload {
     affichage: mine.affichage ?? theirs.affichage,
     suivis: union(mine.suivis ?? [], theirs.suivis ?? [], "id").slice(0, 60),
     joueur: mergePlayers(mine.joueur ?? null, theirs.joueur ?? null),
+    masques: [...new Set([...(mine.masques ?? []), ...(theirs.masques ?? [])])].filter((t) => typeof t === "string").slice(0, 60),
     // Le premier appareil relié donne son identifiant aux autres.
     voter: theirs.voter ?? mine.voter ?? null,
   };
@@ -150,6 +155,7 @@ function apply(p: Payload) {
     if (p.suivi) localStorage.setItem(TRACKER_KEY, JSON.stringify(cleanTracker(p.suivi)));
     if (Array.isArray(p.suivis)) localStorage.setItem(FOLLOWS_KEY, JSON.stringify(p.suivis.filter((f) => f && typeof f.id === "string").slice(0, 60)));
     if (p.joueur) localStorage.setItem("gb-joueur", JSON.stringify(p.joueur));
+    if (Array.isArray(p.masques)) localStorage.setItem(MUTED_KEY, JSON.stringify(p.masques.filter((t) => typeof t === "string").slice(0, 60)));
     const before = rawVoter();
     if (p.voter && /^[\w-]{8,64}$/.test(p.voter) && p.voter !== before) {
       localStorage.setItem("gb-voter", p.voter);
@@ -162,7 +168,7 @@ function apply(p: Payload) {
   } catch {
     /* stockage indisponible */
   }
-  for (const e of ["gb-favoris-change", "gb-epingles-change", "gb-collection-change", "gb-notif-prefs-change", TRACKER_EVENT, "gb-theme-change", FOLLOWS_EVENT]) {
+  for (const e of ["gb-favoris-change", "gb-epingles-change", "gb-collection-change", "gb-notif-prefs-change", TRACKER_EVENT, "gb-theme-change", FOLLOWS_EVENT, MUTED_EVENT]) {
     window.dispatchEvent(new Event(e));
   }
   reloadPlayer();
@@ -173,7 +179,7 @@ function apply(p: Payload) {
 // l'autre appareil n'a rien changé : on envoie l'état local tel quel (suppressions comprises).
 // Sinon, et seulement si on a aussi des changements, on fusionne les deux.
 const META_KEY = "gb-sync-meta";
-const CHANGE_EVENTS = ["gb-favoris-change", "gb-epingles-change", "gb-collection-change", "gb-notif-prefs-change", TRACKER_EVENT, "gb-theme-change", FOLLOWS_EVENT, "gb-joueur"];
+const CHANGE_EVENTS = ["gb-favoris-change", "gb-epingles-change", "gb-collection-change", "gb-notif-prefs-change", TRACKER_EVENT, "gb-theme-change", FOLLOWS_EVENT, "gb-joueur", MUTED_EVENT];
 let applying = false;
 
 interface Meta {

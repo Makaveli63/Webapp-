@@ -1,3 +1,4 @@
+import { MutedGate } from "@/components/app/MutedGate";
 import Link from "next/link";
 import { FollowButton } from "@/components/app/FollowButton";
 import { CollectionButtons } from "@/components/collection/CollectionButtons";
@@ -15,7 +16,7 @@ const fullDate = (ymd: string) =>
     new Date(`${ymd}T12:00:00Z`),
   );
 
-export function GameCard({ game }: { game: SearchGame }) {
+function GameCardBody({ game }: { game: SearchGame }) {
   const body = (
     <>
       <div className="relative aspect-[16/9] w-full">
@@ -67,5 +68,14 @@ export function GameCard({ game }: { game: SearchGame }) {
     <a href={game.url} target="_blank" rel="noopener noreferrer" className={className}>
       {body}
     </a>
+  );
+}
+
+/** Masquée si elle concerne une licence « Pas intéressé ». */
+export function GameCard(props: { game: SearchGame }) {
+  return (
+    <MutedGate title={props.game.title}>
+      <GameCardBody {...props} />
+    </MutedGate>
   );
 }

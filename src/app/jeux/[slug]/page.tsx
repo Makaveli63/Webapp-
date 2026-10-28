@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FollowButton } from "@/components/app/FollowButton";
+import { NotInterestedButton } from "@/components/app/NotInterestedButton";
 import { CollectionButtons } from "@/components/collection/CollectionButtons";
 import { DealCard } from "@/components/deals/DealCard";
 import { GameProgress } from "@/components/tracker/GameProgress";
@@ -100,6 +101,7 @@ export default async function GamePage({ params }: Props) {
           )}
           <FollowButton item={{ id: `jeu-${game.slug}`, kind: "game", title: game.title, href: `/jeux/${game.slug}/` }} />
           <ShareButton title={game.title} path={`/jeux/${game.slug}/`} />
+          <NotInterestedButton title={game.title} />
           <CollectionButtons game={{ id: game.releaseId ? `sortie-${game.releaseId}` : `jeu-${game.slug}`, title: game.title, image: game.image }} />
         </div>
         {!upcoming && (

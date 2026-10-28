@@ -7,6 +7,7 @@ import { flushSync } from "react-dom";
 import { PlatformBadge } from "@/components/ui/Badge";
 import { Countdown } from "@/components/ui/Countdown";
 import { RemoteImage } from "@/components/ui/RemoteImage";
+import { isMuted, useMuted } from "@/lib/muted";
 import { pinnedFirst, usePins } from "@/lib/pins";
 import { themeFor } from "@/lib/themes";
 import type { Release } from "@/types";
@@ -21,6 +22,13 @@ type Item = Release & { at: string; href: string };
  * visuel, plateformes, compte à rebours détaillé et lien vers la fiche du jeu.
  */
 export function ReleaseBannerContent({ releases }: { releases: Item[] }) {
+  // Licences « Pas intéressé » retirées ; plus rien à annoncer : pas d'île.
+  const muted = useMuted();
+  const visible = releases.filter((r) => !isMuted(r.title, muted));
+  return visible.length ? <Island releases={visible} /> : null;
+}
+
+function Island({ releases }: { releases: Item[] }) {
   const pins = usePins();
   const [next] = pinnedFirst(releases, pins);
   const [open, setOpen] = useState(false);

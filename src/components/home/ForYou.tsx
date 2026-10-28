@@ -3,6 +3,7 @@
 import { Bell, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { isMuted, useMuted } from "@/lib/muted";
 import { RemoteImage } from "@/components/ui/RemoteImage";
 import { aliasesOf } from "@/lib/aliases";
 import { useFollows } from "@/lib/follows";
@@ -53,6 +54,7 @@ export function ForYou({ articles }: { articles: ForYouArticle[] }) {
     };
   }, []);
 
+  const muted = useMuted();
   const picks = useMemo(() => {
     if (!follows || !tracker || !extra) return null;
     const signals: Signal[] = [
@@ -62,6 +64,7 @@ export function ForYou({ articles }: { articles: ForYouArticle[] }) {
     ];
     const out: { article: ForYouArticle; reason: string; score: number }[] = [];
     for (const a of articles) {
+      if (isMuted(`${a.title} ${a.tags.join(" ")}`, muted)) continue; // licence « Pas intéressé »
       const hay = ` ${canon(`${a.title} ${a.tags.join(" ")}`)} `;
       let best: { reason: string; score: number } | null = null;
       for (const s of signals) {
@@ -75,7 +78,7 @@ export function ForYou({ articles }: { articles: ForYouArticle[] }) {
     }
     // Les plus pertinentes d'abord, puis les plus récentes (la liste arrive déjà triée par date).
     return out.sort((x, y) => y.score - x.score).slice(0, 10);
-  }, [follows, tracker, extra, articles]);
+  }, [follows, tracker, extra, articles, muted]);
 
   if (!picks) return null;
   const hasSignals = !!(follows?.length || Object.keys(tracker?.anime ?? {}).length || Object.keys(tracker?.games ?? {}).length || extra?.games.length);

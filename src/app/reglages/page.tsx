@@ -3,6 +3,7 @@ import { AppNotificationsToggle } from "@/components/app/AppNotificationsToggle"
 import { LiveActivityToggle } from "@/components/app/LiveActivityToggle";
 import { OpenLinksSetting } from "@/components/app/OpenLinksSetting";
 import { SpoilerToggle } from "@/components/settings/SpoilerToggle";
+import { MutedList } from "@/components/settings/MutedList";
 import { VoiceSettings } from "@/components/settings/VoiceSettings";
 import { ThemePicker } from "@/components/settings/ThemePicker";
 import { SyncPanel } from "@/components/sync/SyncPanel";
@@ -20,6 +21,7 @@ export default function SettingsPage() {
       <LiveActivityToggle />
       <OpenLinksSetting />
       <SpoilerToggle />
+      <MutedList />
       <VoiceSettings />
       <SyncPanel />
       <ThemePicker />

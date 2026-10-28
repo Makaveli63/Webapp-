@@ -1,3 +1,4 @@
+import { MutedGate } from "@/components/app/MutedGate";
 import { Play } from "lucide-react";
 import Link from "next/link";
 import { CategoryBadge, PlatformBadge } from "@/components/ui/Badge";
@@ -9,7 +10,7 @@ import { SpoilerCover } from "./SpoilerCover";
 import { themeFor } from "@/lib/themes";
 import type { Article } from "@/types";
 
-export function NewsCard({ article }: { article: Article }) {
+function NewsCardBody({ article }: { article: Article }) {
   const theme = themeFor(`${article.title} ${article.tags.join(" ")}`, article.platforms);
   return (
     <article className="group relative flex flex-col overflow-hidden rounded-xl glass transition-colors hover:border-accent/60 active:bg-surface-2">
@@ -53,5 +54,14 @@ export function NewsCard({ article }: { article: Article }) {
         </div>
       </div>
     </article>
+  );
+}
+
+/** Masquée si elle concerne une licence « Pas intéressé ». */
+export function NewsCard(props: { article: Article }) {
+  return (
+    <MutedGate title={`${props.article.title} ${props.article.tags.join(" ")}`}>
+      <NewsCardBody {...props} />
+    </MutedGate>
   );
 }

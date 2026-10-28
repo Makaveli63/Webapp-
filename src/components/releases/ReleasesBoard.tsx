@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { PlatformBadge } from "@/components/ui/Badge";
 import { RemoteImage } from "@/components/ui/RemoteImage";
+import { isMuted, useMuted } from "@/lib/muted";
 import { themeFor } from "@/lib/themes";
 import type { AnnouncedRelease, CalendarGame, Release } from "@/types";
 import { CalendarSection } from "./CalendarSection";
@@ -60,16 +61,12 @@ export function ReleasesBoard({ releases, announced, week, month, nextMonth, tod
     }
   };
 
-  const f = useMemo(
-    () => ({
-      releases: releases.filter((r) => matches(r.platforms, chosen)),
-      announced: announced.filter((r) => matches(r.platforms, chosen)),
-      week: week.filter((g) => matches(g.platforms, chosen)),
-      month: month.filter((g) => matches(g.platforms, chosen)),
-      nextMonth: nextMonth.filter((g) => matches(g.platforms, chosen)),
-    }),
-    [releases, announced, week, month, nextMonth, chosen],
-  );
+  const muted = useMuted();
+  const f = useMemo(() => {
+    // Consoles choisies, sans les licences « Pas intéressé ».
+    const keep = <T extends { title: string; platforms: readonly string[] }>(list: T[]) => list.filter((g) => matches(g.platforms, chosen) && !isMuted(g.title, muted));
+    return { releases: keep(releases), announced: keep(announced), week: keep(week), month: keep(month), nextMonth: keep(nextMonth) };
+  }, [releases, announced, week, month, nextMonth, chosen, muted]);
   const chip = (on: boolean) =>
     `shrink-0 rounded-full px-3 py-1.5 text-sm font-semibold ring-1 ring-inset transition-colors ${on ? "bg-accent text-white ring-accent" : "glass-pill text-heading ring-border"}`;
 

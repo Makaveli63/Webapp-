@@ -270,6 +270,13 @@ public class NewsJob extends JobService {
 
     /** L'article correspond-il aux réglages ? (plateformes, tests seulement, jeux de Ma collection) */
     static boolean matches(JSONObject a, JSONObject p) {
+        // Licences « Pas intéressé » : aucune notification pour leurs actus.
+        JSONArray muted = p.optJSONArray("muted");
+        String words = norm(a.optString("title"));
+        for (int i = 0; muted != null && i < muted.length(); i++) {
+            String m = norm(muted.optString(i));
+            if (m.length() >= 4 && words.contains(m)) return false;
+        }
         boolean anime = "Anime".equals(a.optString("category"));
         if (anime && (!p.optBoolean("anime", true) || p.optBoolean("testsOnly"))) return false;
         JSONArray wanted = p.optJSONArray("platforms");

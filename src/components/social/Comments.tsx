@@ -40,8 +40,8 @@ export function Comments({ slug }: { slug: string }) {
   // Mot de passe du tableau de bord, si l'administrateur s'est connecté sur /admin/ dans cet onglet.
   const [admin, setAdmin] = useState("");
   // Profil joueur de cet appareil (pseudo réservé) et niveau des auteurs affichés.
-  const [player, setPlayer] = useState<{ pseudo: string; avatar: number; level: number } | null>(null);
-  const [levels, setLevels] = useState<Record<string, { xp: number; avatar: number }>>({});
+  const [player, setPlayer] = useState<{ pseudo: string; avatar: number; level: number; role?: string | null } | null>(null);
+  const [levels, setLevels] = useState<Record<string, { xp: number; avatar: number; role?: string | null }>>({});
 
   const load = useCallback(() => {
     rpc<Comment[]>("get_comments", { p_slug: slug, p_voter: voterId() })
@@ -55,7 +55,7 @@ export function Comments({ slug }: { slug: string }) {
   useEffect(() => {
     if (!socialEnabled) return;
     const me = readPlayer();
-    if (me.pseudo) setPlayer({ pseudo: me.pseudo, avatar: me.avatar, level: levelOf(me.xp).level });
+    if (me.pseudo) setPlayer({ pseudo: me.pseudo, avatar: me.avatar, level: levelOf(me.xp).level, role: me.role });
     setPseudo(me.pseudo || savedPseudo());
     setAdmin(adminPassword());
     load();
@@ -119,7 +119,7 @@ export function Comments({ slug }: { slug: string }) {
             <span>
               En tant que <span className="font-semibold text-heading">{player.pseudo}</span>
             </span>
-            <RoleBadge pseudo={player.pseudo} />
+            <RoleBadge pseudo={player.pseudo} role={player.role} />
             <span className="whitespace-nowrap rounded-full bg-accent/12 px-2 py-0.5 text-[11px] font-bold text-accent">Niv. {player.level}</span>
           </p>
         ) : (
@@ -182,7 +182,7 @@ export function Comments({ slug }: { slug: string }) {
                 <p className="text-sm">
                   <span className="font-semibold text-heading">{c.author}</span>{" "}
                   {/* Badge réservé aux pseudos protégés (profil enregistré sur le serveur). */}
-                  {levels[c.author.toLowerCase()] && <RoleBadge pseudo={c.author} />}{" "}
+                  {levels[c.author.toLowerCase()] && <RoleBadge pseudo={c.author} role={levels[c.author.toLowerCase()].role} />}{" "}
                   {levels[c.author.toLowerCase()] && <LevelChip xp={levels[c.author.toLowerCase()].xp} />}{" "}
                   <span className="text-muted">· {timeAgo(c.created_at)}</span>
                 </p>

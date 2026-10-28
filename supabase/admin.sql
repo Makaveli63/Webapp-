@@ -73,7 +73,7 @@ begin
         'total', (select count(*) from public.players),
         'week', (select count(*) from public.players where created_at > now() - interval '7 days'),
         'list', coalesce((select json_agg(p order by p.created_at desc) from (
-          select pseudo, avatar, xp, created_at, updated_at from public.players order by created_at desc limit 300) p), '[]'::json))
+          select pseudo, avatar, xp, role, created_at, updated_at from public.players order by created_at desc limit 300) p), '[]'::json))
     $q$ into v_players;
   end if;
   if to_regclass('public.dislikes') is not null then
@@ -86,6 +86,19 @@ begin
     $q$ into v_dislikes;
   end if;
   return json_build_object('players', v_players, 'dislikes', v_dislikes);
+end $$;
+
+-- Badge « Soutien » sur un pseudo (null pour le retirer). Le badge « Fondateur » est réservé au site.
+create or replace function public.admin_set_role(p_password text, p_pseudo text, p_role text)
+returns text
+language plpgsql volatile security definer set search_path = public, extensions as $$
+declare
+  v_check text := public.gb_admin_check(p_password);
+begin
+  if v_check <> 'ok' then return v_check; end if;
+  if p_role is not null and p_role <> 'Soutien' then return 'REQUETE_INVALIDE'; end if;
+  execute 'update public.players set role = $1 where pseudo_key = lower($2)' using p_role, trim(coalesce(p_pseudo, ''));
+  return 'ok';
 end $$;
 
 -- ---------------------------------------------------------------- Sources d'actus ajoutées par l'admin
@@ -188,6 +201,7 @@ grant execute on function public.admin_list_devices(text) to anon;
 grant execute on function public.admin_forget_device(text, text) to anon;
 grant execute on function public.admin_device_status(text) to anon;
 grant execute on function public.admin_community(text) to anon;
+grant execute on function public.admin_set_role(text, text, text) to anon;
 grant execute on function public.admin_add_source(text, text, text, text) to anon;
 grant execute on function public.admin_delete_source(text, uuid) to anon;
 grant execute on function public.get_sources() to anon;

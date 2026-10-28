@@ -1,3 +1,4 @@
+import { MutedGate } from "@/components/app/MutedGate";
 import { RemoteImage } from "@/components/ui/RemoteImage";
 import { TrailerButton } from "@/components/ui/TrailerButton";
 import { themeFor } from "@/lib/themes";
@@ -8,7 +9,7 @@ const dayLabel = (ymd: string) =>
     new Date(`${ymd}T12:00:00Z`),
   );
 
-export function CalendarCard({ game, isToday = false }: { game: CalendarGame; isToday?: boolean }) {
+function CalendarCardBody({ game, isToday = false }: { game: CalendarGame; isToday?: boolean }) {
   const content = (
     <>
       <div className="relative aspect-[16/9] w-full">
@@ -35,5 +36,14 @@ export function CalendarCard({ game, isToday = false }: { game: CalendarGame; is
     </a>
   ) : (
     <div className={className}>{content}</div>
+  );
+}
+
+/** Masquée si elle concerne une licence « Pas intéressé ». */
+export function CalendarCard(props: { game: CalendarGame; isToday?: boolean }) {
+  return (
+    <MutedGate title={props.game.title}>
+      <CalendarCardBody {...props} />
+    </MutedGate>
   );
 }

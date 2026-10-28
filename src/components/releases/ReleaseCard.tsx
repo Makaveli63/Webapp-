@@ -1,3 +1,4 @@
+import { MutedGate } from "@/components/app/MutedGate";
 import { CalendarPlus, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { CollectionButtons } from "@/components/collection/CollectionButtons";
@@ -16,7 +17,7 @@ import type { Release } from "@/types";
 const gameSlug = (title: string) => titleKey(title).replace(/\s+/g, "-").slice(0, 80);
 
 /** Carte d'une grosse sortie ; compacte sur l'accueil. Toucher l'image ou le titre ouvre la fiche du jeu. */
-export function ReleaseCard({ release, pinned = false, compact = false }: { release: Release & { at: string }; pinned?: boolean; compact?: boolean }) {
+function ReleaseCardBody({ release, pinned = false, compact = false }: { release: Release & { at: string }; pinned?: boolean; compact?: boolean }) {
   const theme = release.theme && release.theme in THEMES ? THEMES[release.theme as ThemeId] : themeFor(release.title, release.platforms);
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-xl glass">
@@ -106,5 +107,14 @@ export function ReleaseCard({ release, pinned = false, compact = false }: { rele
         </div>
       )}
     </article>
+  );
+}
+
+/** Masquée si elle concerne une licence « Pas intéressé ». */
+export function ReleaseCard(props: { release: Release & { at: string }; pinned?: boolean; compact?: boolean }) {
+  return (
+    <MutedGate title={props.release.title}>
+      <ReleaseCardBody {...props} />
+    </MutedGate>
   );
 }

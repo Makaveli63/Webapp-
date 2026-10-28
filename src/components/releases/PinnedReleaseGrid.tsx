@@ -1,5 +1,6 @@
 "use client";
 
+import { isMuted, useMuted } from "@/lib/muted";
 import { pinnedFirst, usePins } from "@/lib/pins";
 import type { Release } from "@/types";
 import { ReleaseCard } from "./ReleaseCard";
@@ -19,7 +20,10 @@ export function PinnedReleaseGrid({
   compact?: boolean;
 }) {
   const pins = usePins();
-  const list = onlyPinned ? releases.filter((r) => pins?.includes(r.id)) : pinnedFirst(releases, pins);
+  const muted = useMuted();
+  // Licences « Pas intéressé » retirées (sans laisser de trou dans le carrousel).
+  const visible = releases.filter((r) => !isMuted(r.title, muted));
+  const list = onlyPinned ? visible.filter((r) => pins?.includes(r.id)) : pinnedFirst(visible, pins);
   if (onlyPinned && !list.length) {
     return <p className="text-sm text-muted">Aucun jeu épinglé : touche l&apos;épingle d&apos;un compte à rebours pour le suivre ici.</p>;
   }

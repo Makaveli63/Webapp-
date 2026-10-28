@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { PlayerAvatar } from "@/components/player/PlayerAvatar";
 import { RoleBadge } from "@/components/player/RoleBadge";
-import { levelOf, titleOf } from "@/lib/player";
+import { levelOf, roleOf, titleOf } from "@/lib/player";
 import { ADMIN_ERRORS, rpc, timeAgo, voterId } from "@/lib/social";
 import { PLATFORMS } from "@/types";
 
@@ -86,7 +86,7 @@ export function AdminDevices({ password }: { password: string }) {
 
 interface Community {
   error?: string;
-  players: { total: number; week: number; list: { pseudo: string; avatar: number; xp: number; created_at: string; updated_at: string }[] };
+  players: { total: number; week: number; list: { pseudo: string; avatar: number; xp: number; role?: string | null; created_at: string; updated_at: string }[] };
   dislikes: { total: number; top: { slug: string; n: number }[] };
 }
 
@@ -95,11 +95,19 @@ export function AdminCommunity({ password, titles }: { password: string; titles:
   const [data, setData] = useState<Community | null>(null);
   const [error, setError] = useState("");
   const [all, setAll] = useState(false);
-  useEffect(() => {
+  const load = useCallback(() => {
     rpc<Community>("admin_community", { p_password: password })
       .then((r) => (r?.error ? setError(message(r.error)) : setData(r)))
       .catch((e) => setError((e as Error).message));
   }, [password]);
+  useEffect(load, [load]);
+
+  // Badge « Soutien » : ajouté ou retiré d'un toucher (visible à côté du pseudo dans les commentaires et le profil).
+  const toggleSupport = async (pseudo: string, on: boolean) => {
+    const res = await rpc<string>("admin_set_role", { p_password: password, p_pseudo: pseudo, p_role: on ? "Soutien" : null }).catch((e) => (e as Error).message);
+    if (res !== "ok") return setError(message(res));
+    load();
+  };
 
   const players = data?.players.list ?? [];
   return (
@@ -118,11 +126,21 @@ export function AdminCommunity({ password, titles }: { password: string; titles:
                   <li key={p.pseudo} className="flex items-center gap-3 py-2 text-sm">
                     <PlayerAvatar avatar={p.avatar} className="size-8" iconClass="size-4" />
                     <span className="min-w-0 flex-1">
-                      <span className="font-semibold text-heading">{p.pseudo}</span> <RoleBadge pseudo={p.pseudo} />
+                      <span className="font-semibold text-heading">{p.pseudo}</span> <RoleBadge pseudo={p.pseudo} role={p.role} />
                       <span className="block text-xs text-muted">
                         Niveau {level} ({titleOf(level)}) · {nf.format(p.xp)} XP · inscrit le {day(p.created_at)} · actif {timeAgo(p.updated_at)}
                       </span>
                     </span>
+                    {!roleOf(p.pseudo) && (
+                      <button
+                        type="button"
+                        aria-pressed={p.role === "Soutien"}
+                        onClick={() => toggleSupport(p.pseudo, p.role !== "Soutien")}
+                        className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset ${p.role === "Soutien" ? "role-badge-support ring-transparent" : "text-muted ring-border hover:text-fg"}`}
+                      >
+                        {p.role === "Soutien" ? "Soutien ✓" : "+ Soutien"}
+                      </button>
+                    )}
                   </li>
                 );
               })}
