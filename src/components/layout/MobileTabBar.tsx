@@ -23,7 +23,16 @@ export function MobileTabBar() {
   const start = useRef<{ x: number; moved: boolean } | null>(null);
   const handled = useRef(false);
   const [dragX, setDragX] = useState<number | null>(null);
+  // Onglet choisi dont la page n'est pas encore affichée : la bulle y va tout de suite.
+  const [pending, setPending] = useState<number | null>(null);
   const [width, setWidth] = useState(0);
+
+  // Les pages des onglets sont préchargées : elles s'ouvrent sans attendre le réseau.
+  useEffect(() => {
+    ITEMS.forEach((i) => router.prefetch(i.href));
+  }, [router]);
+  // La page demandée est affichée : plus rien en attente.
+  useEffect(() => setPending(null), [activeIndex]);
 
   // Largeur de la barre (rotation de l'écran, clavier…).
   useEffect(() => {
@@ -38,18 +47,19 @@ export function MobileTabBar() {
 
   const slot = width / ITEMS.length;
   const indexAt = (x: number) => Math.max(0, Math.min(ITEMS.length - 1, Math.floor(x / Math.max(slot, 1))));
-  const hover = dragX !== null ? indexAt(dragX) : activeIndex;
+  const target = pending ?? activeIndex;
+  const hover = dragX !== null ? indexAt(dragX) : target;
 
   // Position de la bulle (CSSOM : pas de style en ligne avec la CSP) : sous le doigt, sinon sur l'onglet actif.
   useLayoutEffect(() => {
     const el = lens.current;
     if (!el || !slot) return;
-    const center = dragX ?? (activeIndex + 0.5) * slot;
+    const center = dragX ?? (target + 0.5) * slot;
     const left = Math.max(0, Math.min(width - slot, center - slot / 2));
     el.style.setProperty("width", `${slot}px`);
     el.style.setProperty("transform", `translateX(${left}px) scale(${dragX !== null ? 1.14 : 1})`);
-    el.style.setProperty("opacity", activeIndex >= 0 || dragX !== null ? "1" : "0");
-  }, [dragX, activeIndex, slot, width]);
+    el.style.setProperty("opacity", target >= 0 || dragX !== null ? "1" : "0");
+  }, [dragX, target, slot, width]);
 
   const relX = (e: PointerEvent) => e.clientX - (list.current?.getBoundingClientRect().left ?? 0);
 
@@ -57,24 +67,29 @@ export function MobileTabBar() {
     if (e.pointerType === "mouse" && e.button !== 0) return;
     start.current = { x: e.clientX, moved: false };
     e.currentTarget.setPointerCapture(e.pointerId);
-    setDragX(relX(e));
   };
   const move = (e: PointerEvent<HTMLUListElement>) => {
     if (!start.current) return;
-    if (Math.abs(e.clientX - start.current.x) > 6) start.current.moved = true;
+    // La bulle ne suit le doigt que s'il glisse vraiment (un simple toucher ne la fait pas sauter).
+    if (!start.current.moved && Math.abs(e.clientX - start.current.x) < 8) return;
+    start.current.moved = true;
     const x = relX(e);
-    if (indexAt(x) !== indexAt(dragX ?? x)) navigator.vibrate?.(6); // petit retour haptique (Android)
+    if (dragX !== null && indexAt(x) !== indexAt(dragX)) navigator.vibrate?.(6); // petit retour haptique (Android)
     setDragX(x);
   };
   const up = (e: PointerEvent<HTMLUListElement>) => {
     if (!start.current) return;
-    const item = ITEMS[indexAt(relX(e))];
+    const index = indexAt(relX(e));
+    const item = ITEMS[index];
     start.current = null;
     setDragX(null);
     // Le doigt a été capturé par la barre : c'est elle qui ouvre l'onglet (le clic du lien est ignoré).
     handled.current = true;
     window.setTimeout(() => (handled.current = false), 400);
-    if (item && item.href !== active) router.push(item.href);
+    if (item && item.href !== active) {
+      setPending(index);
+      router.push(item.href);
+    }
   };
   const cancel = () => {
     start.current = null;

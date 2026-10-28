@@ -621,10 +621,11 @@ html[data-splash="off"] .splash { display: none; }
 :root[data-style="capsule"][data-glass="cristal"] .topbar .head-btn { background: color-mix(in srgb, var(--surface) 48%, transparent); }
 
 /* ---------- Transition entre les pages : glisse depuis la droite, ou depuis la gauche quand on revient en arrière ---------- */
-.page-in-forward { animation: page-in-forward .32s cubic-bezier(.2,.8,.2,1); }
-.page-in-back { animation: page-in-back .32s cubic-bezier(.2,.8,.2,1); }
-@keyframes page-in-forward { from { opacity: 0; transform: translateX(32px); } }
-@keyframes page-in-back { from { opacity: 0; transform: translateX(-32px) scale(.985); } }
+/* Effet léger (opacité + petit glissement) : reste fluide même sur une page chargée d'images. */
+.page-in-forward { animation: page-in-forward .22s cubic-bezier(.2,.8,.2,1); }
+.page-in-back { animation: page-in-back .22s cubic-bezier(.2,.8,.2,1); }
+@keyframes page-in-forward { from { opacity: 0; transform: translate3d(14px, 0, 0); } }
+@keyframes page-in-back { from { opacity: 0; transform: translate3d(-14px, 0, 0); } }
 @media (prefers-reduced-motion: reduce) { .page-in-forward, .page-in-back { animation: none; } }
 
 /* ---------- Bandeau du jeu épinglé : s'agrandit au toucher ---------- */
