@@ -92,7 +92,7 @@ enum LiveActivities {
 
     /// Vignette JPEG de moins de 3 Ko (limite de taille des données d'une Live Activity).
     private static func thumbnail(_ image: UIImage) -> Data? {
-        let size = CGSize(width: 90, height: 120)
+        let size = CGSize(width: 66, height: 88)
         let format = UIGraphicsImageRendererFormat()
         format.scale = 1
         let small = UIGraphicsImageRenderer(size: size, format: format).image { _ in
@@ -101,8 +101,9 @@ enum LiveActivities {
             let h = image.size.height * scale
             image.draw(in: CGRect(x: (size.width - w) / 2, y: (size.height - h) / 2, width: w, height: h))
         }
-        for quality in [0.6, 0.45, 0.3, 0.2] as [CGFloat] {
-            if let data = small.jpegData(compressionQuality: quality), data.count < 2_800 { return data }
+        // Bien sous la limite de 4 Ko d'une Live Activity (titre, chemin et état compris).
+        for quality in [0.55, 0.4, 0.28, 0.18] as [CGFloat] {
+            if let data = small.jpegData(compressionQuality: quality), data.count < 2_000 { return data }
         }
         return nil
     }

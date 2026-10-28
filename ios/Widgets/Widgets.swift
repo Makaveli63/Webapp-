@@ -220,15 +220,27 @@ struct ReleaseView: View {
                 if let r = entry.release { Text("le \(Countdown.day(r.date))").font(.caption2).foregroundStyle(muted) }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+            .shadow(color: .black.opacity(entry.image == nil ? 0 : 0.6), radius: 5)
             .widgetURL(appLink(entry.release?.path ?? "/Webapp-/sorties/"))
-            .widgetBackground(glass)
+            .widgetBackground(smallBackground)
+        }
+    }
+
+    /// Image du jeu en fond (assombrie pour lire le compte à rebours), sinon le verre habituel.
+    private var smallBackground: some View {
+        ZStack {
+            glass
+            if let image = entry.image {
+                Image(uiImage: image).resizable().scaledToFill()
+                LinearGradient(colors: [.black.opacity(0.25), .black.opacity(0.55), .black.opacity(0.9)], startPoint: .top, endPoint: .bottom)
+            }
         }
     }
 }
 
 struct ReleaseWidget: Widget {
     var body: some WidgetConfiguration {
-        AppIntentConfiguration(kind: "ReleaseWidget", intent: ChooseGameIntent.self, provider: GBGameProvider()) {
+        AppIntentConfiguration(kind: "ReleaseWidget", intent: ChooseGameIntent.self, provider: GBGameProvider(withImage: true)) {
             ReleaseView(entry: $0)
         }
             .configurationDisplayName("Prochaine sortie")

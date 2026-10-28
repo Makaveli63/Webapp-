@@ -1,6 +1,8 @@
 package io.github.makaveli63.gamingbase;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.view.View;
 import android.widget.RemoteViews;
 
 import org.json.JSONObject;
@@ -34,6 +36,12 @@ public class ReleaseWidget extends GamingWidget {
         v.setTextViewText(R.id.w_count, count);
         v.setTextViewText(R.id.w_date, "le " + fmt.format(new Date(at)));
         v.setOnClickPendingIntent(R.id.w_root, WidgetData.open(ctx, next.optString("path", "/Webapp-/sorties/"), widgetId));
+        // Image du jeu en fond, comme le widget « Mon jeu épinglé ».
+        Bitmap img = next.isNull("image") ? null : WidgetData.image(next.optString("image"));
+        if (img != null) {
+            v.setImageViewBitmap(R.id.w_image, img);
+            v.setViewVisibility(R.id.w_shade, View.VISIBLE);
+        }
         return v;
     }
 }
