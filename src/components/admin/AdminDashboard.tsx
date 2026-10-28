@@ -1,8 +1,8 @@
 "use client";
 
-import { ArrowDownRight, ArrowUpRight, Eye, EyeOff, Flag, Heart, LogOut, MessageCircle, ShieldCheck, Trash2, Users } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Eye, EyeOff, Flag, Heart, LogOut, MessageCircle, ScanFace, ShieldCheck, Trash2, Users } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { loadSearchIndex } from "@/lib/search-index";
 import { setPageGlow } from "@/lib/background";
 import { ADMIN_ERRORS, ADMIN_SESSION_KEY, rpc, setAdminDevice, socialEnabled, timeAgo } from "@/lib/social";
@@ -49,6 +49,21 @@ function StatTile({ icon, label, value, delta, note }: { icon: ReactNode; label:
   );
 }
 
+// Application iPhone : coffre du mot de passe (trousseau de l'iPhone, ouvert par Face ID). Absent ailleurs.
+type VaultWindow = Window & {
+  webkit?: { messageHandlers?: { gamingbase?: { postMessage: (m: unknown) => void } } };
+  gbAdminSaved?: (saved: boolean) => void;
+  gbAdminPassword?: (password: string) => void;
+};
+const vaultBridge = () => (typeof window !== "undefined" && navigator.userAgent.includes("GamingBaseApp/iOS") ? (window as VaultWindow).webkit?.messageHandlers?.gamingbase : undefined);
+const vault = (action: "query" | "save" | "unlock" | "forget", extra: Record<string, string> = {}) => {
+  try {
+    vaultBridge()?.postMessage({ admin: { action, ...extra } });
+  } catch {
+    /* ancienne version de l'app */
+  }
+};
+
 const pct = (now: number, before: number) => (before > 0 ? Math.round(((now - before) / before) * 100) : null);
 
 /** Tableau de bord privé : fréquentation, j'aime et modération des commentaires (mot de passe requis). */
@@ -61,6 +76,11 @@ export function AdminDashboard() {
   const [loading, setLoading] = useState(false);
   const [titles, setTitles] = useState<Record<string, string>>({});
   const [showTable, setShowTable] = useState(false);
+  // iPhone : mot de passe déjà dans le trousseau (null = pas dans l'app), case « enregistrer » et origine de l'essai.
+  const [vaultSaved, setVaultSaved] = useState<boolean | null>(null);
+  const [remember, setRemember] = useState(true);
+  const saveNext = useRef<string | null>(null);
+  const fromVault = useRef(false);
 
   const load = useCallback(async (pwd: string, period: number) => {
     setLoading(true);
@@ -72,7 +92,17 @@ export function AdminDashboard() {
         setStats(null);
         setPassword("");
         sessionStorage.removeItem(SESSION_KEY);
+        // Mot de passe du trousseau refusé (il a changé) : on l'oublie.
+        if (fromVault.current && data.error === "ACCES_REFUSE") {
+          vault("forget");
+          setVaultSaved(false);
+          setError("Le mot de passe enregistré dans l'appli n'est plus le bon : saisis le nouveau.");
+        }
       } else {
+        if (saveNext.current === pwd) {
+          vault("save", { password: pwd });
+          setVaultSaved(true);
+        }
         setStats(data);
         setPassword(pwd);
         sessionStorage.setItem(SESSION_KEY, pwd);
@@ -84,6 +114,23 @@ export function AdminDashboard() {
       setLoading(false);
     }
   }, []);
+
+  // Application iPhone : l'app dit si un mot de passe est enregistré, et le rend après Face ID.
+  useEffect(() => {
+    if (!vaultBridge()) return;
+    const w = window as VaultWindow;
+    w.gbAdminSaved = (saved) => setVaultSaved(saved);
+    w.gbAdminPassword = (pwd) => {
+      fromVault.current = true;
+      saveNext.current = null;
+      load(pwd, 30);
+    };
+    vault("query");
+    return () => {
+      delete w.gbAdminSaved;
+      delete w.gbAdminPassword;
+    };
+  }, [load]);
 
   // Session déjà ouverte dans cet onglet ; titres des articles pour les classements.
   useEffect(() => {
@@ -113,10 +160,22 @@ export function AdminDashboard() {
   if (!password || !stats) {
     const submit = (e: FormEvent) => {
       e.preventDefault();
+      fromVault.current = false;
+      saveNext.current = vaultSaved === false && remember ? input.trim() : null;
       load(input.trim(), days);
     };
     return (
       <form onSubmit={submit} className="mt-6 max-w-sm space-y-3 rounded-xl glass p-4">
+        {vaultSaved && (
+          <button
+            type="button"
+            onClick={() => vault("unlock")}
+            disabled={loading}
+            className="flex w-full items-center justify-center gap-2 rounded-full bg-accent px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+          >
+            <ScanFace className="size-5" aria-hidden /> Se connecter avec Face ID
+          </button>
+        )}
         <label className="block text-sm font-medium text-heading" htmlFor="admin-pwd">
           Mot de passe
         </label>
@@ -128,6 +187,12 @@ export function AdminDashboard() {
           onChange={(e) => setInput(e.target.value)}
           className="w-full rounded-lg border border-border bg-bg px-3 py-2 text-base focus:border-accent focus:outline-none"
         />
+        {vaultSaved === false && (
+          <label className="flex items-center gap-2 text-sm text-muted">
+            <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} className="size-4 accent-[var(--accent)]" />
+            Enregistrer dans l&apos;appli (protégé par Face ID)
+          </label>
+        )}
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
         <button type="submit" disabled={loading || !input} className="rounded-full bg-accent px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
           {loading ? "Vérification…" : "Ouvrir le tableau de bord"}
@@ -181,6 +246,8 @@ export function AdminDashboard() {
           onClick={() => {
             if (!confirm("Masquer l'onglet Admin sur cet appareil et se déconnecter ?")) return;
             setAdminDevice(false);
+            vault("forget"); // iPhone : le mot de passe enregistré est aussi effacé
+            setVaultSaved((v) => (v === null ? null : false));
             sessionStorage.removeItem(SESSION_KEY);
             setPassword("");
             setStats(null);

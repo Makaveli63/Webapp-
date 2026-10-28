@@ -323,11 +323,27 @@ async function readLimited(res) {
   return new TextDecoder().decode(body);
 }
 
+/**
+ * Lecture d'un flux : un second essai, 4 s plus tard, si le site est lent, surchargé (429) ou en panne (5xx).
+ * Un refus (403) n'est pas réessayé : le site ne veut pas de robots, on respecte son choix.
+ */
+async function getFeed(url) {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      const res = await fetch(url, {
+        headers: { "User-Agent": "GamingBase/1.0 (agrégateur RSS)", Accept: "application/rss+xml, application/atom+xml, application/xml;q=0.9, text/xml;q=0.8" },
+        signal: AbortSignal.timeout(15_000),
+      });
+      if (res.ok || attempt >= 2 || !(res.status === 429 || res.status >= 500)) return res;
+    } catch (err) {
+      if (attempt >= 2) throw err;
+    }
+    await new Promise((r) => setTimeout(r, 4000));
+  }
+}
+
 async function fetchFeed(feed) {
-  const res = await fetch(feed.url, {
-    headers: { "User-Agent": "GamingBase/1.0 (agrégateur RSS)" },
-    signal: AbortSignal.timeout(10_000),
-  });
+  const res = await getFeed(feed.url);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const parser = new Parser({
     customFields: { item: [["media:content", "mediaContent", { keepArray: true }], ["media:thumbnail", "mediaThumbnail"]] },

@@ -79,6 +79,13 @@ export function levelOf(xp: number) {
   }
   return { level, into: rest, need: need(level) };
 }
+/**
+ * Rôles particuliers, affichés à côté du pseudo (profil, commentaires). Le pseudo étant unique et réservé
+ * côté serveur (profiles.sql), personne d'autre ne peut le porter.
+ */
+const ROLES: Record<string, string> = { makaveli63: "Fondateur" };
+export const roleOf = (pseudo: string | undefined | null): string | undefined => (pseudo ? ROLES[pseudo.trim().toLowerCase()] : undefined);
+
 export const titleOf = (level: number) => [...TITLES].reverse().find((t) => level >= t.from)!.name;
 
 let cache: PlayerState | null = null;

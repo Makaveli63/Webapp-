@@ -26,6 +26,20 @@ interface Status {
 }
 
 const nf = new Intl.NumberFormat("fr-FR");
+
+/** Raison d'un échec de source, en clair. */
+function feedError(raw: string): string {
+  const code = Number(/HTTP (\d{3})/.exec(raw)?.[1]);
+  if (code === 403 || code === 401) return "Le site bloque les robots (accès refusé)";
+  if (code === 429) return "Trop de requêtes : le site demande d'attendre";
+  if (code === 404 || code === 410) return "Flux introuvable : l'adresse a peut-être changé";
+  if (code >= 500) return `Site en panne (erreur ${code})`;
+  if (/timeout|aborted|délai/i.test(raw)) return "Le site n'a pas répondu à temps";
+  if (/ENOTFOUND|EAI_AGAIN|getaddrinfo/i.test(raw)) return "Adresse du site introuvable";
+  if (/Non-whitespace|Unexpected|Invalid|parse|XML/i.test(raw)) return "Flux illisible (le site renvoie autre chose qu'un flux)";
+  if (/fetch failed|ECONNRESET|ECONNREFUSED|socket/i.test(raw)) return "Connexion coupée par le site";
+  return raw;
+}
 const fullDate = (iso: string) =>
   new Intl.DateTimeFormat("fr-FR", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris" }).format(new Date(iso));
 
@@ -98,9 +112,12 @@ export function AdminStatus() {
           <ul className="mt-2 grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
             {feeds.map((f) => (
               <li key={f.name} className="flex items-baseline justify-between gap-3">
-                <span className="truncate text-fg">{f.name}</span>
+                <span className="min-w-0 text-fg">
+                  {f.name}
+                  {f.error && <span className="block text-xs text-muted">{feedError(f.error)}</span>}
+                </span>
                 {f.error ? (
-                  <span className="shrink-0 truncate text-xs font-medium text-red-600 dark:text-red-400" title={f.error}>
+                  <span className="shrink-0 text-xs font-medium text-red-600 dark:text-red-400" title={f.error}>
                     échec
                   </span>
                 ) : (

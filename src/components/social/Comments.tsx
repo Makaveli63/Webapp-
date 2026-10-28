@@ -15,6 +15,7 @@ import {
 } from "@/lib/social";
 import Link from "next/link";
 import { PlayerAvatar } from "@/components/player/PlayerAvatar";
+import { RoleBadge } from "@/components/player/RoleBadge";
 import { award, levelOf, playersLevels, readPlayer } from "@/lib/player";
 import { DislikeButton } from "./DislikeButton";
 import { LikeButton } from "./LikeButton";
@@ -118,6 +119,7 @@ export function Comments({ slug }: { slug: string }) {
             <span>
               En tant que <span className="font-semibold text-heading">{player.pseudo}</span>
             </span>
+            <RoleBadge pseudo={player.pseudo} />
             <span className="whitespace-nowrap rounded-full bg-accent/12 px-2 py-0.5 text-[11px] font-bold text-accent">Niv. {player.level}</span>
           </p>
         ) : (
@@ -179,6 +181,8 @@ export function Comments({ slug }: { slug: string }) {
               <div className="min-w-0 flex-1">
                 <p className="text-sm">
                   <span className="font-semibold text-heading">{c.author}</span>{" "}
+                  {/* Badge réservé aux pseudos protégés (profil enregistré sur le serveur). */}
+                  {levels[c.author.toLowerCase()] && <RoleBadge pseudo={c.author} />}{" "}
                   {levels[c.author.toLowerCase()] && <LevelChip xp={levels[c.author.toLowerCase()].xp} />}{" "}
                   <span className="text-muted">· {timeAgo(c.created_at)}</span>
                 </p>

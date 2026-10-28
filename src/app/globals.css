@@ -946,6 +946,9 @@ html:not([data-splash="off"]) .tabbar { animation: tabbar-in .4s ease-out 1.9s b
 @media (min-width: 768px) { .open-app-banner { left: auto; right: 1.25rem; bottom: 1.25rem; width: 24rem; } }
 @keyframes open-app-in { from { opacity: 0; transform: translateY(16px); } }
 @media (prefers-reduced-motion: reduce) { .open-app-banner { animation: none; } }
+/* Badge « Fondateur » : doré, lisible en clair comme en sombre. */
+.role-badge { color: #7a4b00; background: linear-gradient(135deg, #f8d77a, #e9a91e); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .35); }
+:root[data-theme="dark"] .role-badge { color: #3a2400; }
 /* Île de l'XP : pastille du niveau, dorée quand on monte de niveau. */
 .xp-toast-level {
   display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;

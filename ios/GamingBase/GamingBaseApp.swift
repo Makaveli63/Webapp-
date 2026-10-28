@@ -269,9 +269,38 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         scrollView.pinchGestureRecognizer?.isEnabled = false
     }
 
+    /// Coffre du mot de passe admin (trousseau + Face ID) : « query », « save », « unlock », « forget ».
+    private func handleAdmin(_ request: [String: Any]) {
+        switch request["action"] as? String {
+        case "query":
+            webView.evaluateJavaScript("window.gbAdminSaved && window.gbAdminSaved(\(AdminVault.hasPassword))", completionHandler: nil)
+        case "save":
+            if let password = request["password"] as? String { AdminVault.save(password) }
+        case "forget":
+            AdminVault.forget()
+        case "unlock":
+            Task { @MainActor [weak self] in
+                guard let password = await AdminVault.unlock(),
+                      let data = try? JSONSerialization.data(withJSONObject: [password]),
+                      let json = String(data: data, encoding: .utf8) else { return }
+                // Tableau JSON : le mot de passe arrive comme une simple chaîne, jamais interprété comme du code.
+                self?.webView.evaluateJavaScript("window.gbAdminPassword && window.gbAdminPassword(\(json)[0])", completionHandler: nil)
+            }
+        default:
+            break
+        }
+    }
+
     func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
         guard message.frameInfo.isMainFrame, Self.isSite(message.frameInfo.request.url ?? Self.home),
               let body = message.body as? [String: Any] else { return }
+        // Mot de passe administrateur : seulement depuis la page /admin du site.
+        if body["admin"] != nil {
+            // URL actuelle de la vue (suit la navigation interne du site, contrairement à celle du chargement initial).
+            guard (webView.url?.path ?? "").hasPrefix(Self.path + "/admin") else { return }
+            handleAdmin(body["admin"] as? [String: Any] ?? [:])
+            return
+        }
         // Réglages des notifications (plateformes, tests, mes jeux, résumé du soir).
         if let prefs = body["notifPrefs"] as? [String: Any] {
             NewsAlerts.savePrefs(prefs)

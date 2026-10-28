@@ -4,6 +4,7 @@ import { Check, Pencil } from "lucide-react";
 import { useEffect, useState, useSyncExternalStore, type FormEvent } from "react";
 import { BADGES, checkPseudo, levelOf, onPlayer, readPlayer, savePlayer, STREAK_BONUS, titleOf, XP_RULES, type PlayerState } from "@/lib/player";
 import { AVATARS, BADGE_ICONS, PlayerAvatar } from "./PlayerAvatar";
+import { RoleBadge } from "./RoleBadge";
 
 const MESSAGES: Record<string, string> = {
   PSEUDO_PRIS: "Ce pseudo est déjà pris.",
@@ -156,7 +157,10 @@ function Profile({ player, onEdit }: { player: PlayerState; onEdit: () => void }
             <PlayerAvatar avatar={player.avatar} className="size-7" iconClass="size-4" />
             <h2 id="player-title" className="truncate text-xl font-bold text-heading">{player.pseudo}</h2>
           </div>
-          <span className="mt-1.5 inline-flex rounded-full bg-accent/12 px-2.5 py-0.5 text-xs font-semibold text-accent">{titleOf(level)}</span>
+          <span className="mt-1.5 flex flex-wrap items-center gap-1.5">
+            <RoleBadge pseudo={player.pseudo} className="text-xs" />
+            <span className="inline-flex rounded-full bg-accent/12 px-2.5 py-0.5 text-xs font-semibold text-accent">{titleOf(level)}</span>
+          </span>
           <p className="mt-1.5 text-sm text-muted tabular-nums">
             {nf.format(into)} / {nf.format(need)} XP avant le niveau {level + 1}
           </p>
