@@ -53,9 +53,39 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         ("Accueil", "house", "/"),
         ("Tests", "star", "/tests"),
         ("Sorties", "calendar", "/sorties"),
-        ("Anime", "sparkles", "/anime"),
+        ("Anime", "flower", "/anime"), // fleur de cerisier de l'écran de démarrage
         ("Gratuits", "gift", "/jeux-gratuits"),
     ]
+
+    /// Fleur de cerisier (même dessin que sur le site), au trait comme les symboles d'iOS.
+    private static func flowerIcon() -> UIImage {
+        let size = CGSize(width: 26, height: 26)
+        let image = UIGraphicsImageRenderer(size: size).image { ctx in
+            let g = ctx.cgContext
+            g.translateBy(x: 13, y: 13.7)
+            g.scaleBy(x: 0.255, y: 0.255)
+            let petal = UIBezierPath()
+            petal.move(to: .zero)
+            petal.addCurve(to: CGPoint(x: -5, y: -42), controlPoint1: CGPoint(x: -16, y: -12), controlPoint2: CGPoint(x: -14, y: -36))
+            petal.addLine(to: CGPoint(x: 0, y: -36))
+            petal.addLine(to: CGPoint(x: 5, y: -42))
+            petal.addCurve(to: .zero, controlPoint1: CGPoint(x: 14, y: -36), controlPoint2: CGPoint(x: 16, y: -12))
+            petal.close()
+            UIColor.black.setStroke()
+            for i in 0..<5 {
+                g.saveGState()
+                g.rotate(by: CGFloat(i) * 2 * .pi / 5)
+                petal.lineWidth = 6.6
+                petal.lineJoinStyle = .round
+                petal.stroke()
+                g.restoreGState()
+            }
+            let center = UIBezierPath(ovalIn: CGRect(x: -7, y: -7, width: 14, height: 14))
+            center.lineWidth = 6.6
+            center.stroke()
+        }
+        return image.withRenderingMode(.alwaysTemplate)
+    }
 
     /// gamingbase://open?path=/Webapp-/actualites/… (widgets) → page correspondante du site.
     static func open(_ link: URL) {
@@ -113,7 +143,7 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         webView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         root.addSubview(webView)
         tabBar.items = Self.tabs.enumerated().map { index, tab in
-            UITabBarItem(title: tab.title, image: UIImage(systemName: tab.icon), tag: index)
+            UITabBarItem(title: tab.title, image: tab.icon == "flower" ? Self.flowerIcon() : UIImage(systemName: tab.icon), tag: index)
         }
         tabBar.selectedItem = tabBar.items?.first
         tabBar.delegate = self

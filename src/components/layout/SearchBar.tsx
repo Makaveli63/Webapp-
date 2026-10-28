@@ -1,17 +1,36 @@
 "use client";
 
-import { Gamepad2, Mic, Search, Sparkles } from "lucide-react";
+import { Gamepad2, Mic, Newspaper, Search } from "lucide-react";
+import { FlowerIcon } from "@/components/ui/FlowerIcon";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useMemo, useState, type FormEvent, type KeyboardEvent } from "react";
 import { animeHref, https, searchAnime, titleOf, type AniMedia } from "@/lib/anilist";
 import { aliasesOf } from "@/lib/aliases";
-import { suggestTitles } from "@/lib/fuzzy";
+import { canon, suggestTitles } from "@/lib/fuzzy";
 import { loadSearchIndex } from "@/lib/search-index";
 import type { SearchGame } from "@/types";
 
 /** Barre de recherche avec suggestions de jeux pendant la saisie (tolérantes aux fautes). */
-export function SearchBar({ className = "", autoFocus = false, live = false }: { className?: string; autoFocus?: boolean; live?: boolean }) {
+export function SearchBar({
+  className = "",
+  autoFocus = false,
+  live = false,
+  spotlight = false,
+  onDone,
+  onCancel,
+}: {
+  className?: string;
+  autoFocus?: boolean;
+  live?: boolean;
+  /** Recherche dans l'en-tête (façon iOS) : résultats sous le champ, actus comprises, sans changer de page */
+  spotlight?: boolean;
+  /** Un résultat a été ouvert */
+  onDone?: () => void;
+  /** Échap */
+  onCancel?: () => void;
+}) {
   const router = useRouter();
+  const [articles, setArticles] = useState<{ slug: string; title: string; hay: string; source: string }[]>([]);
   const listId = useId();
   const [q, setQ] = useState("");
   const [games, setGames] = useState<Map<string, SearchGame>>(new Map());
@@ -69,7 +88,10 @@ export function SearchBar({ className = "", autoFocus = false, live = false }: {
     // Jeux vidéo seulement : les animes ont leur propre section (AniList), plus complète.
     if (!games.size)
       loadSearchIndex()
-        .then((i) => setGames(new Map(i.games.filter((g) => !g.id.startsWith("anilist-")).map((g) => [g.title, g]))))
+        .then((i) => {
+          setGames(new Map(i.games.filter((g) => !g.id.startsWith("anilist-")).map((g) => [g.title, g])));
+          if (spotlight) setArticles(i.articles.map((a) => ({ slug: a.slug, title: a.title, source: a.source.name, hay: ` ${canon(`${a.title} ${a.tags.join(" ")}`)} ` })));
+        })
         .catch(() => {});
   };
   useEffect(() => {
@@ -102,6 +124,9 @@ export function SearchBar({ className = "", autoFocus = false, live = false }: {
 
   const suggestions = open ? suggestTitles(q, titles, 5, (t) => alt.get(t) ?? []) : [];
   const animeShown = open && !live ? anime : [];
+  // En-tête : les actus qui contiennent tous les mots tapés.
+  const words = spotlight && q.trim().length >= 2 ? canon(q).split(" ").filter(Boolean) : [];
+  const articlesShown = words.length ? articles.filter((a) => words.every((w) => a.hay.includes(w))).slice(0, 4) : [];
 
   // Jeu avec une fiche sur le site : on l'ouvre directement ; sinon, recherche sur son titre.
   const openGame = (title: string) => {
@@ -110,6 +135,7 @@ export function SearchBar({ className = "", autoFocus = false, live = false }: {
       setOpen(false);
       setQ(title);
       router.push(url);
+      onDone?.();
     } else go(title);
   };
 
@@ -119,6 +145,7 @@ export function SearchBar({ className = "", autoFocus = false, live = false }: {
     setOpen(false);
     setQ(term);
     router.push(`/recherche?q=${encodeURIComponent(term)}`);
+    onDone?.();
   };
 
   const submit = (e: FormEvent) => {
@@ -128,6 +155,7 @@ export function SearchBar({ className = "", autoFocus = false, live = false }: {
   };
 
   const onKeyDown = (e: KeyboardEvent) => {
+    if (e.key === "Escape" && onCancel) return onCancel();
     if (!suggestions.length) return;
     if (e.key === "ArrowDown") {
       e.preventDefault();
@@ -155,7 +183,7 @@ export function SearchBar({ className = "", autoFocus = false, live = false }: {
           prepare();
           setOpen(true);
         }}
-        onBlur={() => setTimeout(() => setOpen(false), 150)}
+        onBlur={() => !spotlight && setTimeout(() => setOpen(false), 150)}
         onKeyDown={onKeyDown}
         placeholder="Rechercher…"
         enterKeyHint="search"
@@ -166,7 +194,11 @@ export function SearchBar({ className = "", autoFocus = false, live = false }: {
         aria-controls={listId}
         aria-autocomplete="list"
         aria-label="Rechercher"
-        className={`w-full rounded-lg border border-border bg-surface py-2.5 pl-9 text-base placeholder:text-muted focus:border-accent focus:outline-none md:py-2 md:text-sm ${canSpeak ? "pr-10" : "pr-3"}`}
+        className={`w-full text-base placeholder:text-muted focus:outline-none ${
+          spotlight
+            ? "spotlight-input rounded-full border-0 bg-surface-2 py-2.5 pl-9"
+            : "rounded-lg border border-border bg-surface py-2.5 pl-9 focus:border-accent md:py-2 md:text-sm"
+        } ${canSpeak ? "pr-10" : "pr-3"}`}
       />
       {canSpeak && (
         <button
@@ -178,11 +210,11 @@ export function SearchBar({ className = "", autoFocus = false, live = false }: {
           <Mic className="size-4" aria-hidden />
         </button>
       )}
-      {suggestions.length + animeShown.length > 0 && (
+      {(suggestions.length + animeShown.length + articlesShown.length > 0 || (spotlight && open && q.trim().length >= 2)) && (
         <ul
           id={listId}
           role="listbox"
-          className="absolute inset-x-0 top-full z-50 mt-1 max-h-[70vh] overflow-y-auto rounded-lg glass glass-strong shadow-xl"
+          className={`absolute inset-x-0 top-full z-50 overflow-y-auto glass glass-strong shadow-xl ${spotlight ? "spotlight-results mt-2 max-h-[72vh] rounded-2xl" : "mt-1 max-h-[70vh] rounded-lg"}`}
         >
           {suggestions.length > 0 && (
             <li role="presentation" className="px-3 pb-1 pt-2 text-xs font-semibold uppercase tracking-wide text-muted">
@@ -229,6 +261,7 @@ export function SearchBar({ className = "", autoFocus = false, live = false }: {
                 onClick={() => {
                   setOpen(false);
                   router.push(animeHref(m.id));
+                  onDone?.();
                 }}
                 className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-fg hover:bg-surface-2"
               >
@@ -236,7 +269,7 @@ export function SearchBar({ className = "", autoFocus = false, live = false }: {
                   // eslint-disable-next-line @next/next/no-img-element -- site statique
                   <img src={https(m.coverImage?.large)} alt="" referrerPolicy="no-referrer" className="h-10 w-7 shrink-0 rounded object-cover" />
                 ) : (
-                  <Sparkles className="size-3.5 shrink-0 text-accent" aria-hidden />
+                  <FlowerIcon className="size-4 shrink-0 text-accent" aria-hidden />
                 )}
                 <span className="min-w-0">
                   <span className="block truncate font-semibold text-heading">{titleOf(m)}</span>
@@ -245,6 +278,43 @@ export function SearchBar({ className = "", autoFocus = false, live = false }: {
               </button>
             </li>
           ))}
+          {articlesShown.length > 0 && (
+            <li role="presentation" className="border-t border-border px-3 pb-1 pt-2 text-xs font-semibold uppercase tracking-wide text-muted">
+              Actualités
+            </li>
+          )}
+          {articlesShown.map((a) => (
+            <li key={a.slug} role="option" aria-selected={false}>
+              <button
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  setOpen(false);
+                  router.push(`/actualites/${a.slug}`);
+                  onDone?.();
+                }}
+                className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-fg hover:bg-surface-2"
+              >
+                <Newspaper className="size-4 shrink-0 text-accent" aria-hidden />
+                <span className="min-w-0">
+                  <span className="line-clamp-2 font-semibold text-heading">{a.title}</span>
+                  <span className="block truncate text-xs text-muted">{a.source}</span>
+                </span>
+              </button>
+            </li>
+          ))}
+          {spotlight && q.trim() && (
+            <li role="option" aria-selected={false} className="border-t border-border">
+              <button
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => go(q)}
+                className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm font-semibold text-accent hover:bg-surface-2"
+              >
+                <Search className="size-4 shrink-0" aria-hidden /> Tous les résultats pour « {q.trim()} »
+              </button>
+            </li>
+          )}
         </ul>
       )}
     </form>

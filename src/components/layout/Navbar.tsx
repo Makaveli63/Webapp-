@@ -5,20 +5,20 @@ import { CircleUserRound, Settings } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { Logo } from "@/components/ui/Logo";
 import { AdminLink } from "./AdminLink";
-import { activeHref, NAV_LINKS, SEARCH_LINK } from "./nav-links";
+import { activeHref, NAV_LINKS } from "./nav-links";
+import { HeaderSearch } from "./HeaderSearch";
 import { SearchBar } from "./SearchBar";
 
 /** En-tête : navigation complète sur ordinateur, logo + recherche sur mobile (onglets en bas d'écran). */
 export function Navbar() {
   const pathname = usePathname();
   const active = activeHref(pathname);
-  const SearchIcon = SEARCH_LINK.icon;
   // Mon espace : bibliothèque, favoris et réglages.
   const mySpace = /^\/(favoris|collection)(\/|$)/.test(pathname);
 
   return (
     <header className="topbar sticky top-0 z-40 glass-bar border-b pt-[env(safe-area-inset-top)]">
-      <nav className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4 md:h-16">
+      <nav id="gb-topnav" className="relative mx-auto flex h-14 max-w-6xl items-center gap-4 px-4 md:h-16">
         <Link href="/" aria-label="GamingBase, accueil">
           <Logo id="gb-nav" className="text-lg" />
         </Link>
@@ -40,14 +40,7 @@ export function Navbar() {
         <SearchBar className="ml-auto hidden w-44 lg:block xl:w-56" />
 
         <div className="ml-auto flex items-center gap-1 sm:gap-4 lg:ml-0">
-          <Link
-            href={SEARCH_LINK.href}
-            aria-label="Rechercher"
-            aria-current={pathname.startsWith("/recherche") ? "page" : undefined}
-            className={`head-btn -mr-1 flex size-11 items-center justify-center rounded-full ${pathname.startsWith("/recherche") ? "text-accent" : "text-muted"} hover:text-fg lg:hidden`}
-          >
-            <SearchIcon className="size-5" aria-hidden />
-          </Link>
+          <HeaderSearch active={pathname.startsWith("/recherche")} />
           <Link
             href="/favoris"
             aria-label="Mon espace"

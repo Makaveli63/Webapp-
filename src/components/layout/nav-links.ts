@@ -1,4 +1,5 @@
-import { CalendarDays, Clapperboard, Gamepad2, Gift, House, Newspaper, Search, Sparkles, Star, Tag, Trophy } from "lucide-react";
+import { CalendarDays, Clapperboard, Gamepad2, Gift, House, Newspaper, Search, Star, Tag, Trophy } from "lucide-react";
+import { FlowerIcon } from "@/components/ui/FlowerIcon";
 
 /**
  * mobile : présent dans la barre d'onglets (6 au maximum) ; les autres sont sur l'accueil et dans le pied de page.
@@ -10,7 +11,7 @@ export const NAV_LINKS = [
   { href: "/tests", label: "Tests", icon: Star, mobile: true },
   { href: "/consoles", label: "Consoles", icon: Gamepad2, mobile: false, wide: "never" },
   { href: "/sorties", label: "Sorties", icon: CalendarDays, mobile: true },
-  { href: "/anime", label: "Anime", icon: Sparkles, mobile: true },
+  { href: "/anime", label: "Anime", icon: FlowerIcon, mobile: true },
   { href: "/jeux-gratuits", label: "Gratuits", icon: Gift, mobile: true },
   { href: "/promos", label: "Promos", icon: Tag, mobile: false },
   { href: "/videos", label: "Vidéos", icon: Clapperboard, mobile: false, wide: true },
