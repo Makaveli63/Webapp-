@@ -946,14 +946,18 @@ html[data-native-tabs] .listen-player { bottom: calc(env(safe-area-inset-bottom)
   gap: .75rem;
   padding-inline: 1rem;
 }
-.hs-field { transform-origin: right center; animation: hs-grow .38s cubic-bezier(.2, .9, .25, 1) backwards; }
+.hs-field { transform-origin: right center; }
+/* Pendant l'étirement : seule la loupe du champ se voit, le texte et les boutons arrivent ensuite. */
+.hs-field[data-stretching] input::placeholder { color: transparent; }
+.hs-field[data-stretching] input + button, .hs-field[data-stretching] form > button { opacity: 0; }
+.hs-field input::placeholder { transition: color .2s ease; }
+.hs-field form > button { transition: opacity .2s ease; }
 .hs-cancel { animation: hs-fade .3s ease .12s both; }
-@keyframes hs-grow { from { opacity: 0; transform: translateX(28px) scaleX(.94); } }
 @keyframes hs-fade { from { opacity: 0; transform: translateX(8px); } }
 /* Le reste de l'en-tête s'efface pendant la recherche */
 .topbar nav > :not(.header-search) { transition: opacity .2s ease; }
 html[data-search] .topbar nav > :not(.header-search) { opacity: 0; pointer-events: none; }
-html[data-search="closing"] .header-search { opacity: 0; transition: opacity .2s ease; }
+html[data-search="closing"] .hs-cancel { opacity: 0; transition: opacity .15s ease; }
 html[data-search="closing"] .topbar nav > :not(.header-search) { opacity: 1; }
 /* Champ façon iOS : capsule grise pleine, sans contour, curseur à la couleur de l'appli */
 .spotlight-input { background: color-mix(in srgb, var(--muted) 16%, var(--surface)); box-shadow: none; caret-color: var(--accent); -webkit-appearance: none; appearance: none; }
@@ -973,6 +977,7 @@ html[data-search="closing"] .search-scrim { opacity: 0; transition: opacity .2s 
 @media (prefers-reduced-motion: reduce) { .hs-field, .hs-cancel, .search-scrim { animation: none; } }
 html[data-search] .release-banner { opacity: 0; pointer-events: none; transition: opacity .2s ease; }
 .spotlight-results { background: color-mix(in srgb, var(--surface) 94%, transparent) !important; }
+.spotlight-chips { background: color-mix(in srgb, var(--surface) 96%, transparent); border-bottom: 1px solid var(--border); }
 
 /* Menu « Aa » : sous le bouton, sans jamais sortir de l'écran */
 .reading-panel { position: absolute; left: 0; top: 2.5rem; scroll-margin: 5rem 0 calc(6rem + env(safe-area-inset-bottom)); width: min(16rem, calc(100vw - 2rem)); background: color-mix(in srgb, var(--surface) 97%, transparent); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); }

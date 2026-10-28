@@ -7,7 +7,9 @@ import { useEffect, useId, useMemo, useState, type FormEvent, type KeyboardEvent
 import { animeHref, https, searchAnime, titleOf, type AniMedia } from "@/lib/anilist";
 import { aliasesOf } from "@/lib/aliases";
 import { canon, prepareTitles, suggestTitles } from "@/lib/fuzzy";
+import { onPlatform, type PlatformId } from "@/lib/platform-filter";
 import { loadSearchIndex } from "@/lib/search-index";
+import { PlatformChips } from "./PlatformChips";
 import type { SearchGame } from "@/types";
 
 /** Barre de recherche avec suggestions de jeux pendant la saisie (tolérantes aux fautes). */
@@ -30,7 +32,8 @@ export function SearchBar({
   onCancel?: () => void;
 }) {
   const router = useRouter();
-  const [articles, setArticles] = useState<{ slug: string; title: string; hay: string; source: string }[]>([]);
+  const [articles, setArticles] = useState<{ slug: string; title: string; hay: string; source: string; platforms: string[] }[]>([]);
+  const [platform, setPlatform] = useState<PlatformId | null>(null);
   const listId = useId();
   const [q, setQ] = useState("");
   const [games, setGames] = useState<Map<string, SearchGame>>(new Map());
@@ -90,7 +93,7 @@ export function SearchBar({
       loadSearchIndex()
         .then((i) => {
           setGames(new Map(i.games.filter((g) => !g.id.startsWith("anilist-")).map((g) => [g.title, g])));
-          if (spotlight) setArticles(i.articles.map((a) => ({ slug: a.slug, title: a.title, source: a.source.name, hay: ` ${canon(`${a.title} ${a.tags.join(" ")}`)} ` })));
+          if (spotlight) setArticles(i.articles.map((a) => ({ slug: a.slug, title: a.title, source: a.source.name, platforms: a.platforms, hay: ` ${canon(`${a.title} ${a.tags.join(" ")}`)} ` })));
         })
         .catch(() => {});
   };
@@ -106,7 +109,11 @@ export function SearchBar({
     return map;
   }, [games]);
   // Formes canon des titres et de leurs autres écritures, calculées une fois au chargement de l'index.
-  const prepared = useMemo(() => prepareTitles([...games.keys()], (t) => alt.get(t) ?? []), [games, alt]);
+  // Plateforme choisie (en-tête) : seuls ses jeux sont proposés.
+  const prepared = useMemo(
+    () => prepareTitles([...games.entries()].filter(([, g]) => onPlatform(g.platforms, platform)).map(([t]) => t), (t) => alt.get(t) ?? []),
+    [games, alt, platform],
+  );
 
   // Page Recherche : les résultats s'affichent pendant la saisie (pas besoin de valider).
   useEffect(() => {
@@ -125,10 +132,11 @@ export function SearchBar({
 
   // Page Recherche : les résultats s'affichent déjà dessous, pas de liste par-dessus les filtres.
   const suggestions = useMemo(() => (open && !live ? suggestTitles(q, prepared, 5) : []), [open, live, q, prepared]);
-  const animeShown = open && !live ? anime : [];
+  // Les animes n'ont pas de plateforme : masqués quand on filtre par console.
+  const animeShown = open && !live && !platform ? anime : [];
   // En-tête : les actus qui contiennent tous les mots tapés.
   const words = spotlight && q.trim().length >= 2 ? canon(q).split(" ").filter(Boolean) : [];
-  const articlesShown = words.length ? articles.filter((a) => words.every((w) => a.hay.includes(w))).slice(0, 4) : [];
+  const articlesShown = words.length ? articles.filter((a) => onPlatform(a.platforms, platform) && words.every((w) => a.hay.includes(w))).slice(0, 4) : [];
 
   // Jeu avec une fiche sur le site : on l'ouvre directement ; sinon, recherche sur son titre.
   const openGame = (title: string) => {
@@ -146,7 +154,7 @@ export function SearchBar({
     if (!term) return;
     setOpen(false);
     setQ(term);
-    router.push(`/recherche?q=${encodeURIComponent(term)}`);
+    router.push(`/recherche?q=${encodeURIComponent(term)}${platform ? `&p=${platform}` : ""}`);
     onDone?.();
   };
 
@@ -229,6 +237,14 @@ export function SearchBar({
           role="listbox"
           className={`absolute inset-x-0 top-full z-50 overflow-y-auto glass glass-strong shadow-xl ${spotlight ? "spotlight-results mt-2 max-h-[72vh] rounded-2xl" : "mt-1 max-h-[70vh] rounded-lg"}`}
         >
+          {spotlight && (
+            <li role="presentation" className="spotlight-chips sticky top-0 z-10 px-3 py-2.5">
+              <PlatformChips value={platform} onChange={setPlatform} />
+            </li>
+          )}
+          {spotlight && platform && q.trim().length >= 2 && suggestions.length + articlesShown.length === 0 && (
+            <li role="presentation" className="px-3 py-3 text-sm text-muted">Rien sur cette plateforme pour « {q.trim()} ».</li>
+          )}
           {suggestions.length > 0 && (
             <li role="presentation" className="px-3 pb-1 pt-2 text-xs font-semibold uppercase tracking-wide text-muted">
               Jeux vidéo

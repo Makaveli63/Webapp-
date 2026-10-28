@@ -9,6 +9,8 @@ import { AniListResults } from "@/components/search/AniListResults";
 import { WikipediaResults } from "@/components/search/WikipediaResults";
 import { aliasesOf } from "@/lib/aliases";
 import { canon, correctQuery, normalize } from "@/lib/fuzzy";
+import { isPlatformId, onPlatform, type PlatformId } from "@/lib/platform-filter";
+import { PlatformChips } from "./PlatformChips";
 import { loadSearchIndex } from "@/lib/search-index";
 import type { SearchIndex } from "@/types";
 
@@ -74,7 +76,18 @@ function runSearch(index: SearchIndex | null, query: string) {
 }
 
 export function SearchResults() {
-  const q = (useSearchParams().get("q") ?? "").trim();
+  const params = useSearchParams();
+  const q = (params.get("q") ?? "").trim();
+  const p = params.get("p");
+  const [platform, setPlatformState] = useState<PlatformId | null>(isPlatformId(p) ? p : null);
+  // Plateforme gardée dans l'adresse (retour arrière, partage), sans recharger la page.
+  const setPlatform = (id: PlatformId | null) => {
+    setPlatformState(id);
+    const url = new URL(window.location.href);
+    if (id) url.searchParams.set("p", id);
+    else url.searchParams.delete("p");
+    window.history.replaceState(window.history.state, "", url);
+  };
   const [index, setIndex] = useState<SearchIndex | null>(null);
   const [error, setError] = useState(false);
   const [animeCount, setAnimeCount] = useState(0);
@@ -96,10 +109,11 @@ export function SearchResults() {
   const corrected = guess && guess !== q && fixed.articles.length + fixed.games.length > 0 ? guess : null;
   const found = corrected ? fixed : exact;
   // Les animes ont leur propre section (base AniList complète) : les jeux et les animes ne se mélangent pas.
-  const games = found.games.filter((g) => !g.id.startsWith("anilist-"));
-  const articles = found.articles;
+  const games = found.games.filter((g) => !g.id.startsWith("anilist-") && onPlatform(g.platforms, platform));
+  const articles = found.articles.filter((a) => onPlatform(a.platforms, platform));
   const shownQuery = corrected ?? q;
-  const total = articles.length + games.length + animeCount;
+  // Les animes n'ont pas de plateforme : masqués quand on filtre par console.
+  const total = articles.length + games.length + (platform ? 0 : animeCount);
 
   if (!q) return <p className="mt-4 text-muted">Recherchez un jeu, une console, un éditeur…</p>;
 
@@ -127,7 +141,7 @@ export function SearchResults() {
             [
               ["all", "Tout", total],
               ["games", "🎮 Jeux", games.length],
-              ["anime", "🌸 Animes", animeCount],
+              ...(platform ? [] : ([["anime", "🌸 Animes", animeCount]] as const)),
               ["news", "📰 Actus", articles.length],
             ] as const
           ).map(([id, label, n]) => (
@@ -143,6 +157,16 @@ export function SearchResults() {
             </button>
           ))}
         </div>
+      )}
+      {index && (
+        <PlatformChips
+          value={platform}
+          onChange={(id) => {
+            setPlatform(id);
+            if (id && tab === "anime") setTab("all");
+          }}
+          className="mt-2 pb-1"
+        />
       )}
 
       {games.length > 0 && (tab === "all" || tab === "games") && (
@@ -161,7 +185,7 @@ export function SearchResults() {
         </section>
       )}
 
-      <div className={tab === "all" || tab === "anime" ? undefined : "hidden"}>
+      <div className={!platform && (tab === "all" || tab === "anime") ? undefined : "hidden"}>
         <AniListResults query={parseQuery(shownQuery).words.join(" ")} onCount={setAnimeCount} />
       </div>
 
@@ -176,7 +200,7 @@ export function SearchResults() {
         </section>
       )}
 
-      {tab === "all" && <WikipediaResults query={parseQuery(shownQuery).words.join(" ")} />}
+      {tab === "all" && !platform && <WikipediaResults query={parseQuery(shownQuery).words.join(" ")} />}
     </>
   );
 }
