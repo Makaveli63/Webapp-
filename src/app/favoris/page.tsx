@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { LibraryShortcut } from "@/components/tracker/LibraryShortcut";
-import { MyBadges } from "@/components/settings/MyBadges";
 import { FavoritesList } from "@/components/news/FavoritesList";
 import { PinnedReleaseGrid } from "@/components/releases/PinnedReleaseGrid";
 import { getUpcomingReleases } from "@/lib/releases";
@@ -12,7 +11,7 @@ export default function FavoritesPage() {
     <div className="space-y-10">
       <header>
         <h1 className="text-2xl font-extrabold text-heading sm:text-3xl">Mon espace</h1>
-        <p className="mt-2 text-muted">Ta bibliothèque de jeux et d&apos;animes, tes jeux épinglés, tes articles enregistrés et tes badges. Les réglages sont dans la roue dentée en haut à droite.</p>
+        <p className="mt-2 text-muted">Ta bibliothèque de jeux et d&apos;animes, tes jeux épinglés, et tes articles enregistrés. Les réglages sont dans la roue dentée en haut à droite.</p>
       </header>
       <LibraryShortcut />
       <section aria-labelledby="pinned-title">
@@ -23,7 +22,6 @@ export default function FavoritesPage() {
         <h2 id="saved-title" className="text-xl font-bold text-heading">Articles enregistrés</h2>
         <FavoritesList />
       </section>
-      <MyBadges />
     </div>
   );
 }

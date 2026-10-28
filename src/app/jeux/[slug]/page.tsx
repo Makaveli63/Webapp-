@@ -4,10 +4,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CollectionButtons } from "@/components/collection/CollectionButtons";
 import { DealCard } from "@/components/deals/DealCard";
-import { Prediction } from "@/components/game/Prediction";
 import { GameProgress } from "@/components/tracker/GameProgress";
 import { ShareButton } from "@/components/share/ShareButton";
-import { ReaderRating } from "@/components/game/ReaderRating";
 import { NewsCard } from "@/components/news/NewsCard";
 import { PageTheme } from "@/components/theme/PageTheme";
 import { PlatformBadge } from "@/components/ui/Badge";
@@ -36,7 +34,7 @@ async function getGame(slug: string) {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const game = await getGame((await params).slug);
   if (!game) return {};
-  const description = `${game.title} : tests et notes de la presse, note des lecteurs, actus, promos et bande-annonce.`;
+  const description = `${game.title} : tests et notes de la presse, actus, promos et bande-annonce.`;
   return { title: game.title, description, openGraph: { title: game.title, description, images: game.image ? [game.image] : undefined } };
 }
 
@@ -143,11 +141,6 @@ export default async function GamePage({ params }: Props) {
           <p className="mt-2 text-sm text-muted">Pas encore de test publié.</p>
         )}
       </section>
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <ReaderRating gameKey={game.slug} title={game.title} />
-        {(upcoming || pressAverage !== undefined) && <Prediction gameKey={game.slug} title={game.title} pressAverage={pressAverage} />}
-      </div>
 
       {deals.length > 0 && (
         <section aria-labelledby="game-deals">

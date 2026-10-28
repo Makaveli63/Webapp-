@@ -1,35 +1,81 @@
 import ActivityKit
 import SwiftUI
+import UIKit
 import WidgetKit
 
 private let liveAccent = Color(red: 0.55, green: 0.42, blue: 1.0)
 
-/// Moins de 24 h avant la sortie : minuteur qui défile tout seul ; sinon « J-21 ».
+/// Temps restant, recalculé à chaque affichage :
+/// jours (« 21 j ») et/ou minuteur heures : minutes : secondes qui défile tout seul.
+/// Sans les jours, le minuteur compte toutes les heures restantes (« 525:12:33 »).
 struct LiveCountdownText: View {
-    let date: Date
+    let state: ReleaseActivityAttributes.ContentState
     var compact = false
 
     var body: some View {
-        if date > Date(), date.timeIntervalSinceNow < 86_400 {
-            Text(timerInterval: Date()...date, countsDown: true)
-                .monospacedDigit()
-                .multilineTextAlignment(.trailing)
-                .frame(maxWidth: compact ? 52 : 110, alignment: .trailing)
+        let now = Date()
+        let left = state.releaseAt.timeIntervalSince(now)
+        let days = max(0, Int(left / 86_400))
+        let showDays = state.showDays || !state.showClock
+        // Fin du jour en cours du compte à rebours (quand « 21 j » passera à « 20 j »).
+        let boundary = showDays ? state.releaseAt.addingTimeInterval(-Double(days) * 86_400) : state.releaseAt
+        if left <= 0 {
+            Text("Dispo !")
+        } else if compact {
+            // Dynamic Island réduite : peu de place, une seule information.
+            if showDays && days > 0 {
+                Text("\(days) j")
+            } else {
+                Text(timerInterval: now...max(boundary, now.addingTimeInterval(1)), countsDown: true)
+                    .monospacedDigit()
+                    .frame(maxWidth: 60, alignment: .trailing)
+            }
         } else {
-            Text(Countdown.text(to: date))
+            HStack(spacing: 6) {
+                if showDays && days > 0 {
+                    Text("\(days) j")
+                }
+                if state.showClock {
+                    Text(timerInterval: now...max(boundary, now.addingTimeInterval(1)), countsDown: true)
+                        .monospacedDigit()
+                        .multilineTextAlignment(.trailing)
+                        .frame(maxWidth: 104, alignment: .trailing)
+                }
+            }
         }
     }
 }
 
-/// Écran verrouillé (et bannière) : le jeu, sa date et le compte à rebours.
+/// Vignette du jeu envoyée par l'app (sinon l'icône manette).
+struct LiveGameImage: View {
+    let data: Data?
+    var width: CGFloat
+    var height: CGFloat
+    var corner: CGFloat = 8
+
+    var body: some View {
+        if let data, let image = UIImage(data: data) {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFill()
+                .frame(width: width, height: height)
+                .clipShape(RoundedRectangle(cornerRadius: corner, style: .continuous))
+        } else {
+            Image(systemName: "gamecontroller.fill")
+                .font(.system(size: min(width, height) * 0.6))
+                .foregroundStyle(liveAccent)
+                .frame(width: width, height: height)
+        }
+    }
+}
+
+/// Écran verrouillé (et bannière) : image, nom, date et compte à rebours.
 struct LiveLockScreenView: View {
     let context: ActivityViewContext<ReleaseActivityAttributes>
 
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: "gamecontroller.fill")
-                .font(.title2)
-                .foregroundStyle(liveAccent)
+            LiveGameImage(data: context.attributes.image, width: 48, height: 64)
             VStack(alignment: .leading, spacing: 2) {
                 Text(context.attributes.title)
                     .font(.headline)
@@ -40,11 +86,11 @@ struct LiveLockScreenView: View {
                     .foregroundStyle(.white.opacity(0.7))
             }
             Spacer(minLength: 8)
-            LiveCountdownText(date: context.state.releaseAt)
-                .font(.title2.bold())
+            LiveCountdownText(state: context.state)
+                .font(.title3.bold())
                 .foregroundStyle(liveAccent)
         }
-        .padding(16)
+        .padding(14)
     }
 }
 
@@ -59,12 +105,10 @@ struct ReleaseLiveActivity: Widget {
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
-                    Image(systemName: "gamecontroller.fill")
-                        .font(.title2)
-                        .foregroundStyle(liveAccent)
+                    LiveGameImage(data: context.attributes.image, width: 44, height: 58)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    LiveCountdownText(date: context.state.releaseAt)
+                    LiveCountdownText(state: context.state)
                         .font(.title3.bold())
                         .foregroundStyle(liveAccent)
                 }
@@ -79,15 +123,13 @@ struct ReleaseLiveActivity: Widget {
                         .foregroundStyle(.secondary)
                 }
             } compactLeading: {
-                Image(systemName: "gamecontroller.fill")
-                    .foregroundStyle(liveAccent)
+                LiveGameImage(data: context.attributes.image, width: 22, height: 22, corner: 11)
             } compactTrailing: {
-                LiveCountdownText(date: context.state.releaseAt, compact: true)
+                LiveCountdownText(state: context.state, compact: true)
                     .font(.caption.bold())
                     .foregroundStyle(liveAccent)
             } minimal: {
-                Image(systemName: "gamecontroller.fill")
-                    .foregroundStyle(liveAccent)
+                LiveGameImage(data: context.attributes.image, width: 22, height: 22, corner: 11)
             }
             .widgetURL(appLink(context.attributes.path))
         }

@@ -14,7 +14,6 @@ import {
   voterId,
 } from "@/lib/social";
 import { LikeButton } from "./LikeButton";
-import { bumpActivity } from "@/lib/badges";
 
 interface Comment {
   id: string;
@@ -35,19 +34,10 @@ export function Comments({ slug }: { slug: string }) {
   const [reported, setReported] = useState<Set<string>>(new Set());
   // Mot de passe du tableau de bord, si l'administrateur s'est connecté sur /admin/ dans cet onglet.
   const [admin, setAdmin] = useState("");
-  // Badges des pseudos (nombre de commentaires visibles sur tout le site).
-  const [authorCounts, setAuthorCounts] = useState<Record<string, number>>({});
 
   const load = useCallback(() => {
     rpc<Comment[]>("get_comments", { p_slug: slug, p_voter: voterId() })
-      .then((list) => {
-        setComments(list);
-        const authors = [...new Set(list.map((c) => c.author))].slice(0, 50);
-        if (authors.length)
-          rpc<Record<string, number>>("get_author_badges", { p_authors: authors })
-            .then((r) => setAuthorCounts(r ?? {}))
-            .catch(() => {});
-      })
+      .then(setComments)
       .catch(() => setComments([]));
   }, [slug]);
 
@@ -67,7 +57,6 @@ export function Comments({ slug }: { slug: string }) {
     try {
       await rpc<string>("add_comment", { p_slug: slug, p_author: pseudo.trim(), p_body: body.trim(), p_voter: voterId() });
       savePseudo(pseudo.trim());
-      bumpActivity("comments");
       setBody("");
       load();
     } catch (err) {
@@ -158,15 +147,6 @@ export function Comments({ slug }: { slug: string }) {
               <div className="min-w-0 flex-1">
                 <p className="text-sm">
                   <span className="font-semibold text-heading">{c.author}</span>{" "}
-                  {(authorCounts[c.author] ?? 0) >= 50 ? (
-                    <span className="rounded-full bg-amber-400/20 px-1.5 py-0.5 text-[11px] font-semibold text-amber-600 dark:text-amber-300" title="Plus de 50 commentaires">
-                      🏆 Pilier
-                    </span>
-                  ) : (authorCounts[c.author] ?? 0) >= 10 ? (
-                    <span className="rounded-full bg-accent/15 px-1.5 py-0.5 text-[11px] font-semibold text-accent" title="Plus de 10 commentaires">
-                      🏅 Fidèle
-                    </span>
-                  ) : null}{" "}
                   <span className="text-muted">· {timeAgo(c.created_at)}</span>
                 </p>
                 <p className="mt-0.5 whitespace-pre-line break-words text-sm text-fg">{c.body}</p>

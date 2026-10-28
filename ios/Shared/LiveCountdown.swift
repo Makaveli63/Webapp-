@@ -9,9 +9,15 @@ struct ReleaseActivityAttributes: ActivityAttributes {
         var releaseAt: Date
         /// « 19 novembre 2026 »
         var day: String
+        /// Afficher les jours (« 21 j »)
+        var showDays: Bool
+        /// Afficher heures : minutes : secondes (minuteur en direct)
+        var showClock: Bool
     }
 
     var gameId: String
     var title: String
     var path: String
+    /// Vignette du jeu (JPEG de quelques Ko) : l'extension ne peut pas télécharger d'image elle-même.
+    var image: Data?
 }

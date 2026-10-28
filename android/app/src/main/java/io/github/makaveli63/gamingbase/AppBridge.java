@@ -42,6 +42,16 @@ final class AppBridge {
     }
 
     @JavascriptInterface
+    public void setLiveFormat(String json) {
+        try {
+            JSONObject f = new JSONObject(json);
+            LiveCountdown.setFormat(ctx, f.optBoolean("days", true), f.optBoolean("clock", true));
+        } catch (Exception ignored) {
+            // réglage invalide : ignoré
+        }
+    }
+
+    @JavascriptInterface
     public void setPins(String json) {
         try {
             JSONArray in = new JSONArray(json);

@@ -63,7 +63,6 @@ export default function LegalPage() {
         empreinte chiffrée de ce code est conservée, et les données sont effacées après 13 mois sans utilisation.
       </p>
       <p>
-        Notes des lecteurs et pronostics : enregistrés avec le même identifiant aléatoire que les votes, sans donnée personnelle.
         Lecture hors connexion : les pages consultées et les derniers articles sont gardés dans le stockage de votre navigateur,
         uniquement sur votre appareil.
       </p>

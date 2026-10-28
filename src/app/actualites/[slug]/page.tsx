@@ -119,7 +119,7 @@ export default async function ArticlePage({ params }: Props) {
             {gamePage && (
               <p>
                 <Link href={`/jeux/${gamePage}`} className="font-semibold">
-                  🎮 Voir la fiche du jeu : notes, note des lecteurs, promos et vidéos
+                  🎮 Voir la fiche du jeu : notes de la presse, promos et vidéos
                 </Link>
               </p>
             )}

@@ -650,9 +650,15 @@ html[data-splash="off"] .splash { display: none; }
   margin: 0 auto;
   overflow: hidden; /* le contenu reste dans l'île pendant qu'elle grandit */
   border-radius: 9999px;
-  background: #000;
+  /* Verre fumé : la page transparaît, floutée, derrière l'île. */
+  background: rgb(10 10 14 / .58);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  backdrop-filter: blur(22px) saturate(180%);
   color: #fff;
-  box-shadow: 0 0 0 1px rgb(255 255 255 / .08), 0 14px 34px -12px rgb(0 0 0 / .6);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / .18),
+    inset 0 0 0 1px rgb(255 255 255 / .1),
+    0 14px 34px -12px rgb(0 0 0 / .6);
   --heading: #fff;
   --muted: #a1a1aa;
   --border: rgb(255 255 255 / .2);
@@ -660,6 +666,7 @@ html[data-splash="off"] .splash { display: none; }
 :root[data-style="capsule"] .island[data-open] {
   width: min(92vw, 30rem);
   border-radius: 30px;
+  background: rgb(10 10 14 / .68); /* un peu plus dense ouverte, pour bien lire */
 }
 /* L'agrandissement est animé en JavaScript (taille réelle avant / après) : pas de transition CSS en plus. */
 :root[data-style="capsule"] .island-panel { transition: none; }

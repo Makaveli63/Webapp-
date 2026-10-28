@@ -116,6 +116,13 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
             }
             return
         }
+        // Affichage du compte à rebours en direct : jours et/ou heures : minutes : secondes.
+        if let format = body["liveFormat"] as? [String: Any] {
+            let days = format["days"] as? Bool ?? true
+            let clock = format["clock"] as? Bool ?? true
+            Task { await LiveActivities.setFormat(days: days, clock: clock) }
+            return
+        }
         // Interrupteur « Compte à rebours en direct » (Live Activity) du site.
         if let on = body["liveActivity"] as? Bool {
             Task { @MainActor [weak self] in

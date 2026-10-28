@@ -37,6 +37,10 @@
             android:permission="android.permission.BIND_JOB_SERVICE" />
 
         <receiver
+            android:name=".LiveCountdown$Tick"
+            android:exported="false" />
+
+        <receiver
             android:name=".PinnedWidget"
             android:exported="false"
             android:label="Mon jeu épinglé">
