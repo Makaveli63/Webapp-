@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useId, useMemo, useState, type FormEvent, type KeyboardEvent } from "react";
 import { animeHref, https, searchAnime, titleOf, type AniMedia } from "@/lib/anilist";
 import { aliasesOf } from "@/lib/aliases";
-import { canon, suggestTitles } from "@/lib/fuzzy";
+import { canon, prepareTitles, suggestTitles } from "@/lib/fuzzy";
 import { loadSearchIndex } from "@/lib/search-index";
 import type { SearchGame } from "@/types";
 
@@ -105,7 +105,8 @@ export function SearchBar({
     for (const [title, g] of games) map.set(title, [...aliasesOf(title), ...(g.aka ? [g.aka] : [])]);
     return map;
   }, [games]);
-  const titles = useMemo(() => [...games.keys()], [games]);
+  // Formes canon des titres et de leurs autres écritures, calculées une fois au chargement de l'index.
+  const prepared = useMemo(() => prepareTitles([...games.keys()], (t) => alt.get(t) ?? []), [games, alt]);
 
   // Page Recherche : les résultats s'affichent pendant la saisie (pas besoin de valider).
   useEffect(() => {
@@ -122,7 +123,7 @@ export function SearchBar({
     return () => window.clearTimeout(timer);
   }, [q, live, router]);
 
-  const suggestions = open ? suggestTitles(q, titles, 5, (t) => alt.get(t) ?? []) : [];
+  const suggestions = useMemo(() => (open ? suggestTitles(q, prepared, 5) : []), [open, q, prepared]);
   const animeShown = open && !live ? anime : [];
   // En-tête : les actus qui contiennent tous les mots tapés.
   const words = spotlight && q.trim().length >= 2 ? canon(q).split(" ").filter(Boolean) : [];

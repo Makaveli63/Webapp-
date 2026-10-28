@@ -39,7 +39,18 @@ export default async function HomePage() {
           .map((a) => ({ title: a.title, path: `/actualites/${a.slug}`, text: `${a.title}. ${(a.aiSummary ?? a.excerpt).replace(/[#*_>`]/g, "").slice(0, 900)}` }))}
       />
       {/* Sans le texte complet des articles : la page reste légère. */}
-      <ForYou articles={latest.slice(0, 120).map((a) => ({ ...a, content: "", aiSummary: undefined }))} />
+      <ForYou
+        articles={latest.slice(0, 100).map((a) => ({
+          slug: a.slug,
+          title: a.title,
+          tags: a.tags.slice(0, 8),
+          platforms: a.platforms,
+          category: a.category,
+          image: a.image,
+          publishedAt: a.publishedAt,
+          source: { name: a.source.name },
+        }))}
+      />
       <NewsSection id="latest-title" title="Dernières actualités" href="/actualites" articles={latest.filter((a) => a.category !== "Anime").slice(0, 6)} />
       <PollCard poll={currentPoll()} />
       <WeekReleasesTeaser />

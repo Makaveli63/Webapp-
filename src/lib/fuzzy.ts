@@ -83,20 +83,37 @@ export function correctQuery(query: string, vocab: Record<string, number>): stri
  * Suggestions de titres pendant la saisie : début de titre, début d'un mot, contenu,
  * puis titres proches malgré une faute dans le dernier mot.
  */
-export function suggestTitles(query: string, titles: string[], limit = 6, alt?: (title: string) => string[]): string[] {
+/** Titres préparés une fois (formes canon du titre et de ses autres écritures) : la saisie reste fluide. */
+export interface PreparedTitle {
+  title: string;
+  forms: string[];
+}
+
+export function prepareTitles(titles: string[], alt?: (title: string) => string[]): PreparedTitle[] {
+  return titles.map((title) => ({ title, forms: [...new Set([title, ...(alt?.(title) ?? [])].map(canon))] }));
+}
+
+export function suggestTitles(query: string, titles: string[] | PreparedTitle[], limit = 6, alt?: (title: string) => string[]): string[] {
   const q = canon(query);
   if (q.length < 2) return [];
   const words = q.split(" ");
-  const scored: [number, string][] = [];
-  for (const title of titles) {
-    // Meilleur score entre le titre et ses autres écritures (« GTA 6 » pour Grand Theft Auto VI).
-    let best: number | null = null;
-    for (const name of [title, ...(alt?.(title) ?? [])]) {
-      const s = scoreTitle(q, words, canon(name));
-      if (s !== null && (best === null || s < best)) best = s;
+  const list: PreparedTitle[] = typeof titles[0] === "string" ? prepareTitles(titles as string[], alt) : (titles as PreparedTitle[]);
+  const run = (fuzzy: boolean) => {
+    const scored: [number, string][] = [];
+    for (const { title, forms } of list) {
+      // Meilleur score entre le titre et ses autres écritures (« GTA 6 » pour Grand Theft Auto VI).
+      let best: number | null = null;
+      for (const form of forms) {
+        const s = scoreTitle(q, words, form, fuzzy);
+        if (s !== null && (best === null || s < best)) best = s;
+      }
+      if (best !== null) scored.push([best * 1000 + title.length, title]);
     }
-    if (best !== null) scored.push([best * 1000 + title.length, title]);
-  }
+    return scored;
+  };
+  // D'abord les titres qui contiennent ce qui est tapé ; les fautes de frappe (plus coûteuses) seulement sinon.
+  let scored = run(false);
+  if (!scored.length) scored = run(true);
   scored.sort((a, b) => a[0] - b[0]);
   // Des titres contiennent ce qui est tapé : pas de propositions approximatives en plus (« Solo » ≠ « Nine Sols »).
   const exact = scored.filter(([s]) => s < 3000);
@@ -104,11 +121,12 @@ export function suggestTitles(query: string, titles: string[], limit = 6, alt?: 
 }
 
 /** Score d'un titre (forme canon) : 0 début, 1 début de mot, 2 contenu, 3+ avec fautes ; null s'il ne correspond pas. */
-function scoreTitle(q: string, words: string[], t: string): number | null {
+function scoreTitle(q: string, words: string[], t: string, fuzzy = true): number | null {
   let score: number;
   if (t.startsWith(q)) score = 0;
   else if (` ${t}`.includes(` ${q}`)) score = 1;
   else if (t.includes(q)) score = 2;
+  else if (!fuzzy) return null;
   else {
     // Fautes de frappe : chaque mot tapé doit ressembler à un mot du titre (le dernier, à un début de mot).
     const tw = t.split(" ");

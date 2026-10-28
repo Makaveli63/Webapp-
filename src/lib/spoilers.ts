@@ -66,15 +66,35 @@ export function spoilerReason(text: string, list: Watched[]): string | null {
   return null;
 }
 
+// Calculée une fois pour toutes les cartes de la page, puis recalculée seulement quand le suivi change.
+let cached: Watched[] | null | undefined;
+const listeners = new Set<(l: Watched[] | null) => void>();
+let wired = false;
+function current(): Watched[] | null {
+  if (cached === undefined) cached = spoilerShield() ? watched() : null;
+  return cached;
+}
+function wire() {
+  if (wired) return;
+  wired = true;
+  const refresh = () => {
+    cached = undefined;
+    const list = current();
+    listeners.forEach((f) => f(list));
+  };
+  for (const e of [TRACKER_EVENT, FOLLOWS_EVENT, SPOILER_EVENT, "storage"]) window.addEventListener(e, refresh);
+}
+
 /** Liste des animes regardés, tenue à jour (null : bouclier coupé ou pas encore chargé). */
 export function useWatched(): Watched[] | null {
   const [list, setList] = useState<Watched[] | null>(null);
   useEffect(() => {
-    const update = () => setList(spoilerShield() ? watched() : null);
-    update();
-    const events = [TRACKER_EVENT, FOLLOWS_EVENT, SPOILER_EVENT, "storage"];
-    events.forEach((e) => window.addEventListener(e, update));
-    return () => events.forEach((e) => window.removeEventListener(e, update));
+    wire();
+    setList(current());
+    listeners.add(setList);
+    return () => {
+      listeners.delete(setList);
+    };
   }, []);
   return list;
 }

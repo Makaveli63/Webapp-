@@ -4,7 +4,7 @@ import { Flame, Share2, Trophy } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { aliasesOf } from "@/lib/aliases";
-import { canon, distance, suggestTitles } from "@/lib/fuzzy";
+import { canon, distance, prepareTitles, suggestTitles } from "@/lib/fuzzy";
 
 export interface DailyCandidate {
   title: string;
@@ -84,7 +84,7 @@ export function DailyGame({ candidates }: { candidates: DailyCandidate[] }) {
     return candidates.reduce((best, c) => (hash(`${day}|${c.title}`) < hash(`${day}|${best.title}`) ? c : best));
   }, [day, candidates]);
   const keys = useMemo(() => (answer ? new Set(aliasesOf(answer.title).map(canon)) : new Set<string>()), [answer]);
-  const titles = useMemo(() => candidates.map((c) => c.title), [candidates]);
+  const titles = useMemo(() => prepareTitles(candidates.map((c) => c.title)), [candidates]);
   const number = day ? Math.floor((Date.parse(`${day}T00:00:00Z`) - START) / 86_400_000) + 1 : 0;
 
   if (!candidates.length) return <p className="mt-6 text-muted">Le jeu du jour arrive à la prochaine mise à jour du site.</p>;

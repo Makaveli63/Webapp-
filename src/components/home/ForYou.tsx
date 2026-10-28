@@ -12,6 +12,9 @@ import { themeFor } from "@/lib/themes";
 import { useTracker } from "@/lib/tracker";
 import type { Article } from "@/types";
 
+/** Juste ce qu'il faut pour les cartes (la page reste légère). */
+export type ForYouArticle = Pick<Article, "slug" | "title" | "tags" | "platforms" | "category" | "image" | "publishedAt"> & { source: { name: string } };
+
 interface Signal {
   /** Écritures du titre, forme canon (« gta 6 ») */
   keys: string[];
@@ -35,7 +38,7 @@ function collection(): { title: string }[] {
  * « Pour toi » : les actus qui parlent de ce que tu suis (🔔), de ta bibliothèque et de tes plateformes,
  * avec la raison affichée sur chaque carte. Calculé sur l'appareil, rien n'est envoyé.
  */
-export function ForYou({ articles }: { articles: Article[] }) {
+export function ForYou({ articles }: { articles: ForYouArticle[] }) {
   const follows = useFollows();
   const tracker = useTracker();
   const [extra, setExtra] = useState<{ games: { title: string }[]; platforms: string[] } | null>(null);
@@ -57,7 +60,7 @@ export function ForYou({ articles }: { articles: Article[] }) {
       ...Object.values(tracker.anime).map((a) => ({ keys: keysOf(a.title), reason: `▶️ ${a.title} · dans ton suivi`, weight: 2 })),
       ...[...Object.values(tracker.games), ...extra.games].map((g) => ({ keys: keysOf(g.title), reason: "🎮 Dans ta bibliothèque", weight: 2 })),
     ];
-    const out: { article: Article; reason: string; score: number }[] = [];
+    const out: { article: ForYouArticle; reason: string; score: number }[] = [];
     for (const a of articles) {
       const hay = ` ${canon(`${a.title} ${a.tags.join(" ")}`)} `;
       let best: { reason: string; score: number } | null = null;

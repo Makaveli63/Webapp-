@@ -117,7 +117,7 @@ enum NewsAlerts {
         guard enabled else { return defaults.set([String](), forKey: episodeIdsKey) }
         let now = Date()
         var ids: [String] = []
-        for ep in (prefs.episodes ?? []).prefix(30) {
+        for ep in (prefs.episodes ?? []).prefix(20) { // iOS garde 64 notifications programmées au plus
             let at = Date(timeIntervalSince1970: ep.atMs / 1000)
             guard at > now, ep.path.hasPrefix("/Webapp-/") else { continue }
             let content = UNMutableNotificationContent()
@@ -148,7 +148,7 @@ enum NewsAlerts {
         let cal = Calendar.current
         let now = Date()
         var ids: [String] = []
-        for r in mine.prefix(12) {
+        for r in mine.prefix(8) {
             let day = cal.startOfDay(for: r.date)
             let moments: [(String, Date, String, String)] = [
                 ("eve", cal.date(byAdding: .hour, value: -4, to: day) ?? day, "⏰ \(r.title) sort demain", "Plus qu'une nuit à attendre !"),
@@ -208,7 +208,9 @@ enum NewsAlerts {
               data.count < 20_000, (try? JSONDecoder().decode(Prefs.self, from: data)) != nil else { return }
         let changed = defaults.data(forKey: prefsKey) != data
         defaults.set(data, forKey: prefsKey)
-        if changed { WidgetCenter.shared.reloadAllTimelines() } // animes suivis : le widget les met en tête
+        // Rien de changé (le site renvoie ses réglages à chaque page) : rien à reprogrammer.
+        guard changed else { return }
+        WidgetCenter.shared.reloadAllTimelines() // animes suivis : le widget les met en tête
         Task {
             await refreshDigest() // programmé (ou retiré) tout de suite
             await scheduleEpisodes()

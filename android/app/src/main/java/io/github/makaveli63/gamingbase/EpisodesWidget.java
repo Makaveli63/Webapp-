@@ -71,7 +71,9 @@ public class EpisodesWidget extends GamingWidget {
                 } catch (Exception ignored) {
                     // non enregistré
                 }
-                WidgetData.refreshAll(ctx);
+                // Redessiné tout de suite (ce widget n'a pas besoin du réseau).
+                android.appwidget.AppWidgetManager m = android.appwidget.AppWidgetManager.getInstance(ctx);
+                for (int wid : m.getAppWidgetIds(new android.content.ComponentName(ctx, EpisodesWidget.class))) m.updateAppWidget(wid, render(ctx, null, wid));
             }
             return;
         }

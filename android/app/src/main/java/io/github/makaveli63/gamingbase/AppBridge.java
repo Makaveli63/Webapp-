@@ -132,7 +132,7 @@ final class AppBridge {
     @JavascriptInterface
     public String takePendingEpisodes() {
         String json = EpisodesWidget.takePending(ctx);
-        WidgetData.refreshAll(ctx);
+        if (!"[]".equals(json)) WidgetData.refreshAll(ctx); // seulement s'il y avait des épisodes cochés
         return json;
     }
 }

@@ -34,6 +34,8 @@ export function PullToRefresh() {
     document.documentElement.dataset.ptr = "1";
 
     let startY = 0;
+    let startX = 0;
+    let decided = false; // geste vertical confirmé (un glissement horizontal dans un carrousel n'actualise pas)
     let pulling = false;
     let dist = 0;
     const show = (d: number) => {
@@ -58,14 +60,26 @@ export function PullToRefresh() {
     };
     const start = (e: TouchEvent) => {
       if (el.dataset.loading === "1" || e.touches.length !== 1 || window.scrollY > 0) return;
-      if (document.body.classList.contains("overflow-hidden")) return; // fenêtre ouverte
+      if (document.body.classList.contains("overflow-hidden") || document.documentElement.hasAttribute("data-search")) return; // fenêtre ou recherche ouverte
+      if ((e.target as Element | null)?.closest?.(".tabbar, .listen-player, [role=dialog], .header-search")) return;
       startY = e.touches[0].clientY;
+      startX = e.touches[0].clientX;
+      decided = false;
       pulling = true;
       moving().forEach((n) => n.classList.remove("ptr-spring"));
     };
     const move = (e: TouchEvent) => {
       if (!pulling) return;
       const dy = e.touches[0].clientY - startY;
+      if (!decided) {
+        const dx = Math.abs(e.touches[0].clientX - startX);
+        if (dx < 8 && Math.abs(dy) < 8) return;
+        decided = true;
+        if (dx > Math.abs(dy)) {
+          pulling = false; // glissement horizontal : pas d'actualisation
+          return;
+        }
+      }
       if (dy <= 0 || window.scrollY > 0) return show(0);
       el.dataset.dragging = "1";
       halo.dataset.on = "1";
