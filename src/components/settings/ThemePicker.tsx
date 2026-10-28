@@ -12,8 +12,8 @@ const CHOICES: { id: Choice; label: string; icon: typeof Sun }[] = [
 
 type Style = "gamingbase" | "capsule";
 const STYLES: { id: Style; label: string; hint: string; icon: typeof Sun }[] = [
-  { id: "gamingbase", label: "GamingBase", hint: "Verre coloré, fond dynamique", icon: Sparkles },
   { id: "capsule", label: "Capsule", hint: "Noir profond, barres flottantes, couleur au choix", icon: Smartphone },
+  { id: "gamingbase", label: "GamingBase", hint: "Verre coloré, fond dynamique", icon: Sparkles },
 ];
 
 // Couleurs du style Capsule (pastille : teinte en mode sombre).
@@ -46,7 +46,7 @@ const save = (key: string, value: string) => {
 /** Choix du style et du thème (appliqués par public/theme.js), dans les réglages. */
 export function ThemePicker() {
   const [choice, setChoice] = useState<Choice>("system");
-  const [style, setStyle] = useState<Style>("gamingbase");
+  const [style, setStyle] = useState<Style>("capsule");
   const [tint, setTint] = useState("gamingbase");
   const [glass, setGlass] = useState("verre");
   useEffect(() => {

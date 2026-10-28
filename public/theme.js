@@ -18,13 +18,13 @@
       return "violet";
     }
   }
-  // Style complet du site : « gamingbase » (par défaut) ou « capsule » (l'ancien nom « ios » est repris).
+  // Style complet du site : « capsule » (par défaut) ou « gamingbase » (l'ancien nom « ios » est repris).
   function style() {
     try {
       var v = localStorage.getItem("gb-style");
-      return v === "ios" ? "capsule" : v || "gamingbase";
+      return v === "ios" ? "capsule" : v || "capsule"; // Capsule par défaut, sur le site comme dans les apps
     } catch {
-      return "gamingbase";
+      return "capsule";
     }
   }
   // Style Capsule : couleur (rose par défaut) et transparence (verre par défaut).

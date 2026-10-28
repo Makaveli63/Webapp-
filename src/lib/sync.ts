@@ -19,7 +19,24 @@ interface Payload {
   collection: { owned: Item[]; wanted: Item[] };
   notif?: string | null;
   suivi?: Tracker;
+  /** Réglages d'affichage : style, couleur, transparence, thème clair / sombre, couleur du style GamingBase */
+  affichage?: Record<string, string>;
 }
+
+// Clés des réglages d'affichage synchronisés (public/theme.js les lit au chargement de chaque page).
+const DISPLAY_KEYS = ["gb-style", "gb-tint", "gb-glass", "gb-theme", "gb-accent"];
+const displayLocal = (): Record<string, string> | undefined => {
+  const out: Record<string, string> = {};
+  try {
+    for (const k of DISPLAY_KEYS) {
+      const v = localStorage.getItem(k);
+      if (v && /^[a-z0-9-]{1,20}$/.test(v)) out[k] = v;
+    }
+  } catch {
+    /* stockage indisponible */
+  }
+  return Object.keys(out).length ? out : undefined;
+};
 
 export function newCode(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(16));
@@ -71,6 +88,7 @@ function local(): Payload {
     collection: { owned: col.owned ?? [], wanted: col.wanted ?? [] },
     notif,
     suivi: cleanTracker(readJson<unknown>(TRACKER_KEY, {})),
+    affichage: displayLocal(),
   };
 }
 
@@ -92,6 +110,8 @@ function merge(mine: Payload, theirs: Partial<Payload> | null): Payload {
     },
     notif: mine.notif ?? theirs.notif ?? null,
     suivi: mergeTrackers(cleanTracker(mine.suivi), cleanTracker(theirs.suivi)),
+    // Affichage : le dernier appareil modifié l'emporte (celui-ci s'il a des changements).
+    affichage: mine.affichage ?? theirs.affichage,
   };
 }
 
@@ -104,10 +124,13 @@ function apply(p: Payload) {
     localStorage.setItem("gb-collection", JSON.stringify({ owned: p.collection.owned, wanted: p.collection.wanted.filter((g) => !owned.has(g.id)) }));
     if (p.notif) localStorage.setItem("gb-notif-prefs", p.notif);
     if (p.suivi) localStorage.setItem(TRACKER_KEY, JSON.stringify(cleanTracker(p.suivi)));
+    for (const [k, v] of Object.entries(p.affichage ?? {})) {
+      if (DISPLAY_KEYS.includes(k) && typeof v === "string" && /^[a-z0-9-]{1,20}$/.test(v)) localStorage.setItem(k, v);
+    }
   } catch {
     /* stockage indisponible */
   }
-  for (const e of ["gb-favoris-change", "gb-epingles-change", "gb-collection-change", "gb-notif-prefs-change", TRACKER_EVENT]) {
+  for (const e of ["gb-favoris-change", "gb-epingles-change", "gb-collection-change", "gb-notif-prefs-change", TRACKER_EVENT, "gb-theme-change"]) {
     window.dispatchEvent(new Event(e));
   }
 }
@@ -117,7 +140,7 @@ function apply(p: Payload) {
 // l'autre appareil n'a rien changé : on envoie l'état local tel quel (suppressions comprises).
 // Sinon, et seulement si on a aussi des changements, on fusionne les deux.
 const META_KEY = "gb-sync-meta";
-const CHANGE_EVENTS = ["gb-favoris-change", "gb-epingles-change", "gb-collection-change", "gb-notif-prefs-change", TRACKER_EVENT];
+const CHANGE_EVENTS = ["gb-favoris-change", "gb-epingles-change", "gb-collection-change", "gb-notif-prefs-change", TRACKER_EVENT, "gb-theme-change"];
 let applying = false;
 
 interface Meta {
