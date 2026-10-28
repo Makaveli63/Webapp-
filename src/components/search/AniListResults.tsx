@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { FollowButton } from "@/components/app/FollowButton";
 import { AnimeFollow } from "@/components/tracker/AnimeFollow";
 import { EpisodeTracker } from "@/components/tracker/EpisodeTracker";
 import { animeHref, FORMATS, https, nextOf, originalOf, searchAnime, STATUS, streamingOf, titleOf, type AniMedia } from "@/lib/anilist";
@@ -83,6 +84,7 @@ export function AniListResults({ query, onCount }: { query: string; onCount?: (n
                   <span className="mt-2 flex flex-wrap items-center gap-1.5">
                     <EpisodeTracker anime={{ id: `anilist-${m.id}`, title, image: cover, total: m.episodes ?? undefined, duration: m.duration ?? undefined, next: nextOf(m) }} />
                     <AnimeFollow anime={{ id: `anilist-${m.id}`, title, image: cover, total: m.episodes ?? undefined, duration: m.duration ?? undefined, next: nextOf(m) }} compact />
+                    <FollowButton compact item={{ id: `anilist-${m.id}`, kind: "anime", title, href: animeHref(m.id), next: nextOf(m) }} titles={[m.title.romaji, m.title.english]} className="!size-8" />
                   </span>
                   {links.length > 0 && (
                     <p className="mt-2 flex flex-wrap gap-1.5">

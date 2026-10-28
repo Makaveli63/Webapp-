@@ -6,6 +6,8 @@ import { Countdown } from "@/components/ui/Countdown";
 import { RemoteImage } from "@/components/ui/RemoteImage";
 import { TrailerButton } from "@/components/ui/TrailerButton";
 import { PinButton } from "./PinButton";
+import { FollowButton } from "@/components/app/FollowButton";
+import { gameFollowId } from "@/lib/aliases";
 import { formatDate } from "@/lib/format";
 import { titleKey } from "@/lib/text";
 import { THEMES, themeFor, type ThemeId } from "@/lib/themes";
@@ -25,6 +27,7 @@ export function ReleaseCard({ release, pinned = false, compact = false }: { rele
         </div>
         <div className="absolute right-3 top-3 z-10 flex items-center gap-2">
           {release.video && <TrailerButton video={release.video} title={release.title} />}
+          <FollowButton compact item={{ id: gameFollowId(release.title), kind: "game", title: release.title, href: `/jeux/${gameSlug(release.title)}/` }} titles={[release.short]} />
           <PinButton id={release.id} title={release.title} />
         </div>
         {pinned && (

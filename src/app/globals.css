@@ -831,3 +831,7 @@ html.vt-back::view-transition-new(root) { animation-name: vt-new-back; }
 html:not([data-splash="off"]) .tabbar { animation: tabbar-in .4s ease-out 1.9s both; }
 @keyframes tabbar-in { from { opacity: 0; transform: translateY(12px); } }
 @media (prefers-reduced-motion: reduce) { html .tabbar { animation: none; } }
+
+/* Message après « Suivre » sur une vignette : au-dessus de la barre d'onglets. */
+.follow-toast { bottom: calc(env(safe-area-inset-bottom) + 5.5rem); animation: follow-toast-in .35s cubic-bezier(.3, 1.4, .5, 1); }
+@keyframes follow-toast-in { from { opacity: 0; transform: translateY(12px) scale(.96); } }

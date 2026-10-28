@@ -1,3 +1,8 @@
+import { titleKey } from "@/lib/text";
+
+/** Identifiant de suivi d'un jeu, le même partout (fiche, recherche, sorties) : « jeu-grand-theft-auto-vi ». */
+export const gameFollowId = (title: string) => `jeu-${titleKey(title).replace(/\s+/g, "-").slice(0, 80)}`;
+
 /** Autres façons d'écrire un titre de jeu ou d'anime (actus, recherche, notifications). */
 export const ROMAN: Record<string, string> = { ii: "2", iii: "3", iv: "4", v: "5", vi: "6", vii: "7", viii: "8", ix: "9", x: "10", xi: "11", xii: "12" };
 const ARABIC = Object.fromEntries(Object.entries(ROMAN).map(([r, n]) => [n, r]));

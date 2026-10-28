@@ -2,6 +2,7 @@
 
 import { Bell, BellRing } from "lucide-react";
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { aliasesOf, toggleFollow, useFollows, type Follow } from "@/lib/follows";
 import { inApp, notificationsOn, sendToApp } from "@/lib/notif-prefs";
 
@@ -9,7 +10,18 @@ import { inApp, notificationsOn, sendToApp } from "@/lib/notif-prefs";
  * 🔔 « Suivre » un jeu ou un anime : une notification pour chaque actu qui en parle
  * (et chaque nouvel épisode pour un anime). Allume les notifications de l'app si besoin.
  */
-export function FollowButton({ item, titles = [], className = "" }: { item: Omit<Follow, "aliases">; titles?: (string | null | undefined)[]; className?: string }) {
+export function FollowButton({
+  item,
+  titles = [],
+  compact = false,
+  className = "",
+}: {
+  item: Omit<Follow, "aliases">;
+  titles?: (string | null | undefined)[];
+  /** Bouton rond sur une vignette (comme l'épingle) ; le message s'affiche en bas de l'écran */
+  compact?: boolean;
+  className?: string;
+}) {
   const follows = useFollows();
   const [hint, setHint] = useState("");
   const on = !!follows?.some((f) => f.id === item.id);
@@ -31,6 +43,30 @@ export function FollowButton({ item, titles = [], className = "" }: { item: Omit
   };
 
   const Icon = on ? BellRing : Bell;
+  if (compact)
+    return (
+      <>
+        <button
+          type="button"
+          aria-pressed={on}
+          onClick={click}
+          aria-label={on ? `Ne plus suivre ${item.title}` : `Suivre ${item.title} (notifications)`}
+          title={on ? "Suivi : notifications activées" : "Suivre (notifications)"}
+          className={`relative z-10 inline-flex size-9 items-center justify-center rounded-full backdrop-blur transition-colors ${
+            on ? "bg-accent text-white" : "bg-black/60 text-white hover:bg-black/75"
+          } ${className}`}
+        >
+          <Icon className="size-4" aria-hidden />
+        </button>
+        {hint &&
+          createPortal(
+          <span role="status" className="follow-toast glass-strong fixed inset-x-4 z-50 mx-auto max-w-sm rounded-2xl px-4 py-3 text-center text-sm font-semibold text-heading shadow-xl">
+            🔔 {item.title} : {hint.charAt(0).toLowerCase() + hint.slice(1)}
+          </span>,
+            document.body, // hors de la vignette (son effet de verre enfermerait le message)
+          )}
+      </>
+    );
   return (
     <span className="inline-flex flex-col items-start">
       <button

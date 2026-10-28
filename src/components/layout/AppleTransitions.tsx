@@ -46,6 +46,9 @@ export function AppleTransitions() {
       if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
       const a = (e.target as Element | null)?.closest?.("a");
       if (!a || a.target || a.hasAttribute("download") || a.closest(".tabbar")) return; // onglets : changement direct
+      // Bouton posé dans une vignette cliquable (suivre, épingler, Je l'ai…) : c'est lui qui répond, pas le lien.
+      const control = (e.target as Element).closest("button, select, input, label, [role=button]");
+      if (control && a.contains(control)) return;
       const url = new URL(a.href, location.href);
       if (url.origin !== location.origin || !url.pathname.startsWith(`${BASE}/`) || /\.\w+$/.test(url.pathname)) return;
       if (url.pathname === location.pathname && url.search === location.search) return;

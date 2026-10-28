@@ -1,10 +1,12 @@
 import Link from "next/link";
+import { FollowButton } from "@/components/app/FollowButton";
 import { CollectionButtons } from "@/components/collection/CollectionButtons";
 import { AnimeFollow } from "@/components/tracker/AnimeFollow";
 import { EpisodeTracker } from "@/components/tracker/EpisodeTracker";
 import { GameProgress } from "@/components/tracker/GameProgress";
 import { RemoteImage } from "@/components/ui/RemoteImage";
 import { TrailerButton } from "@/components/ui/TrailerButton";
+import { gameFollowId } from "@/lib/aliases";
 import { themeFor } from "@/lib/themes";
 import type { SearchGame } from "@/types";
 
@@ -26,6 +28,16 @@ export function GameCard({ game }: { game: SearchGame }) {
           </span>
         )}
         {game.video && <TrailerButton video={game.video} title={game.title} className="absolute bottom-2 right-2" />}
+        <FollowButton
+          compact
+          className="!absolute right-2 top-2"
+          item={
+            game.anime || game.id.startsWith("anilist-")
+              ? { id: game.id, kind: "anime", title: game.title, href: `/anime/fiche?id=${game.id.replace(/^anilist-/, "")}`, next: game.anime?.next }
+              : { id: gameFollowId(game.title), kind: "game", title: game.title, href: game.url?.startsWith("/") ? game.url : `/recherche?q=${encodeURIComponent(game.title)}` }
+          }
+          titles={[game.aka]}
+        />
       </div>
       <div className="p-3">
         <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-heading">{game.title}</h3>

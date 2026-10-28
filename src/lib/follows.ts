@@ -21,7 +21,7 @@ export interface Follow {
   next?: { episode: number; at: string };
 }
 
-export { aliasesOf } from "@/lib/aliases";
+export { aliasesOf, gameFollowId } from "@/lib/aliases";
 
 export function readFollows(): Follow[] {
   try {
