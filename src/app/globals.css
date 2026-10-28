@@ -838,10 +838,15 @@ html:not([data-splash="off"]) .tabbar { animation: tabbar-in .4s ease-out 1.9s b
   left: 50%;
   top: calc(env(safe-area-inset-top) + 3.95rem);
   z-index: 60;
+  width: min(92vw, 30rem);
+  transform: translateX(-50%);
+  animation: follow-toast-in .55s cubic-bezier(.3, 1.35, .45, 1) both, follow-toast-out .35s ease-in 3.6s forwards;
+}
+/* Le verre est sur l'élément intérieur, qui ne bouge pas : Safari garde ainsi ses coins arrondis. */
+.follow-toast-body {
   display: flex;
   align-items: center;
   gap: .65rem;
-  width: min(92vw, 30rem); /* recouvre l'île des sorties, qui reprend sa place ensuite */
   padding: .6rem 1.1rem .6rem 1rem;
   border-radius: 1.6rem;
   color: #fff;
@@ -850,14 +855,13 @@ html:not([data-splash="off"]) .tabbar { animation: tabbar-in .4s ease-out 1.9s b
   -webkit-backdrop-filter: blur(22px) saturate(180%);
   backdrop-filter: blur(22px) saturate(180%);
   box-shadow: inset 0 1px 0 rgb(255 255 255 / .18), inset 0 0 0 1px rgb(255 255 255 / .1), 0 12px 32px -10px rgb(0 0 0 / .55);
-  transform: translateX(-50%);
-  animation: follow-toast-in .55s cubic-bezier(.3, 1.35, .45, 1) both, follow-toast-out .35s ease-in 3.6s forwards;
 }
 @media (min-width: 768px) { .follow-toast { top: calc(env(safe-area-inset-top) + 4.6rem); } }
+/* Safari perd l'arrondi d'un élément en verre flouté si l'arrondi est animé : seuls l'opacité et la position bougent. */
 @keyframes follow-toast-in {
-  from { opacity: 0; transform: translateX(-50%) translateY(-14px) scale(.55, .4); border-radius: 9999px; }
+  from { opacity: 0; transform: translateX(-50%) translateY(-12px) scale(.9); }
 }
-@keyframes follow-toast-out { to { opacity: 0; transform: translateX(-50%) translateY(-10px) scale(.8, .6); } }
+@keyframes follow-toast-out { to { opacity: 0; transform: translateX(-50%) translateY(-10px) scale(.94); } }
 @media (prefers-reduced-motion: reduce) { .follow-toast { animation: none; } }
 
 /* Récap du mois (Ma bibliothèque) */
@@ -881,7 +885,6 @@ html:not([data-splash="off"]) .tabbar { animation: tabbar-in .4s ease-out 1.9s b
   backdrop-filter: blur(22px) saturate(180%);
   box-shadow: inset 0 1px 0 rgb(255 255 255 / .18), inset 0 0 0 1px rgb(255 255 255 / .1), 0 12px 32px -10px rgb(0 0 0 / .55);
   transform: translateX(-50%);
-  animation: follow-toast-in .5s cubic-bezier(.3, 1.35, .45, 1) both;
 }
 @media (min-width: 768px) { .listen-player { bottom: 1.5rem; } }
 html[data-native-tabs] .listen-player { bottom: calc(env(safe-area-inset-bottom) + 4.2rem); }

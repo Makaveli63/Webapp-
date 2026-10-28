@@ -48,11 +48,13 @@ export function FollowButton({
     hint &&
     createPortal(
       <div role="status" className="follow-toast">
-        <BellRing className="size-4 shrink-0 text-accent" aria-hidden />
-        <span className="min-w-0">
-          <span className="block truncate font-semibold">{item.title}</span>
-          <span className="block text-xs text-white/75">{hint}</span>
-        </span>
+        <div className="follow-toast-body">
+          <BellRing className="size-4 shrink-0 text-accent" aria-hidden />
+          <span className="min-w-0">
+            <span className="block truncate font-semibold">{item.title}</span>
+            <span className="block text-xs text-white/75">{hint}</span>
+          </span>
+        </div>
       </div>,
       document.body,
     );
