@@ -3,6 +3,7 @@ export function formatDate(iso: string): string {
     day: "numeric",
     month: "long",
     year: "numeric",
+    timeZone: "Europe/Paris", // même date au build (UTC) et chez le visiteur : pas d'erreur d'hydratation
   }).format(new Date(iso));
 }
 

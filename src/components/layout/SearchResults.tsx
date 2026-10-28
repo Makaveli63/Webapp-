@@ -90,8 +90,10 @@ export function SearchResults() {
 
   const exact = runSearch(index, q);
   // Aucun résultat : on corrige les fautes de frappe (« cal of dutty » → « call of duty »).
-  const corrected = index && q && exact.articles.length + exact.games.length === 0 ? correctQuery(q, index.vocab) : null;
-  const fixed = runSearch(index, corrected ?? "");
+  // La correction n'est retenue que si elle trouve quelque chose (« solo leveling » ne devient pas « sols leveling »).
+  const guess = index && q && exact.articles.length + exact.games.length === 0 ? correctQuery(q, index.vocab) : null;
+  const fixed = runSearch(index, guess ?? "");
+  const corrected = guess && guess !== q && fixed.articles.length + fixed.games.length > 0 ? guess : null;
   const found = corrected ? fixed : exact;
   // Les animes ont leur propre section (base AniList complète) : les jeux et les animes ne se mélangent pas.
   const games = found.games.filter((g) => !g.id.startsWith("anilist-"));
