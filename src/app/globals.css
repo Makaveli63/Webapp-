@@ -924,6 +924,28 @@ html:not([data-splash="off"]) .tabbar { animation: tabbar-in .4s ease-out 1.9s b
 }
 @keyframes follow-toast-out { to { opacity: 0; transform: translateX(-50%) translateY(-10px) scale(.94); } }
 @media (prefers-reduced-motion: reduce) { .follow-toast { animation: none; } }
+/* Bandeau « Ouvrir dans l'appli » (lien partagé ouvert dans le navigateur) : au-dessus de la barre d'onglets. */
+.open-app-banner {
+  position: fixed;
+  left: 14px;
+  right: 14px;
+  bottom: calc(env(safe-area-inset-bottom) + 5.6rem);
+  z-index: 45;
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: .6rem .6rem .6rem .75rem;
+  border-radius: 1.4rem;
+  border: 1px solid var(--glass-edge, var(--border));
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  backdrop-filter: blur(22px) saturate(180%);
+  box-shadow: 0 16px 36px -14px rgb(0 0 0 / .45);
+  animation: open-app-in .45s cubic-bezier(.2, .9, .25, 1) .6s both;
+}
+@media (min-width: 768px) { .open-app-banner { left: auto; right: 1.25rem; bottom: 1.25rem; width: 24rem; } }
+@keyframes open-app-in { from { opacity: 0; transform: translateY(16px); } }
+@media (prefers-reduced-motion: reduce) { .open-app-banner { animation: none; } }
 /* Île de l'XP : pastille du niveau, dorée quand on monte de niveau. */
 .xp-toast-level {
   display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;

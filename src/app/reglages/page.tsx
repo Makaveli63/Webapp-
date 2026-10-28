@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { AppNotificationsToggle } from "@/components/app/AppNotificationsToggle";
 import { LiveActivityToggle } from "@/components/app/LiveActivityToggle";
+import { OpenLinksSetting } from "@/components/app/OpenLinksSetting";
 import { SpoilerToggle } from "@/components/settings/SpoilerToggle";
 import { VoiceSettings } from "@/components/settings/VoiceSettings";
 import { ThemePicker } from "@/components/settings/ThemePicker";
@@ -17,6 +18,7 @@ export default function SettingsPage() {
       </header>
       <AppNotificationsToggle />
       <LiveActivityToggle />
+      <OpenLinksSetting />
       <SpoilerToggle />
       <VoiceSettings />
       <SyncPanel />

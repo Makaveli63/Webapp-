@@ -24,6 +24,15 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- Liens du site (actu partagée par message…) : ouverts dans l'application.
+                 Sans fichier de vérification à la racine du domaine, Android demande de l'autoriser une fois
+                 (Réglages du site dans l'appli → « Ouvrir les liens dans l'appli »). -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="makaveli63.github.io" android:pathPrefix="/Webapp-" />
+            </intent-filter>
         </activity>
 
         <service
