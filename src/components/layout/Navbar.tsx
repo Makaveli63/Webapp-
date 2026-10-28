@@ -37,7 +37,7 @@ export function Navbar() {
           ))}
         </ul>
 
-        <SearchBar className="ml-auto hidden w-44 lg:block xl:w-56" />
+        <SearchBar className="ml-auto hidden w-52 lg:block xl:w-64" />
 
         <div className="ml-auto flex items-center gap-1 sm:gap-4 lg:ml-0">
           <HeaderSearch active={pathname.startsWith("/recherche")} />

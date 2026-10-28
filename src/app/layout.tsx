@@ -27,7 +27,14 @@ export const metadata: Metadata = {
   title: { default: "GamingBase", template: "%s · GamingBase" },
   description: "L'actualité du jeu vidéo et de l'anime en français : news, tests, sorties et épisodes, mis à jour toutes les 2 heures.",
   manifest: `${BASE_PATH}/manifest.webmanifest`,
-  icons: { icon: `${BASE_PATH}/icon.svg`, apple: `${BASE_PATH}/apple-touch-icon.png` },
+  // « ?v= » : oblige les navigateurs à recharger l'icône de l'onglet (ils la gardent longtemps en mémoire).
+  icons: {
+    icon: [
+      { url: `${BASE_PATH}/icon.svg?v=4`, type: "image/svg+xml" },
+      { url: `${BASE_PATH}/favicon.ico?v=4`, sizes: "48x48" },
+    ],
+    apple: `${BASE_PATH}/apple-touch-icon.png?v=4`,
+  },
   appleWebApp: { capable: true, title: "GamingBase", statusBarStyle: "default" },
   authors: [{ name: "Makaveli63" }],
   creator: "Makaveli63",
