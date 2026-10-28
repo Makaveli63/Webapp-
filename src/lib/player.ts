@@ -181,6 +181,37 @@ export function award(action: XpAction, key?: string, opts: { anime?: boolean; q
   return gain;
 }
 
+/** Profil réécrit par la synchronisation entre appareils : on le relit et l'affichage suit. */
+export function reloadPlayer() {
+  cache = null;
+  emit(null);
+}
+
+/** Réunion de deux profils (appareils liés) : rien n'est perdu, on garde le plus avancé de chaque côté. */
+export function mergePlayers(a: Partial<PlayerState> | null, b: Partial<PlayerState> | null): PlayerState | null {
+  if (!a && !b) return null;
+  const x: PlayerState = { ...EMPTY, ...a, stats: { ...EMPTY.stats, ...a?.stats } };
+  const y: PlayerState = { ...EMPTY, ...b, stats: { ...EMPTY.stats, ...b?.stats } };
+  // Pseudo et avatar : ceux du profil qui a le plus d'XP (ou le seul qui en a un).
+  const lead = !x.pseudo ? y : !y.pseudo ? x : y.xp > x.xp ? y : x;
+  const stats = Object.fromEntries(Object.keys(EMPTY.stats).map((k) => [k, Math.max(x.stats[k as keyof PlayerState["stats"]], y.stats[k as keyof PlayerState["stats"]])])) as PlayerState["stats"];
+  const streak = x.streak.last === y.streak.last ? (x.streak.days >= y.streak.days ? x.streak : y.streak) : x.streak.last > y.streak.last ? x.streak : y.streak;
+  const today =
+    x.today.day === y.today.day
+      ? { day: x.today.day, counts: Object.fromEntries(Object.keys(XP_RULES).map((k) => [k, Math.max(x.today.counts[k as XpAction] ?? 0, y.today.counts[k as XpAction] ?? 0)])) }
+      : x.today.day > y.today.day ? x.today : y.today;
+  return {
+    pseudo: lead.pseudo,
+    avatar: lead.avatar,
+    xp: Math.max(x.xp, y.xp),
+    today,
+    streak,
+    seen: [...new Set([...x.seen, ...y.seen])].slice(-500),
+    stats,
+    badges: [...new Set([...x.badges, ...y.badges])],
+  };
+}
+
 /** Vérifie qu'un pseudo est libre : 'ok' ou le code d'erreur (PSEUDO_PRIS, PSEUDO_FORMAT…). */
 export async function checkPseudo(pseudo: string): Promise<string> {
   if (!/^[\p{L}\p{N}_.-]{3,20}$/u.test(pseudo.trim())) return "PSEUDO_FORMAT";

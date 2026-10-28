@@ -1,12 +1,14 @@
 "use client";
 
 import { FOLLOWS_EVENT, FOLLOWS_KEY } from "@/lib/follows";
+import { mergePlayers, reloadPlayer, type PlayerState } from "@/lib/player";
 import { rpc } from "@/lib/social";
 import { cleanTracker, mergeTrackers, TRACKER_EVENT, TRACKER_KEY, type Tracker } from "@/lib/tracker";
 
 /**
  * Synchronisation entre appareils par « code de synchronisation » (16 caractères, sans compte ni email).
- * Données synchronisées : favoris, jeux épinglés, collection, suivi (épisodes, jeux), réglage des notifications.
+ * Données synchronisées : favoris, jeux épinglés, collection, suivi (épisodes, jeux), réglage des notifications,
+ * profil joueur (pseudo, XP) et identifiant anonyme de l'appareil.
  * Fusion sans perte : on réunit le contenu des deux appareils (rien n'est effacé par erreur).
  */
 const CODE_KEY = "gb-sync-code";
@@ -24,6 +26,10 @@ interface Payload {
   affichage?: Record<string, string>;
   /** Jeux et animes suivis pour les notifications (🔔) */
   suivis?: Item[];
+  /** Profil joueur (pseudo, XP, série, succès) */
+  joueur?: PlayerState | null;
+  /** Identifiant anonyme commun aux appareils liés : même pseudo réservé, mêmes j'aime */
+  voter?: string | null;
 }
 
 // Clés des réglages d'affichage synchronisés (public/theme.js les lit au chargement de chaque page).
@@ -93,7 +99,17 @@ function local(): Payload {
     suivi: cleanTracker(readJson<unknown>(TRACKER_KEY, {})),
     affichage: displayLocal(),
     suivis: readJson<Item[]>(FOLLOWS_KEY, []),
+    joueur: readJson<PlayerState | null>("gb-joueur", null),
+    voter: rawVoter(),
   };
+}
+
+function rawVoter(): string | null {
+  try {
+    return localStorage.getItem("gb-voter");
+  } catch {
+    return null;
+  }
 }
 
 /** Réunion de deux listes d'objets, sans doublon (même identifiant), l'appareil courant en premier. */
@@ -117,6 +133,9 @@ function merge(mine: Payload, theirs: Partial<Payload> | null): Payload {
     // Affichage : le dernier appareil modifié l'emporte (celui-ci s'il a des changements).
     affichage: mine.affichage ?? theirs.affichage,
     suivis: union(mine.suivis ?? [], theirs.suivis ?? [], "id").slice(0, 60),
+    joueur: mergePlayers(mine.joueur ?? null, theirs.joueur ?? null),
+    // Le premier appareil relié donne son identifiant aux autres.
+    voter: theirs.voter ?? mine.voter ?? null,
   };
 }
 
@@ -130,6 +149,13 @@ function apply(p: Payload) {
     if (p.notif) localStorage.setItem("gb-notif-prefs", p.notif);
     if (p.suivi) localStorage.setItem(TRACKER_KEY, JSON.stringify(cleanTracker(p.suivi)));
     if (Array.isArray(p.suivis)) localStorage.setItem(FOLLOWS_KEY, JSON.stringify(p.suivis.filter((f) => f && typeof f.id === "string").slice(0, 60)));
+    if (p.joueur) localStorage.setItem("gb-joueur", JSON.stringify(p.joueur));
+    const before = rawVoter();
+    if (p.voter && /^[\w-]{8,64}$/.test(p.voter) && p.voter !== before) {
+      localStorage.setItem("gb-voter", p.voter);
+      // Profil enregistré sous l'ancien identifiant de cet appareil : rattaché au nouveau.
+      if (before) rpc("merge_player", { p_old: before, p_new: p.voter }).catch(() => {});
+    }
     for (const [k, v] of Object.entries(p.affichage ?? {})) {
       if (DISPLAY_KEYS.includes(k) && typeof v === "string" && /^[a-z0-9-]{1,20}$/.test(v)) localStorage.setItem(k, v);
     }
@@ -139,6 +165,7 @@ function apply(p: Payload) {
   for (const e of ["gb-favoris-change", "gb-epingles-change", "gb-collection-change", "gb-notif-prefs-change", TRACKER_EVENT, "gb-theme-change", FOLLOWS_EVENT]) {
     window.dispatchEvent(new Event(e));
   }
+  reloadPlayer();
 }
 
 // ---------- Versions : une suppression faite sur un appareil doit se propager ----------
@@ -146,7 +173,7 @@ function apply(p: Payload) {
 // l'autre appareil n'a rien changé : on envoie l'état local tel quel (suppressions comprises).
 // Sinon, et seulement si on a aussi des changements, on fusionne les deux.
 const META_KEY = "gb-sync-meta";
-const CHANGE_EVENTS = ["gb-favoris-change", "gb-epingles-change", "gb-collection-change", "gb-notif-prefs-change", TRACKER_EVENT, "gb-theme-change", FOLLOWS_EVENT];
+const CHANGE_EVENTS = ["gb-favoris-change", "gb-epingles-change", "gb-collection-change", "gb-notif-prefs-change", TRACKER_EVENT, "gb-theme-change", FOLLOWS_EVENT, "gb-joueur"];
 let applying = false;
 
 interface Meta {

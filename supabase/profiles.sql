@@ -93,6 +93,31 @@ begin
   return v_id;
 end $$;
 
+-- Appareils liés par une même clé de synchronisation : ils adoptent le même identifiant (p_new).
+-- Le profil de l'ancien identifiant y est rattaché ; s'il en existe déjà un, on garde le plus avancé.
+-- Connaître l'ancien identifiant (aléatoire, jamais affiché) prouve qu'on est bien cet appareil.
+create or replace function public.merge_player(p_old text, p_new text)
+returns void
+language plpgsql volatile security definer set search_path = public, extensions as $$
+declare
+  v_old public.players;
+  v_new public.players;
+begin
+  if p_old is null or p_new is null or p_old = p_new or char_length(p_new) not between 8 and 64 then return; end if;
+  select * into v_old from public.players where voter = p_old;
+  if not found then return; end if;
+  select * into v_new from public.players where voter = p_new;
+  if not found then
+    update public.players set voter = p_new, updated_at = now() where voter = p_old;
+  elsif v_old.xp > v_new.xp then
+    delete from public.players where voter = p_new;
+    update public.players set voter = p_new, updated_at = now() where voter = p_old;
+  else
+    delete from public.players where voter = p_old;
+  end if;
+end $$;
+
+grant execute on function public.merge_player(text, text) to anon;
 grant execute on function public.check_pseudo(text, text) to anon;
 grant execute on function public.save_player(text, text, int, int) to anon;
 grant execute on function public.get_player(text) to anon;
