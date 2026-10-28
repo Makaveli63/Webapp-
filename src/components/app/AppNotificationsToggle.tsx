@@ -146,7 +146,7 @@ export function AppNotificationsToggle() {
                 {follows.map((f) => (
                   <li key={f.id} className="glass-pill inline-flex items-center gap-1 rounded-full py-1 pl-3 pr-1 text-sm ring-1 ring-inset ring-border">
                     <Link href={f.href} className="max-w-[14rem] truncate font-semibold text-heading">
-                      {f.kind === "anime" ? "✨" : "🎮"} {f.title}
+                      {f.kind === "anime" ? "🌸" : "🎮"} {f.title}
                     </Link>
                     <button type="button" onClick={() => toggleFollow(f)} aria-label={`Ne plus suivre ${f.title}`} className="rounded-full px-2 text-muted hover:text-fg">
                       ×

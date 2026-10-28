@@ -45,7 +45,7 @@ export function AniListResults({ query, onCount }: { query: string; onCount?: (n
   if (!query || (media && media.length === 0)) return null;
   return (
     <section className="mt-10">
-      <h2 className="text-lg font-bold text-heading">✨ Animes</h2>
+      <h2 className="text-lg font-bold text-heading">🌸 Animes</h2>
       {media === null ? (
         <p className="mt-3 text-sm text-muted">Recherche en cours…</p>
       ) : (

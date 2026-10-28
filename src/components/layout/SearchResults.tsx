@@ -125,7 +125,7 @@ export function SearchResults() {
             [
               ["all", "Tout", total],
               ["games", "🎮 Jeux", games.length],
-              ["anime", "✨ Animes", animeCount],
+              ["anime", "🌸 Animes", animeCount],
               ["news", "📰 Actus", articles.length],
             ] as const
           ).map(([id, label, n]) => (

@@ -91,7 +91,7 @@ async function drawStory(r: Recap): Promise<Blob | null> {
   g.fillText("de jeu et d'anime", 90, 550);
   const rows: [string, string][] = [
     ["🎮 Jeu", hours(r.gameMinutes)],
-    ["✨ Anime", hours(r.animeMinutes)],
+    ["🌸 Anime", hours(r.animeMinutes)],
     ["📅 Jours actifs", `${r.days}`],
     ["🔥 Série de jours", `${r.streak}`],
   ];
@@ -176,7 +176,7 @@ export function MonthRecap() {
 
   const rows: [string, string][] = [
     ["🎮 Jeu", hours(recap.gameMinutes)],
-    ["✨ Anime", hours(recap.animeMinutes)],
+    ["🌸 Anime", hours(recap.animeMinutes)],
     ["📅 Jours actifs", String(recap.days)],
     ["🔥 Série de jours", String(recap.streak)],
     ...(recap.topGame ? ([["🏆 Jeu du mois", recap.topGame]] as [string, string][]) : []),
