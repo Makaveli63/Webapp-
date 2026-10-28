@@ -1,6 +1,7 @@
 import BackgroundTasks
 import UIKit
 import UserNotifications
+import WidgetKit
 
 /// Notifications des nouveaux articles (au choix de l'utilisateur, réglage sur le site dans l'app).
 /// Sans compte développeur payant, pas de « push » Apple : l'app vérifie le site en arrière-plan
@@ -138,7 +139,9 @@ enum NewsAlerts {
     static func savePrefs(_ raw: [String: Any]) {
         guard JSONSerialization.isValidJSONObject(raw), let data = try? JSONSerialization.data(withJSONObject: raw),
               data.count < 20_000, (try? JSONDecoder().decode(Prefs.self, from: data)) != nil else { return }
+        let changed = defaults.data(forKey: prefsKey) != data
         defaults.set(data, forKey: prefsKey)
+        if changed { WidgetCenter.shared.reloadTimelines(ofKind: "AnimeWidget") } // animes suivis : le widget les met en tête
         Task {
             await refreshDigest() // programmé (ou retiré) tout de suite
             await scheduleEpisodes()

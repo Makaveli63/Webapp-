@@ -334,6 +334,57 @@ struct FreeWidget: Widget {
     }
 }
 
+// MARK: - ▶️ Prochains épisodes (animes)
+
+struct AnimeView: View {
+    let entry: GBEntry
+    @Environment(\.widgetFamily) private var family
+
+    var body: some View {
+        let all = FeedLoader.episodes(entry.feed, now: entry.date)
+        let shown = Array(all.prefix(family == .systemLarge ? 7 : family == .systemSmall ? 1 : 3))
+        VStack(alignment: .leading, spacing: family == .systemSmall ? 4 : 7) {
+            Text("▶️ Prochains épisodes").font(.caption.bold()).foregroundStyle(accent).lineLimit(1)
+            if shown.isEmpty {
+                Text(entry.feed == nil ? "Pas de connexion" : "Aucun épisode cette semaine").font(.footnote).foregroundStyle(muted)
+            }
+            if family == .systemSmall, let e = shown.first {
+                Spacer(minLength: 0)
+                Text(e.title).font(.headline).lineLimit(3).foregroundStyle(.white)
+                Text("Épisode \(e.episode)").font(.caption).foregroundStyle(muted)
+                Text(FeedLoader.when(e.date, now: entry.date)).font(.caption.bold()).foregroundStyle(accent)
+            } else {
+                ForEach(shown, id: \.self) { e in
+                    Link(destination: appLink(e.path)) {
+                        HStack(spacing: 6) {
+                            Text(e.followed == true ? "🔔" : "•").font(.caption2)
+                            VStack(alignment: .leading, spacing: 0) {
+                                Text(e.title).font(.footnote.weight(.semibold)).lineLimit(1).foregroundStyle(.white)
+                                Text("Épisode \(e.episode)").font(.caption2).foregroundStyle(muted)
+                            }
+                            Spacer(minLength: 6)
+                            Text(FeedLoader.when(e.date, now: entry.date)).font(.caption2.bold()).foregroundStyle(accent).lineLimit(1)
+                        }
+                    }
+                }
+            }
+            Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .widgetURL(appLink(family == .systemSmall ? (shown.first?.path ?? "/Webapp-/anime/") : "/Webapp-/anime/"))
+        .widgetBackground(glass)
+    }
+}
+
+struct AnimeWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: "AnimeWidget", provider: GBProvider()) { AnimeView(entry: $0) }
+            .configurationDisplayName("Prochains épisodes")
+            .description("Les prochains épisodes de tes animes suivis, puis ceux de la semaine.")
+            .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
+    }
+}
+
 // MARK: - Ensemble des widgets
 
 @main
@@ -343,6 +394,7 @@ struct GamingBaseWidgets: WidgetBundle {
         ReleaseWidget()
         NewsWidget()
         FreeWidget()
+        AnimeWidget()
         ReleaseLiveActivity()
     }
 }

@@ -1,5 +1,6 @@
 import { getFreeGames } from "@/lib/free-games";
 import { gameSlug } from "@/lib/games";
+import { getAnime, thisWeek } from "@/lib/anime";
 import { getArticles } from "@/lib/news";
 import { getUpcomingReleases } from "@/lib/releases";
 
@@ -37,6 +38,17 @@ export async function GET() {
       .map((a) => ({ title: a.title, score: a.score, path: `${BASE}/actualites/${a.slug}/` })),
     free: free.slice(0, 4).map((g) => ({ title: g.title, store: g.store, endDate: g.endDate ?? null })),
     freePath: `${BASE}/jeux-gratuits/`,
+    // Widget « Prochains épisodes » : les épisodes des 7 prochains jours (les animes suivis passent devant dans l'app).
+    anime: thisWeek(getAnime())
+      .slice(0, 12)
+      .map((a) => ({
+        id: a.id,
+        title: a.title,
+        episode: a.next!.episode,
+        atMs: Date.parse(a.next!.at),
+        image: a.image ?? null,
+        path: `${BASE}/anime/fiche?id=${a.id.replace(/^anilist-/, "")}`,
+      })),
   };
   return Response.json(data);
 }

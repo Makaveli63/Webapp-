@@ -7,5 +7,6 @@
     <string name="w_release_desc">Compte à rebours de la prochaine grosse sortie</string>
     <string name="w_news_desc">Les dernières actus et tests</string>
     <string name="w_pinned_desc">Le jeu que tu as épinglé, avec son image et le compte à rebours</string>
+    <string name="w_anime_desc">Les prochains épisodes de tes animes suivis</string>
     <string name="w_free_desc">Les jeux gratuits du moment</string>
 </resources>

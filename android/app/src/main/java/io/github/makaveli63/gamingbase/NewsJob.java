@@ -39,7 +39,10 @@ public class NewsJob extends JobService {
     private static final String PREFS = "notifications";
 
     static void savePrefs(Context ctx, String json) {
-        ctx.getSharedPreferences(PREFS, MODE_PRIVATE).edit().putString("prefs", json).apply();
+        SharedPreferences sp = ctx.getSharedPreferences(PREFS, MODE_PRIVATE);
+        boolean changed = !json.equals(sp.getString("prefs", ""));
+        sp.edit().putString("prefs", json).apply();
+        if (changed) WidgetData.refreshAll(ctx); // animes suivis : le widget « Prochains épisodes » les met en tête
         scheduleEvening(ctx);
         scheduleEpisodes(ctx);
     }
@@ -150,7 +153,7 @@ public class NewsJob extends JobService {
         }
     }
 
-    private static JSONObject prefs(Context ctx) {
+    static JSONObject prefs(Context ctx) {
         try {
             return new JSONObject(ctx.getSharedPreferences(PREFS, MODE_PRIVATE).getString("prefs", "{}"));
         } catch (Exception e) {

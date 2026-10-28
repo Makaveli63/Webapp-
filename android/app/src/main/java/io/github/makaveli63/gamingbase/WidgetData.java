@@ -143,7 +143,7 @@ final class WidgetData {
     /** Redessine tous les widgets (après une nouvelle épingle). */
     static void refreshAll(Context ctx) {
         AppWidgetManager m = AppWidgetManager.getInstance(ctx);
-        Class<?>[] providers = {ReleaseWidget.class, PinnedWidget.class};
+        Class<?>[] providers = {ReleaseWidget.class, PinnedWidget.class, AnimeWidget.class};
         for (Class<?> cls : providers) {
             int[] ids = m.getAppWidgetIds(new ComponentName(ctx, cls));
             if (ids.length == 0) continue;

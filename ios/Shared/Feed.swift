@@ -26,10 +26,24 @@ struct Feed: Codable {
         let store: String
     }
 
+    /// Prochain épisode d'un anime (widget « Prochains épisodes »).
+    struct Episode: Codable, Hashable {
+        let title: String
+        let episode: Int
+        let atMs: Double
+        let path: String
+        var image: String? = nil
+        /// Anime suivi (🔔) dans l'app
+        var followed: Bool? = nil
+        var date: Date { Date(timeIntervalSince1970: atMs / 1000) }
+    }
+
     let releases: [Release]
     let news: [News]
     let free: [Free]
     let freePath: String?
+    /// Absent des anciennes versions du fichier
+    let anime: [Episode]?
 }
 
 enum FeedLoader {
@@ -68,6 +82,39 @@ enum FeedLoader {
         ]
         guard let thumb = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else { return nil }
         return UIImage(cgImage: thumb)
+    }
+
+    /// Épisodes à afficher : d'abord ceux des animes suivis (🔔, transmis par le site à l'app),
+    /// puis ceux de la semaine ; sortis depuis moins de 6 h ou à venir.
+    static func episodes(_ feed: Feed?, now: Date = Date()) -> [Feed.Episode] {
+        var followed: [Feed.Episode] = []
+        if let data = AppGroup.defaults?.data(forKey: "notif.prefs"),
+           let prefs = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+           let list = prefs["episodes"] as? [[String: Any]] {
+            followed = list.compactMap { e in
+                guard let title = e["title"] as? String, let episode = e["episode"] as? Int,
+                      let atMs = (e["atMs"] as? NSNumber)?.doubleValue, let path = e["path"] as? String else { return nil }
+                return Feed.Episode(title: title, episode: episode, atMs: atMs, path: path, followed: true)
+            }
+        }
+        let recent = now.addingTimeInterval(-6 * 3600)
+        let known = Set(followed.map(\.title))
+        let others = (feed?.anime ?? []).filter { !known.contains($0.title) }
+        return (followed.sorted { $0.atMs < $1.atMs } + others).filter { $0.date > recent }
+    }
+
+    /// « aujourd'hui 17:30 », « demain 9:00 », « jeu. 18:00 », « sorti ».
+    static func when(_ date: Date, now: Date = Date()) -> String {
+        if date <= now { return "disponible" }
+        let cal = Calendar.current
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "fr_FR")
+        f.dateFormat = "H:mm"
+        let time = f.string(from: date)
+        if cal.isDateInToday(date) { return "aujourd'hui \(time)" }
+        if cal.isDateInTomorrow(date) { return "demain \(time)" }
+        f.dateFormat = "EEE H:mm"
+        return f.string(from: date)
     }
 
     /// Jeux épinglés dans l'app (📌), le plus récent en premier.
