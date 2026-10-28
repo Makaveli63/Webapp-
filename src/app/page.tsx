@@ -36,7 +36,7 @@ export default async function HomePage() {
         items={latest
           .filter((a) => a.category !== "Anime")
           .slice(0, 8)
-          .map((a) => ({ title: a.title, text: `${a.title}. ${(a.aiSummary ?? a.excerpt).replace(/[#*_>`]/g, "").slice(0, 900)}` }))}
+          .map((a) => ({ title: a.title, path: `/actualites/${a.slug}`, text: `${a.title}. ${(a.aiSummary ?? a.excerpt).replace(/[#*_>`]/g, "").slice(0, 900)}` }))}
       />
       {/* Sans le texte complet des articles : la page reste légère. */}
       <ForYou articles={latest.slice(0, 120).map((a) => ({ ...a, content: "", aiSummary: undefined }))} />

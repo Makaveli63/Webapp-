@@ -8,6 +8,7 @@ import { PageTransition } from "@/components/layout/PageTransition";
 import { NativeTabsBridge } from "@/components/app/NativeTabsBridge";
 import { NotifBridge } from "@/components/app/NotifBridge";
 import { StaleBuildGuard } from "@/components/app/ErrorScreen";
+import { ListenPlayer } from "@/components/layout/ListenPlayer";
 import { AppleTransitions } from "@/components/layout/AppleTransitions";
 import { Splash } from "@/components/splash/Splash";
 import { DynamicBackground } from "@/components/theme/DynamicBackground";
@@ -78,6 +79,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <PageTransition>{children}</PageTransition>
         </main>
         <Footer />
+        <ListenPlayer />
         <MobileTabBar />
         <NativeTabsBridge />
         <NotifBridge />

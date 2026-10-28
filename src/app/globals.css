@@ -879,7 +879,7 @@ html:not([data-splash="off"]) .tabbar { animation: tabbar-in .4s ease-out 1.9s b
   position: fixed;
   left: 50%;
   bottom: calc(env(safe-area-inset-bottom) + 4.9rem);
-  z-index: 45;
+  z-index: 55; /* au premier plan, au-dessus du contenu de toutes les pages */
   display: flex;
   align-items: center;
   gap: .5rem;
