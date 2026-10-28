@@ -859,3 +859,6 @@ html:not([data-splash="off"]) .tabbar { animation: tabbar-in .4s ease-out 1.9s b
 }
 @keyframes follow-toast-out { to { opacity: 0; transform: translateX(-50%) translateY(-10px) scale(.8, .6); } }
 @media (prefers-reduced-motion: reduce) { .follow-toast { animation: none; } }
+
+/* Récap du mois (Ma bibliothèque) */
+.recap-card { background: radial-gradient(120% 80% at 0% 0%, #8b5cf6, transparent 60%), radial-gradient(120% 80% at 100% 100%, #00b4d8, transparent 60%), #1b1530; }

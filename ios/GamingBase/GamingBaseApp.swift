@@ -197,6 +197,15 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
             }
             return
         }
+        // Image à partager (récap du mois) : feuille de partage d'iOS (story, Photos, Messages…).
+        if let base64 = body["shareImage"] as? String {
+            guard base64.count < 8_000_000, let data = Data(base64Encoded: base64), let image = UIImage(data: data) else { return }
+            let sheet = UIActivityViewController(activityItems: [image], applicationActivities: nil)
+            sheet.popoverPresentationController?.sourceView = view // iPad : la feuille part du centre de l'écran
+            sheet.popoverPresentationController?.sourceRect = CGRect(x: view.bounds.midX, y: view.bounds.midY, width: 1, height: 1)
+            present(sheet, animated: true)
+            return
+        }
         // Fin de l'animation d'ouverture du site : la barre d'onglets apparaît.
         if body["tabsReady"] as? Bool == true {
             showTabBar()

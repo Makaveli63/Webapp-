@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { CollectionView } from "@/components/collection/CollectionView";
+import { MonthRecap } from "@/components/tracker/MonthRecap";
 import { getDeals } from "@/lib/deals";
 
 export const metadata: Metadata = { title: "Ma bibliothèque" };
@@ -17,6 +18,7 @@ export default function CollectionPage() {
         Tes jeux et tes animes : ton avancement, tes heures de jeu et de visionnage, les jeux que tu possèdes et ceux que tu veux, avec
         leurs promos et leurs actus. Conservé sur cet appareil (synchronisable dans Réglages).
       </p>
+      <MonthRecap />
       <CollectionView deals={getDeals().steam} />
     </div>
   );

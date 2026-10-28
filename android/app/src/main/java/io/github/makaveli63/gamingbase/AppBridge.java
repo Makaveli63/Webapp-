@@ -1,10 +1,18 @@
 package io.github.makaveli63.gamingbase;
 
+import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Build;
+import android.provider.MediaStore;
+import android.util.Base64;
 import android.webkit.JavascriptInterface;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+
+import java.io.OutputStream;
 
 /**
  * Pont site → application : le site transmet la liste des jeux épinglés (📌) pour le widget.
@@ -68,6 +76,35 @@ final class AppBridge {
             AppShortcuts.refreshAsync(ctx); // et le menu de l'appui long sur l'icône
         } catch (Exception ignored) {
             // donnée invalide : ignorée
+        }
+    }
+
+    /**
+     * Image à partager (récap du mois, PNG en base64) : enregistrée dans Images/GamingBase,
+     * puis proposée au partage (story, messagerie…). Android 10 et plus (pas d'autorisation à demander).
+     */
+    @JavascriptInterface
+    public boolean shareImage(String base64, String name) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q || base64 == null || base64.length() > 8_000_000) return false;
+        try {
+            byte[] png = Base64.decode(base64, Base64.DEFAULT);
+            ContentValues values = new ContentValues();
+            String file = (name != null && name.matches("[a-z0-9-]{1,60}") ? name : "gamingbase") + ".png";
+            values.put(MediaStore.Images.Media.DISPLAY_NAME, file);
+            values.put(MediaStore.Images.Media.MIME_TYPE, "image/png");
+            values.put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/GamingBase");
+            Uri uri = ctx.getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+            if (uri == null) return false;
+            try (OutputStream out = ctx.getContentResolver().openOutputStream(uri)) {
+                if (out == null) return false;
+                out.write(png);
+            }
+            Intent send = new Intent(Intent.ACTION_SEND).setType("image/png").putExtra(Intent.EXTRA_STREAM, uri)
+                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            activity.runOnUiThread(() -> activity.startActivity(Intent.createChooser(send, "Partager mon récap")));
+            return true;
+        } catch (Exception e) {
+            return false;
         }
     }
 }

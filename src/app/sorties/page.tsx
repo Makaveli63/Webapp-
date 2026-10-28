@@ -1,3 +1,5 @@
+import { CalendarDays } from "lucide-react";
+import Link from "next/link";
 import type { Metadata } from "next";
 import { CalendarSection } from "@/components/releases/CalendarSection";
 import { PinnedReleaseGrid } from "@/components/releases/PinnedReleaseGrid";
@@ -25,6 +27,9 @@ export default function ReleasesPage() {
       <header>
         <h1 className="text-2xl font-extrabold text-heading sm:text-3xl">Sorties jeux vidéo</h1>
         <p className="mt-2 text-muted">Ce qui sort cette semaine, ce mois-ci, et le compte à rebours des jeux les plus attendus.</p>
+        <Link href="/mon-calendrier" className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-accent px-3.5 py-1.5 text-sm font-semibold text-white">
+          <CalendarDays className="size-4" aria-hidden /> Mon calendrier
+        </Link>
       </header>
 
       {releases.length > 0 && (
