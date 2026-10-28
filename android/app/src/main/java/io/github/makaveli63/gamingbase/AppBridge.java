@@ -65,6 +65,7 @@ final class AppBridge {
             WidgetData.savePins(ctx, value);
             WidgetData.refreshAll(ctx);
             LiveCountdown.refreshAsync(ctx); // le compte à rebours en direct suit le nouveau jeu épinglé
+            AppShortcuts.refreshAsync(ctx); // et le menu de l'appui long sur l'icône
         } catch (Exception ignored) {
             // donnée invalide : ignorée
         }

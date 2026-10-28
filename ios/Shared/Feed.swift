@@ -94,6 +94,14 @@ enum Countdown {
         return "J-\(Int((left / 86_400).rounded(.up)))"
     }
 
+    /// « dans 21 j », « dans 5 h » ou « disponible » (menu de l'icône).
+    static func long(to date: Date, now: Date = Date()) -> String {
+        let left = date.timeIntervalSince(now)
+        if left <= 0 { return "disponible" }
+        if left < 86_400 { return "dans \(max(1, Int(left / 3600))) h" }
+        return "dans \(Int((left / 86_400).rounded(.up))) j"
+    }
+
     static func day(_ date: Date) -> String {
         let f = DateFormatter()
         f.locale = Locale(identifier: "fr_FR")

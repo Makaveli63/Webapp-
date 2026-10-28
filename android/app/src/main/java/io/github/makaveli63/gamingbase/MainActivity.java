@@ -182,6 +182,7 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         LiveCountdown.refreshAsync(this); // à chaque retour dans l'app
+        AppShortcuts.refreshAsync(this); // menu de l'appui long sur l'icône
     }
 
     @Override

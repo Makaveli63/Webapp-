@@ -1,4 +1,5 @@
 import { getFreeGames } from "@/lib/free-games";
+import { gameSlug } from "@/lib/games";
 import { getArticles } from "@/lib/news";
 import { getUpcomingReleases } from "@/lib/releases";
 
@@ -19,7 +20,7 @@ export async function GET() {
       at: r.at,
       atMs: Date.parse(r.at),
       image: r.image ?? null,
-      path: `${BASE}/sorties/`,
+      path: `${BASE}/jeux/${gameSlug(r.title)}/`, // fiche du jeu (widgets, raccourcis de l'icône)
     })),
     // 15 derniers : les widgets en affichent 3 à 6, les notifications filtrent par plateforme / tests / jeux.
     news: articles.slice(0, 15).map((a) => ({

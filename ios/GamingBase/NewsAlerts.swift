@@ -187,6 +187,15 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
         return true
     }
 
+    // Menu de l'appui long sur l'icône : raccourci touché pour lancer l'app, puis quand elle tourne déjà.
+    func application(_ application: UIApplication, configurationForConnecting session: UISceneSession,
+                     options: UIScene.ConnectionOptions) -> UISceneConfiguration {
+        if let item = options.shortcutItem { QuickActions.handle(item) }
+        let config = UISceneConfiguration(name: nil, sessionRole: session.role)
+        config.delegateClass = SceneDelegate.self
+        return config
+    }
+
     // Notification touchée : ouvre l'article dans l'app.
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse,
                                 withCompletionHandler completionHandler: @escaping () -> Void) {

@@ -19,6 +19,7 @@ struct GamingBaseApp: App {
                     if phase == .active {
                         Task { _ = await NewsAlerts.check(notify: true) }
                         Task { await LiveActivities.refresh() }
+                        Task { await QuickActions.refresh() }
                     }
                     if phase == .background { NewsAlerts.schedule() }
                 }
@@ -231,6 +232,7 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         defaults?.set(Array(clean), forKey: AppGroup.pinsKey)
         WidgetCenter.shared.reloadAllTimelines()
         Task { await LiveActivities.refresh() } // nouveau jeu épinglé : la Live Activity suit
+        Task { await QuickActions.refresh() } // et le menu de l'appui long sur l'icône
     }
 
     private static func isSite(_ url: URL) -> Bool {
