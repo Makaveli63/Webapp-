@@ -423,7 +423,6 @@ interface Props {
 export function Cover({ theme, seed, className = "", children }: Props) {
   const c = theme.colors;
   const uid = `cv-${theme.id}-${seed.replace(/[^a-z0-9]/gi, "").slice(0, 24)}`;
-  const SceneComponent = SCENES[theme.scene];
   return (
     <div className={`relative overflow-hidden ${className}`}>
       <svg className="absolute inset-0 h-full w-full" viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
@@ -447,7 +446,9 @@ export function Cover({ theme, seed, className = "", children }: Props) {
           </filter>
         </defs>
         <rect width="400" height="200" fill={`url(#${uid}-sky)`} />
-        <SceneComponent c={c} r={seeded(seed)} uid={uid} />
+        {/* Appel direct (pas un composant) : le tirage repart du début à chaque rendu, sinon un rendu
+            rejoué par React continue la série et le décor diffère du HTML du build (erreur d'hydratation). */}
+        {SCENES[theme.scene]({ c, r: seeded(seed), uid })}
       </svg>
       {children && (
         <div className="relative flex h-full flex-col justify-end bg-gradient-to-t from-black/70 via-black/20 to-transparent p-4">

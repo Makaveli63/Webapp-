@@ -18,18 +18,18 @@ export function Navbar() {
 
   return (
     <header className="topbar sticky top-0 z-40 glass-bar border-b pt-[env(safe-area-inset-top)]">
-      <nav id="gb-topnav" className="relative mx-auto flex h-14 max-w-6xl items-center gap-4 px-4 md:h-16">
+      <nav id="gb-topnav" className="relative mx-auto flex h-14 max-w-6xl items-center gap-4 px-4 md:h-16 md:gap-2 lg:gap-4">
         <Link href="/" aria-label="GamingBase, accueil">
           <Logo id="gb-nav" className="text-lg" />
         </Link>
 
-        <ul className="ml-4 hidden items-center gap-0.5 md:flex">
+        <ul className="ml-4 hidden items-center gap-0.5 md:ml-0 md:flex lg:ml-4">
           {NAV_LINKS.map((l) => (
             <li key={l.href} data-tab={l.mobile ? "" : undefined} className={"wide" in l && l.wide ? (l.wide === "never" ? "hidden" : "hidden xl:block") : undefined}>
               <Link
                 href={l.href}
                 aria-current={active === l.href ? "page" : undefined}
-                className={`rounded-md px-3 py-2 text-sm transition-colors ${active === l.href ? "bg-surface-2 text-heading" : "text-muted hover:text-fg"}`}
+                className={`rounded-md px-3 py-2 text-sm transition-colors md:px-2 lg:px-3 ${active === l.href ? "bg-surface-2 text-heading" : "text-muted hover:text-fg"}`}
               >
                 {l.label}
               </Link>
@@ -39,7 +39,7 @@ export function Navbar() {
 
         <SearchBar className="ml-auto hidden w-52 lg:block xl:w-64" />
 
-        <div className="ml-auto flex items-center gap-1 sm:gap-4 lg:ml-0">
+        <div className="ml-auto flex items-center gap-1 sm:gap-4 md:gap-1 lg:ml-0 lg:gap-4">
           <HeaderSearch active={pathname.startsWith("/recherche")} />
           <Link
             href="/favoris"
@@ -48,7 +48,7 @@ export function Navbar() {
             className={`head-btn -mr-1 flex h-11 items-center justify-center gap-1.5 rounded-full px-2.5 hover:text-fg ${mySpace ? "text-accent" : "text-muted"}`}
           >
             <CircleUserRound className="size-5" aria-hidden />
-            <span className="hidden whitespace-nowrap text-sm font-semibold sm:inline lg:hidden 2xl:inline">Mon espace</span>
+            <span className="hidden whitespace-nowrap text-sm font-semibold sm:inline md:hidden 2xl:inline">Mon espace</span>
           </Link>
 
           <AdminLink active={pathname.startsWith("/admin")} />

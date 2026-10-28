@@ -28,7 +28,7 @@ export default function MyCalendarPage() {
     .map((g) => ({ id: g.id, title: g.title, day: g.date, platforms: g.platforms.slice(0, 4) }));
   return (
     <div>
-      <Link href="/favoris" className="inline-flex items-center gap-1 text-sm text-muted hover:text-fg">
+      <Link href="/favoris" className="-my-2 inline-flex items-center gap-1 py-2 text-sm text-muted hover:text-fg">
         <ArrowLeft className="size-4" aria-hidden /> Mon espace
       </Link>
       <h1 className="mt-2 text-2xl font-extrabold text-heading sm:text-3xl">Mon calendrier</h1>

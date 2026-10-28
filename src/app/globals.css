@@ -975,5 +975,5 @@ html[data-search] .release-banner { opacity: 0; pointer-events: none; transition
 .spotlight-results { background: color-mix(in srgb, var(--surface) 94%, transparent) !important; }
 
 /* Menu « Aa » : sous le bouton, sans jamais sortir de l'écran */
-.reading-panel { position: absolute; left: 0; top: 2.5rem; width: min(16rem, calc(100vw - 2rem)); background: color-mix(in srgb, var(--surface) 97%, transparent); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); }
+.reading-panel { position: absolute; left: 0; top: 2.5rem; scroll-margin: 5rem 0 calc(6rem + env(safe-area-inset-bottom)); width: min(16rem, calc(100vw - 2rem)); background: color-mix(in srgb, var(--surface) 97%, transparent); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); }
 .share-menu { background: color-mix(in srgb, var(--surface) 97%, transparent) !important; }

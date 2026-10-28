@@ -10,7 +10,7 @@ export function PromosTeaser() {
     <section aria-labelledby="promos-teaser">
       <div className="flex items-end justify-between gap-4">
         <h2 id="promos-teaser" className="text-xl font-bold text-heading sm:text-2xl">Promos du moment</h2>
-        <Link href="/promos" className="inline-flex items-center gap-1 text-sm font-semibold text-accent hover:underline">
+        <Link href="/promos" className="-my-2 inline-flex items-center gap-1 py-2 text-sm font-semibold text-accent hover:underline">
           Toutes les promos <ArrowRight className="size-4" aria-hidden />
         </Link>
       </div>

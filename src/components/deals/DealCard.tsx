@@ -32,7 +32,7 @@ export function DealCard({ deal }: { deal: Deal }) {
             href={deal.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-sm font-semibold text-accent hover:underline"
+            className="-my-2 inline-flex items-center gap-1 py-2 text-sm font-semibold text-accent hover:underline"
           >
             Voir l&apos;offre <ExternalLink className="size-3.5" aria-hidden />
           </a>

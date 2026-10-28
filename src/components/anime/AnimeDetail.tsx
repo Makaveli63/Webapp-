@@ -70,7 +70,7 @@ export function AnimeDetail() {
   }, [id]);
 
   const back = (
-    <Link href="/anime" className="inline-flex items-center gap-1 text-sm text-muted hover:text-fg">
+    <Link href="/anime" className="-my-2 inline-flex items-center gap-1 py-2 text-sm text-muted hover:text-fg">
       <ArrowLeft className="size-4" aria-hidden /> Anime
     </Link>
   );

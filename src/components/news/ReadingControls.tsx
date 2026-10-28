@@ -26,6 +26,8 @@ export function ReadingControls() {
   }, []);
   useEffect(() => {
     if (!open) return;
+    // Bouton en bas d'écran : le panneau remonte juste assez pour ne pas passer sous la barre d'onglets.
+    box.current?.querySelector(".reading-panel")?.scrollIntoView({ block: "nearest", behavior: "smooth" });
     const close = (e: PointerEvent) => !box.current?.contains(e.target as Node) && setOpen(false);
     document.addEventListener("pointerdown", close);
     return () => document.removeEventListener("pointerdown", close);

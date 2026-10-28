@@ -11,7 +11,7 @@ export async function VideosTeaser() {
     <section aria-labelledby="videos-teaser">
       <div className="flex items-end justify-between gap-4">
         <h2 id="videos-teaser" className="text-xl font-bold text-heading sm:text-2xl">Vidéos</h2>
-        <Link href="/videos" className="inline-flex items-center gap-1 text-sm font-semibold text-accent hover:underline">
+        <Link href="/videos" className="-my-2 inline-flex items-center gap-1 py-2 text-sm font-semibold text-accent hover:underline">
           Toutes les vidéos <ArrowRight className="size-4" aria-hidden />
         </Link>
       </div>

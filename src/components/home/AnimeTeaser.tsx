@@ -12,7 +12,7 @@ export function AnimeTeaser() {
     <section aria-labelledby="anime-teaser">
       <div className="flex items-end justify-between gap-4">
         <h2 id="anime-teaser" className="text-xl font-bold text-heading sm:text-2xl">Anime de la semaine</h2>
-        <Link href="/anime" className="inline-flex items-center gap-1 text-sm font-semibold text-accent hover:underline">
+        <Link href="/anime" className="-my-2 inline-flex items-center gap-1 py-2 text-sm font-semibold text-accent hover:underline">
           Tout l&apos;anime <ArrowRight className="size-4" aria-hidden />
         </Link>
       </div>

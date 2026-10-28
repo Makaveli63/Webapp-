@@ -73,7 +73,7 @@ export default async function ArticlePage({ params }: Props) {
     <div className="mx-auto max-w-2xl">
       <PageTheme themeId={themeFor(`${article.title} ${article.tags.join(" ")}`, article.platforms).id} image={article.image} />
       <article>
-        <Link href={isAnime ? "/anime" : "/actualites"} className="inline-flex items-center gap-1 text-sm text-muted hover:text-fg">
+        <Link href={isAnime ? "/anime" : "/actualites"} className="-my-2 inline-flex items-center gap-1 py-2 text-sm text-muted hover:text-fg">
           <ArrowLeft className="size-4" aria-hidden /> {isAnime ? "Toute l'actu anime" : "Toutes les actualités"}
         </Link>
         <RemoteImage
