@@ -903,3 +903,12 @@ html[data-native-tabs] .listen-player { bottom: calc(env(safe-area-inset-bottom)
   -webkit-backdrop-filter: blur(18px) saturate(140%);
   backdrop-filter: blur(18px) saturate(140%);
 }
+
+/* Jeu du jour : l'image se précise à chaque essai */
+.daily-img { transform: scale(1.08); transition: filter .6s ease, transform .6s ease; }
+.daily-blur-26 { filter: blur(26px) saturate(1.2); }
+.daily-blur-18 { filter: blur(18px) saturate(1.15); }
+.daily-blur-12 { filter: blur(12px); }
+.daily-blur-7 { filter: blur(7px); }
+.daily-blur-3 { filter: blur(3px); }
+.daily-blur-0 { filter: none; transform: none; }

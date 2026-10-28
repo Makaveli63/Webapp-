@@ -114,6 +114,43 @@ enum FeedLoader {
         return (followed.sorted { $0.atMs < $1.atMs } + others).filter { $0.date > recent }
     }
 
+    /// Anime en cours (widget « Mes épisodes ») : transmis par le site avec le prochain épisode à cocher.
+    struct Tracked: Hashable {
+        let id: String
+        let title: String
+        let next: Int
+        let total: Int?
+        let path: String
+    }
+
+    static let pendingKey = "widget.pendingEpisodes"
+
+    /// Épisodes cochés depuis le widget, pas encore transmis au site : [{id, episode}].
+    static var pendingEpisodes: [[String: Any]] {
+        guard let data = AppGroup.defaults?.data(forKey: pendingKey),
+              let list = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] else { return [] }
+        return list
+    }
+
+    static func setPendingEpisodes(_ list: [[String: Any]]) {
+        let data = try? JSONSerialization.data(withJSONObject: Array(list.suffix(100)))
+        AppGroup.defaults?.set(data, forKey: pendingKey)
+    }
+
+    /// Animes en cours, avec le prochain épisode à cocher (en tenant compte de ceux cochés depuis le widget).
+    static func tracked() -> [Tracked] {
+        guard let data = AppGroup.defaults?.data(forKey: "notif.prefs"),
+              let prefs = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let list = prefs["tracked"] as? [[String: Any]] else { return [] }
+        let pending = pendingEpisodes
+        return list.compactMap { t in
+            guard let id = t["id"] as? String, let title = t["title"] as? String, let next = t["next"] as? Int,
+                  let path = t["path"] as? String else { return nil }
+            let done = pending.filter { $0["id"] as? String == id }.compactMap { $0["episode"] as? Int }
+            return Tracked(id: id, title: title, next: max(next, (done.max() ?? 0) + 1), total: t["total"] as? Int, path: path)
+        }
+    }
+
     /// « aujourd'hui 17:30 », « demain 9:00 », « jeu. 18:00 », « sorti ».
     static func when(_ date: Date, now: Date = Date()) -> String {
         if date <= now { return "disponible" }

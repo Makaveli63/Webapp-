@@ -31,7 +31,7 @@ await new Promise((r) => server.listen(0, "127.0.0.1", r));
 const origin = `http://127.0.0.1:${server.address().port}${BASE}`;
 
 const first = async (dir) => (await readdir(join(ROOT, dir)).catch(() => [])).find((f) => !f.includes("."));
-const pages = ["/", "/actualites/", "/tests/", "/sorties/", "/anime/", "/jeux-gratuits/", "/promos/", "/videos/", "/classement/", "/consoles/", "/favoris/", "/reglages/", "/recherche/", "/mon-calendrier/", "/collection/", "/anime/fiche/?id=151807"];
+const pages = ["/", "/actualites/", "/tests/", "/sorties/", "/anime/", "/jeux-gratuits/", "/promos/", "/videos/", "/classement/", "/consoles/", "/favoris/", "/reglages/", "/recherche/", "/mon-calendrier/", "/collection/", "/jeu-du-jour/", "/anime/fiche/?id=151807"];
 for (const dir of ["actualites", "jeux"]) {
   const slug = await first(dir);
   if (slug) pages.push(`/${dir}/${slug}/`);

@@ -20,6 +20,7 @@ struct GamingBaseApp: App {
                         Task {
                             _ = await NewsAlerts.check(notify: true)
                             await NewsAlerts.refreshDigest() // résumé du soir programmé pour les soirs à venir
+                            await NewsAlerts.scheduleReleaseDays()
                         }
                         Task { await LiveActivities.refresh() }
                         Task { await QuickActions.refresh() }
@@ -197,6 +198,19 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
             }
             return
         }
+        // Épisodes cochés depuis le widget « Mes épisodes » : transmis au site, puis oubliés.
+        if body["pendingEpisodes"] as? Bool == true {
+            let pending = FeedLoader.pendingEpisodes
+            guard !pending.isEmpty, let data = try? JSONSerialization.data(withJSONObject: pending),
+                  let json = String(data: data, encoding: .utf8) else { return }
+            webView.evaluateJavaScript("window.gbMarkEpisodes ? window.gbMarkEpisodes(\(json)) : false") { result, _ in
+                if result as? Bool == true {
+                    FeedLoader.setPendingEpisodes([])
+                    WidgetCenter.shared.reloadTimelines(ofKind: "EpisodesWidget")
+                }
+            }
+            return
+        }
         // « Écouter les actus » : lecture à voix haute.
         if let list = body["speak"] as? [[String: Any]] {
             NewsReader.shared.onState = { [weak self] index, state in
@@ -258,6 +272,7 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         WidgetCenter.shared.reloadAllTimelines()
         Task { await LiveActivities.refresh() } // nouveau jeu épinglé : la Live Activity suit
         Task { await QuickActions.refresh() } // et le menu de l'appui long sur l'icône
+        Task { await NewsAlerts.scheduleReleaseDays() } // et le rappel du jour J
     }
 
     private static func isSite(_ url: URL) -> Bool {

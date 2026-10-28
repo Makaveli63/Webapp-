@@ -134,6 +134,42 @@ enum NewsAlerts {
         defaults.set(ids, forKey: episodeIdsKey)
     }
 
+    private static let releaseIdsKey = "notif.releaseIds"
+
+    /// 🎉 Jour J des jeux épinglés (📌) ou suivis (🔔) : un rappel la veille à 20 h, puis « est sorti ! » le matin à 9 h.
+    /// Programmés à l'avance : ils arrivent à l'heure, même si l'app n'est pas ouverte.
+    static func scheduleReleaseDays() async {
+        let center = UNUserNotificationCenter.current()
+        center.removePendingNotificationRequests(withIdentifiers: defaults.stringArray(forKey: releaseIdsKey) ?? [])
+        guard enabled, let feed = await FeedLoader.load() else { return }
+        let followed = Set((prefs.follows ?? []).map { norm($0.t) })
+        let pins = Set(FeedLoader.pins)
+        let mine = feed.releases.filter { pins.contains($0.id) || followed.contains(norm($0.title)) }
+        let cal = Calendar.current
+        let now = Date()
+        var ids: [String] = []
+        for r in mine.prefix(12) {
+            let day = cal.startOfDay(for: r.date)
+            let moments: [(String, Date, String, String)] = [
+                ("eve", cal.date(byAdding: .hour, value: -4, to: day) ?? day, "⏰ \(r.title) sort demain", "Plus qu'une nuit à attendre !"),
+                ("day", cal.date(byAdding: .hour, value: 9, to: day) ?? day, "🎉 \(r.title) est sorti !", "Disponible aujourd'hui. Touche pour la fiche, les premiers tests et les prix."),
+            ]
+            for (kind, at, title, body) in moments where at > now {
+                let content = UNMutableNotificationContent()
+                content.title = title
+                content.body = body
+                content.sound = .default
+                content.threadIdentifier = "releases" // regroupées sur l'iPhone et l'Apple Watch
+                content.userInfo = ["path": r.path]
+                let parts = cal.dateComponents([.year, .month, .day, .hour, .minute], from: at)
+                let id = "release-\(kind)-\(r.id)"
+                try? await center.add(UNNotificationRequest(identifier: id, content: content, trigger: UNCalendarNotificationTrigger(dateMatching: parts, repeats: false)))
+                ids.append(id)
+            }
+        }
+        defaults.set(ids, forKey: releaseIdsKey)
+    }
+
     private static let dealsKey = "notif.deals"
 
     /// 💸 Promo sur un jeu « Je le veux » : une notification par promo (3 au plus à la fois).
@@ -172,10 +208,11 @@ enum NewsAlerts {
               data.count < 20_000, (try? JSONDecoder().decode(Prefs.self, from: data)) != nil else { return }
         let changed = defaults.data(forKey: prefsKey) != data
         defaults.set(data, forKey: prefsKey)
-        if changed { WidgetCenter.shared.reloadTimelines(ofKind: "AnimeWidget") } // animes suivis : le widget les met en tête
+        if changed { WidgetCenter.shared.reloadAllTimelines() } // animes suivis : le widget les met en tête
         Task {
             await refreshDigest() // programmé (ou retiré) tout de suite
             await scheduleEpisodes()
+            await scheduleReleaseDays()
         }
     }
 
@@ -222,6 +259,7 @@ enum NewsAlerts {
             schedule()
             await refreshDigest()
             await scheduleEpisodes()
+            await scheduleReleaseDays()
         }
         return granted
     }

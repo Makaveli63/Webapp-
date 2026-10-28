@@ -148,22 +148,75 @@ public class NewsJob extends JobService {
      * peut être repoussée de plusieurs heures par Android). Reprogrammé chaque soir pour le lendemain.
      */
     static void scheduleEvening(Context ctx) {
+        alarmAt(ctx, 4244, 19); // résumé du soir et rappel « sort demain »
+        alarmAt(ctx, 4246, 9); // « est sorti ! » le matin du jour J
+    }
+
+    private static void alarmAt(Context ctx, int code, int hour) {
         AlarmManager am = ctx.getSystemService(AlarmManager.class);
-        PendingIntent pi = PendingIntent.getBroadcast(ctx, 4244, new Intent(ctx, Evening.class),
+        PendingIntent pi = PendingIntent.getBroadcast(ctx, code, new Intent(ctx, Evening.class),
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         if (am == null) return;
-        if (!isEnabled(ctx) || !prefs(ctx).optBoolean("digest")) {
+        if (!isEnabled(ctx)) {
             am.cancel(pi);
             return;
         }
         Calendar at = Calendar.getInstance();
-        at.set(Calendar.HOUR_OF_DAY, 19);
+        at.set(Calendar.HOUR_OF_DAY, hour);
         at.set(Calendar.MINUTE, 0);
         at.set(Calendar.SECOND, 0);
         at.set(Calendar.MILLISECOND, 0);
         if (at.getTimeInMillis() <= System.currentTimeMillis()) at.add(Calendar.DAY_OF_YEAR, 1);
         // Réveil approximatif autorisé en veille : pas besoin de l'autorisation d'alarme exacte.
         am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at.getTimeInMillis(), pi);
+    }
+
+    /**
+     * 🎉 Jour J des jeux épinglés (📌) ou suivis (🔔) : « sort demain » à partir de 19 h la veille,
+     * puis « est sorti ! » à partir de 9 h le jour même. Une seule fois chacun.
+     */
+    static void notifyReleaseDays(Context ctx, JSONObject data, JSONObject p) {
+        JSONArray releases = data != null ? data.optJSONArray("releases") : null;
+        if (releases == null || !canNotify(ctx)) return;
+        Set<String> followed = new HashSet<>();
+        JSONArray follows = p.optJSONArray("follows");
+        for (int i = 0; follows != null && i < follows.length(); i++) {
+            JSONObject f = follows.optJSONObject(i);
+            if (f != null) followed.add(norm(f.optString("t")));
+        }
+        String pins = WidgetData.pinsJson(ctx);
+        SharedPreferences prefs = ctx.getSharedPreferences(PREFS, MODE_PRIVATE);
+        Set<String> done = new LinkedHashSet<>(prefs.getStringSet("releaseDays", new HashSet<>()));
+        long now = System.currentTimeMillis();
+        boolean changed = false;
+        for (int i = 0; i < releases.length(); i++) {
+            JSONObject r = releases.optJSONObject(i);
+            if (r == null) continue;
+            String id = r.optString("id");
+            if (!pins.contains("\"" + id + "\"") && !followed.contains(norm(r.optString("title")))) continue;
+            Calendar day = Calendar.getInstance();
+            day.setTimeInMillis(r.optLong("atMs"));
+            day.set(Calendar.HOUR_OF_DAY, 0);
+            day.set(Calendar.MINUTE, 0);
+            day.set(Calendar.SECOND, 0);
+            day.set(Calendar.MILLISECOND, 0);
+            long start = day.getTimeInMillis();
+            String title = r.optString("title");
+            String path = r.optString("path");
+            if (now >= start + 9 * 3_600_000L && now < start + 86_400_000L && done.add("day:" + id)) {
+                channel(ctx).notify(("day" + id).hashCode(), build(ctx, "🎉 " + title + " est sorti !",
+                        "Disponible aujourd'hui. Touche pour la fiche, les premiers tests et les prix.", path, ("day" + id).hashCode()));
+                changed = true;
+            } else if (now >= start - 5 * 3_600_000L && now < start && done.add("eve:" + id)) {
+                channel(ctx).notify(("eve" + id).hashCode(), build(ctx, "⏰ " + title + " sort demain", "Plus qu'une nuit à attendre !", path, ("eve" + id).hashCode()));
+                changed = true;
+            }
+        }
+        if (changed) {
+            Set<String> keep = new LinkedHashSet<>();
+            for (String k : done) if (keep.size() < 200) keep.add(k);
+            prefs.edit().putStringSet("releaseDays", keep).apply();
+        }
     }
 
     /** Réveil de 19 h : vérifie le site et envoie le résumé, puis programme celui du lendemain. */
@@ -270,7 +323,10 @@ public class NewsJob extends JobService {
     static void check(Context ctx, boolean notify) {
         if (!isEnabled(ctx)) return;
         JSONObject data = WidgetData.load(ctx);
-        if (notify) notifyDeals(ctx, data, prefs(ctx));
+        if (notify) {
+            notifyDeals(ctx, data, prefs(ctx));
+            notifyReleaseDays(ctx, data, prefs(ctx));
+        }
         JSONArray news = data != null ? data.optJSONArray("news") : null;
         if (news == null) return;
         SharedPreferences prefs = ctx.getSharedPreferences(PREFS, MODE_PRIVATE);

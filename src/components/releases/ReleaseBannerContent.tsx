@@ -102,7 +102,7 @@ export function ReleaseBannerContent({ releases }: { releases: Item[] }) {
         {/* Le nom peut être tronqué, jamais le compte à rebours. */}
         <span className="min-w-0 truncate font-semibold text-heading">{next.short ?? next.title}</span>
         <span className="shrink-0 font-semibold text-accent">
-          <Countdown target={next.at} fallback={`le ${dateLabel(next.at)}`} doneLabel="disponible !" />
+          <Countdown target={next.at} fallback={`le ${dateLabel(next.at)}`} doneLabel="disponible aujourd'hui 🎉" />
         </span>
         <ChevronDown className={`island-chevron ml-auto size-4 shrink-0 text-muted transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
       </button>

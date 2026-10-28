@@ -121,4 +121,12 @@ final class AppBridge {
         if (cmd == null || !cmd.matches("pause|resume|next|previous|stop")) return;
         activity.runOnUiThread(() -> activity.reader().control(cmd));
     }
+
+    /** Épisodes cochés depuis le widget « Mes épisodes », remis au site une seule fois (JSON [{id, episode}]). */
+    @JavascriptInterface
+    public String takePendingEpisodes() {
+        String json = EpisodesWidget.takePending(ctx);
+        WidgetData.refreshAll(ctx);
+        return json;
+    }
 }

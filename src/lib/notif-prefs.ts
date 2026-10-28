@@ -2,6 +2,7 @@
 
 import { readFollows } from "@/lib/follows";
 import { spoilerShield } from "@/lib/spoilers";
+import { readTracker } from "@/lib/tracker";
 
 export const NOTIF_KEY = "gb-notif";
 export const PREFS_KEY = "gb-notif-prefs";
@@ -58,10 +59,18 @@ export function sendPrefs(prefs: Prefs = readPrefs()) {
       .filter((f) => f.next && Date.parse(f.next.at) > now - 86_400_000)
       .map((f) => ({ title: f.title, episode: f.next!.episode, atMs: Date.parse(f.next!.at), path: `/Webapp-${f.href}` })),
   };
+  // Widget « Mes épisodes » : animes en cours avec le prochain épisode à cocher.
+  const tracked = Object.values(readTracker().anime)
+    .map((a) => ({ a, last: Math.max(0, ...a.seen) }))
+    .filter(({ a, last }) => !a.total || last < a.total)
+    .sort((x, y) => y.a.updatedAt.localeCompare(x.a.updatedAt))
+    .slice(0, 8)
+    .map(({ a, last }) => ({ id: a.id, title: a.title, next: last + 1, total: a.total ?? null, path: `/Webapp-/anime/fiche?id=${a.id.replace(/^anilist-/, "")}` }));
+  const full = { ...payload, tracked };
   const w = window as AppWindow;
   try {
-    w.GamingBaseApp?.setNotificationPrefs?.(JSON.stringify(payload));
-    w.webkit?.messageHandlers?.gamingbase?.postMessage({ notifPrefs: payload });
+    w.GamingBaseApp?.setNotificationPrefs?.(JSON.stringify(full));
+    w.webkit?.messageHandlers?.gamingbase?.postMessage({ notifPrefs: full });
   } catch {
     /* hors application */
   }

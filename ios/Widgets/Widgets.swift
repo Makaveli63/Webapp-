@@ -385,6 +385,167 @@ struct AnimeWidget: Widget {
     }
 }
 
+// MARK: - ✅ Mes épisodes : cocher l'épisode suivant sans ouvrir l'app (iOS 17)
+
+struct MarkEpisodeIntent: AppIntent {
+    static var title: LocalizedStringResource = "Cocher l'épisode suivant"
+    static var isDiscoverable = false
+
+    @Parameter(title: "Anime") var animeId: String
+    @Parameter(title: "Épisode") var episode: Int
+
+    init() {}
+    init(animeId: String, episode: Int) {
+        self.animeId = animeId
+        self.episode = episode
+    }
+
+    func perform() async throws -> some IntentResult {
+        // Gardé dans le groupe d'apps : le site l'ajoute au suivi à la prochaine ouverture.
+        FeedLoader.setPendingEpisodes(FeedLoader.pendingEpisodes + [["id": animeId, "episode": episode]])
+        return .result()
+    }
+}
+
+struct EpisodesView: View {
+    let entry: GBEntry
+    @Environment(\.widgetFamily) private var family
+
+    var body: some View {
+        let list = Array(FeedLoader.tracked().prefix(family == .systemLarge ? 6 : 3))
+        VStack(alignment: .leading, spacing: 8) {
+            Text("✅ Mes épisodes").font(.caption.bold()).foregroundStyle(accent)
+            if list.isEmpty {
+                Text("Coche des épisodes d'un anime dans l'app pour le retrouver ici.").font(.footnote).foregroundStyle(muted)
+            }
+            ForEach(list, id: \.self) { t in
+                HStack(spacing: 8) {
+                    Link(destination: appLink(t.path)) {
+                        VStack(alignment: .leading, spacing: 0) {
+                            Text(t.title).font(.footnote.weight(.semibold)).lineLimit(1).foregroundStyle(.white)
+                            Text(t.total.map { "Épisode \(t.next) sur \($0)" } ?? "Épisode \(t.next)").font(.caption2).foregroundStyle(muted)
+                        }
+                    }
+                    Spacer(minLength: 6)
+                    if #available(iOSApplicationExtension 17.0, *), t.total.map({ t.next <= $0 }) ?? true {
+                        Button(intent: MarkEpisodeIntent(animeId: t.id, episode: t.next)) {
+                            Image(systemName: "plus.circle.fill").font(.title2).foregroundStyle(accent)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Cocher l'épisode \(t.next) de \(t.title)")
+                    } else if t.total.map({ t.next > $0 }) ?? false {
+                        Image(systemName: "checkmark.circle.fill").font(.title2).foregroundStyle(.green)
+                    }
+                }
+            }
+            Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .widgetURL(appLink("/Webapp-/collection/"))
+        .widgetBackground(glass)
+    }
+}
+
+struct EpisodesWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: "EpisodesWidget", provider: GBProvider()) { EpisodesView(entry: $0) }
+            .configurationDisplayName("Mes épisodes")
+            .description("Coche l'épisode que tu viens de voir, sans ouvrir l'app.")
+            .supportedFamilies([.systemMedium, .systemLarge])
+    }
+}
+
+// MARK: - 🔒 Écran verrouillé : compte à rebours et prochain épisode
+
+/// Jeu épinglé (sinon prochaine grosse sortie) sous l'heure de l'écran verrouillé.
+struct LockReleaseView: View {
+    let entry: GBEntry
+    @Environment(\.widgetFamily) private var family
+
+    var body: some View {
+        let r = entry.release
+        let short = r.map { Countdown.text(to: $0.date, now: entry.date) } ?? "–"
+        Group {
+            switch family {
+            case .accessoryCircular:
+                ZStack {
+                    AccessoryWidgetBackground()
+                    VStack(spacing: 0) {
+                        Image(systemName: entry.pinned ? "pin.fill" : "gamecontroller.fill").font(.caption2)
+                        Text(short).font(.system(size: 15, weight: .bold, design: .rounded)).minimumScaleFactor(0.6).lineLimit(1)
+                    }
+                    .padding(4)
+                }
+            case .accessoryInline:
+                Text("\(Image(systemName: "gamecontroller.fill")) \(r?.title ?? "GamingBase") \(short)")
+            default:
+                VStack(alignment: .leading, spacing: 1) {
+                    Label(entry.pinned ? "Épinglé" : "Prochaine sortie", systemImage: entry.pinned ? "pin.fill" : "gamecontroller.fill")
+                        .font(.caption2.weight(.semibold)).foregroundStyle(.secondary)
+                    Text(r?.title ?? "Pas de sortie").font(.headline).lineLimit(1)
+                    if let r { Text("\(Countdown.long(to: r.date, now: entry.date)) · \(Countdown.day(r.date))").font(.caption).lineLimit(1) }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+        .widgetURL(appLink(r?.path))
+        .widgetBackground(Color.clear)
+    }
+}
+
+struct LockReleaseWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: "LockReleaseWidget", provider: GBProvider()) { LockReleaseView(entry: $0) }
+            .configurationDisplayName("Compte à rebours")
+            .description("Ton jeu épinglé sur l'écran verrouillé.")
+            .supportedFamilies([.accessoryCircular, .accessoryRectangular, .accessoryInline])
+    }
+}
+
+/// Prochain épisode (anime suivi d'abord) sous l'heure de l'écran verrouillé.
+struct LockAnimeView: View {
+    let entry: GBEntry
+    @Environment(\.widgetFamily) private var family
+
+    var body: some View {
+        let e = FeedLoader.episodes(entry.feed, now: entry.date).first
+        Group {
+            switch family {
+            case .accessoryCircular:
+                ZStack {
+                    AccessoryWidgetBackground()
+                    VStack(spacing: 0) {
+                        Image(systemName: "play.tv.fill").font(.caption2)
+                        Text(e.map { "ép. \($0.episode)" } ?? "–").font(.system(size: 13, weight: .bold, design: .rounded)).minimumScaleFactor(0.6).lineLimit(1)
+                    }
+                    .padding(4)
+                }
+            case .accessoryInline:
+                Text("\(Image(systemName: "play.tv.fill")) \(e.map { "\($0.title) ép. \($0.episode)" } ?? "Aucun épisode")")
+            default:
+                VStack(alignment: .leading, spacing: 1) {
+                    Label(e?.followed == true ? "Anime suivi" : "Prochain épisode", systemImage: "play.tv.fill")
+                        .font(.caption2.weight(.semibold)).foregroundStyle(.secondary)
+                    Text(e?.title ?? "Aucun épisode").font(.headline).lineLimit(1)
+                    if let e { Text("Épisode \(e.episode) · \(FeedLoader.when(e.date, now: entry.date))").font(.caption).lineLimit(1) }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+        .widgetURL(appLink(e?.path ?? "/Webapp-/anime/"))
+        .widgetBackground(Color.clear)
+    }
+}
+
+struct LockAnimeWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: "LockAnimeWidget", provider: GBProvider()) { LockAnimeView(entry: $0) }
+            .configurationDisplayName("Prochain épisode")
+            .description("Le prochain épisode de tes animes suivis sur l'écran verrouillé.")
+            .supportedFamilies([.accessoryCircular, .accessoryRectangular, .accessoryInline])
+    }
+}
+
 // MARK: - Ensemble des widgets
 
 @main
@@ -395,6 +556,9 @@ struct GamingBaseWidgets: WidgetBundle {
         NewsWidget()
         FreeWidget()
         AnimeWidget()
+        EpisodesWidget()
+        LockReleaseWidget()
+        LockAnimeWidget()
         ReleaseLiveActivity()
     }
 }

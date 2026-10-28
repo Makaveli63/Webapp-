@@ -1,7 +1,8 @@
-import { Clapperboard, Gamepad2, Newspaper, Tag, Trophy } from "lucide-react";
+import { Clapperboard, Gamepad2, Newspaper, Puzzle, Tag, Trophy } from "lucide-react";
 import Link from "next/link";
 
 const LINKS = [
+  { href: "/jeu-du-jour", label: "Jeu du jour", icon: Puzzle },
   { href: "/actualites", label: "Toutes les actus", icon: Newspaper },
   { href: "/promos", label: "Promos", icon: Tag },
   { href: "/videos", label: "Vidéos", icon: Clapperboard },
