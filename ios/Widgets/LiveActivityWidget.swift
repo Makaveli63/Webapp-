@@ -119,15 +119,11 @@ struct ReleaseLiveActivity: Widget {
                 DynamicIslandExpandedRegion(.leading) {
                     LiveGameImage(data: context.attributes.image, width: 44, height: 58)
                 }
-                DynamicIslandExpandedRegion(.trailing) {
-                    LiveCountdownText(state: context.state, part: .days)
-                        .font(.title2.bold())
-                        .foregroundStyle(liveAccent)
-                }
                 DynamicIslandExpandedRegion(.center) {
                     Text(context.attributes.title)
                         .font(.headline)
                         .lineLimit(1)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
                 DynamicIslandExpandedRegion(.bottom) {
                     HStack(alignment: .firstTextBaseline) {
@@ -136,9 +132,12 @@ struct ReleaseLiveActivity: Widget {
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
                         Spacer(minLength: 8)
-                        LiveCountdownText(state: context.state, part: .clock)
+                        // Jours et minuteur ensemble, en bas sur toute la largeur : loin des bords arrondis.
+                        LiveCountdownText(state: context.state)
                             .font(.title3.bold())
                             .foregroundStyle(liveAccent)
+                            .minimumScaleFactor(0.75)
+                            .layoutPriority(1)
                     }
                 }
             } compactLeading: {
