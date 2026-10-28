@@ -630,6 +630,7 @@ html[data-splash="off"] .splash { display: none; }
 .page-in-back { animation: page-in-back .22s cubic-bezier(.2,.8,.2,1); }
 @keyframes page-in-forward { from { opacity: 0; transform: translate3d(14px, 0, 0); } }
 @keyframes page-in-back { from { opacity: 0; transform: translate3d(-14px, 0, 0); } }
+html[data-vt] .page-in-forward, html[data-vt] .page-in-back { animation: none; }
 @media (prefers-reduced-motion: reduce) { .page-in-forward, .page-in-back { animation: none; } }
 
 /* ---------- Bandeau du jeu épinglé : s'agrandit au toucher ---------- */
@@ -737,4 +738,43 @@ html[data-native-tabs] .tabbar { display: none; }
 html[data-refract] .tab-lens-drag {
   -webkit-backdrop-filter: url(#gb-lens) saturate(1.8) brightness(1.08);
   backdrop-filter: url(#gb-lens) saturate(1.8) brightness(1.08);
+}
+
+/* ---------- Transitions entre les pages façon iOS (View Transitions) ---------- */
+.topbar { view-transition-name: gb-topbar; }
+.tabbar { view-transition-name: gb-tabbar; }
+.release-banner { view-transition-name: gb-island; }
+::view-transition-group(gb-topbar),
+::view-transition-group(gb-tabbar),
+::view-transition-group(gb-island) { animation: none; }
+::view-transition-old(gb-topbar), ::view-transition-new(gb-topbar),
+::view-transition-old(gb-tabbar), ::view-transition-new(gb-tabbar),
+::view-transition-old(gb-island), ::view-transition-new(gb-island) { animation: none; }
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: .46s;
+  animation-timing-function: cubic-bezier(.32, .72, 0, 1); /* courbe des transitions d'iOS */
+  animation-fill-mode: both;
+}
+::view-transition-old(root) { animation-name: vt-old-out; }
+::view-transition-new(root) { animation-name: vt-new-in; }
+html.vt-back::view-transition-old(root) { animation-name: vt-old-back; z-index: 1; }
+html.vt-back::view-transition-new(root) { animation-name: vt-new-back; }
+@keyframes vt-new-in { from { transform: translateX(100%); box-shadow: -12px 0 32px rgb(0 0 0 / .22); } to { box-shadow: -12px 0 32px rgb(0 0 0 / 0); } }
+@keyframes vt-old-out { to { transform: translateX(-30%); filter: brightness(.82); } }
+@keyframes vt-old-back { from { box-shadow: -12px 0 32px rgb(0 0 0 / .22); } to { transform: translateX(100%); box-shadow: -12px 0 32px rgb(0 0 0 / 0); } }
+@keyframes vt-new-back { from { transform: translateX(-30%); filter: brightness(.82); } }
+
+/* ---------- Toucher façon iOS : la carte ou le bouton s'enfonce légèrement puis revient en rebondissant ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  :is(a, button):is(.glass, .glass-pill, .rounded-full, .rounded-xl, .rounded-2xl, .rounded-lg) {
+    transition-property: transform, color, background-color, border-color, box-shadow, opacity;
+    transition-duration: .42s;
+    transition-timing-function: cubic-bezier(.2, .9, .3, 1.35);
+  }
+  :is(a, button):is(.glass, .glass-pill, .rounded-full, .rounded-xl, .rounded-2xl, .rounded-lg):active {
+    transform: scale(.96);
+    transition-duration: .12s;
+  }
+  .tabbar a:active { transform: none; }
 }

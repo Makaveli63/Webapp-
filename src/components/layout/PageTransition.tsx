@@ -13,6 +13,7 @@ export function PageTransition({ children }: { children: ReactNode }) {
   // Animation choisie pendant le rendu (et non après) : pas d'image sans effet avant qu'il démarre.
   const [state, setState] = useState({ path: pathname, anim: "" });
   if (state.path !== pathname) setState({ path: pathname, anim: back.current ? "page-in-back" : "page-in-forward" });
+  // Effet de repli : seulement si le navigateur n'a pas les transitions façon iOS (AppleTransitions).
 
   useEffect(() => {
     const onPop = () => (back.current = true);
