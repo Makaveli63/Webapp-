@@ -10,7 +10,7 @@ export default function SearchPage() {
   return (
     <div>
       <h1 className="text-2xl font-extrabold text-heading sm:text-3xl">Recherche</h1>
-      <SearchBar className="mt-5 max-w-xl md:hidden" autoFocus />
+      <SearchBar className="mt-5 max-w-xl lg:hidden" autoFocus live />
       <Suspense>
         <SearchResults />
       </Suspense>

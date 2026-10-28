@@ -7,14 +7,27 @@ import { NewsCard } from "@/components/news/NewsCard";
 import { GameCard } from "@/components/search/GameCard";
 import { AniListResults } from "@/components/search/AniListResults";
 import { WikipediaResults } from "@/components/search/WikipediaResults";
-import { correctQuery, normalize } from "@/lib/fuzzy";
+import { aliasesOf } from "@/lib/aliases";
+import { canon, correctQuery, normalize } from "@/lib/fuzzy";
 import { loadSearchIndex } from "@/lib/search-index";
 import type { SearchIndex } from "@/types";
 
-/** Tous les mots de la recherche doivent apparaître (dans n'importe quel ordre). */
-const matches = (words: string[], ...fields: (string | undefined)[]) => {
-  const hay = ` ${normalize(fields.filter(Boolean).join(" "))} `;
-  return words.every((w) => hay.includes(w));
+/**
+ * Tous les mots de la recherche doivent apparaître (dans n'importe quel ordre). Les nombres doivent commencer
+ * un mot (« gta 6 » ne trouve pas « 2026 »).
+ */
+const has = (hay: string, words: string[]) => words.every((w) => (/^\d/.test(w) ? hay.includes(` ${w}`) : hay.includes(w)));
+const matches = (words: string[], ...fields: (string | undefined)[]) => has(` ${canon(fields.filter(Boolean).join(" "))} `, words);
+
+// Texte cherché d'un jeu : titre, autre titre et autres écritures (« GTA 6 », « GTA VI » pour Grand Theft Auto VI).
+const gameHay = new WeakMap<object, string>();
+const matchesGame = (words: string[], g: SearchIndex["games"][number]) => {
+  let hay = gameHay.get(g);
+  if (hay === undefined) {
+    hay = ` ${canon([g.title, g.aka, ...aliasesOf(g.title)].filter(Boolean).join(" | "))} `;
+    gameHay.set(g, hay);
+  }
+  return has(hay, words);
 };
 
 // Petits mots ignorés (« 007 first light sur ps5 ») et noms de plateformes traités comme un filtre.
@@ -34,7 +47,8 @@ function parseQuery(query: string) {
     else if (!STOP_WORDS.has(w) || all.length === 1) words.push(w);
   });
   // Recherche d'une plateforme seule (« ps5 ») : on cherche le mot, pas un filtre vide.
-  return words.length ? { words, platforms } : { words: all, platforms: [] };
+  const split = (list: string[]) => canon(list.join(" ")).split(" ").filter(Boolean);
+  return words.length ? { words: split(words), platforms } : { words: split(all), platforms: [] };
 }
 
 const onPlatforms = (list: string[], platforms: RegExp[]) =>
@@ -43,7 +57,7 @@ const onPlatforms = (list: string[], platforms: RegExp[]) =>
 function runSearch(index: SearchIndex | null, query: string) {
   const { words, platforms } = parseQuery(query);
   if (!index || !words.length) return { articles: [], games: [] };
-  const games = index.games.filter((g) => matches(words, g.title, g.aka));
+  const games = index.games.filter((g) => matchesGame(words, g));
   const onPlatform = games.filter((g) => onPlatforms(g.platforms, platforms));
   return {
     articles: index.articles.filter((a) => matches(words, a.title, a.excerpt, a.source.name, ...a.tags) && onPlatforms(a.platforms, platforms)),

@@ -2,14 +2,15 @@
 
 import { Gamepad2, Mic, Search, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useId, useState, type FormEvent, type KeyboardEvent } from "react";
+import { useEffect, useId, useMemo, useState, type FormEvent, type KeyboardEvent } from "react";
 import { animeHref, https, searchAnime, titleOf, type AniMedia } from "@/lib/anilist";
+import { aliasesOf } from "@/lib/aliases";
 import { suggestTitles } from "@/lib/fuzzy";
 import { loadSearchIndex } from "@/lib/search-index";
 import type { SearchGame } from "@/types";
 
 /** Barre de recherche avec suggestions de jeux pendant la saisie (tolérantes aux fautes). */
-export function SearchBar({ className = "", autoFocus = false }: { className?: string; autoFocus?: boolean }) {
+export function SearchBar({ className = "", autoFocus = false, live = false }: { className?: string; autoFocus?: boolean; live?: boolean }) {
   const router = useRouter();
   const listId = useId();
   const [q, setQ] = useState("");
@@ -76,8 +77,31 @@ export function SearchBar({ className = "", autoFocus = false }: { className?: s
     // eslint-disable-next-line react-hooks/exhaustive-deps -- chargement unique
   }, []);
 
-  const suggestions = open ? suggestTitles(q, [...games.keys()], 5) : [];
-  const animeShown = open ? anime : [];
+  // Autres écritures des titres (« GTA 6 », « GTA VI »), calculées une fois.
+  const alt = useMemo(() => {
+    const map = new Map<string, string[]>();
+    for (const [title, g] of games) map.set(title, [...aliasesOf(title), ...(g.aka ? [g.aka] : [])]);
+    return map;
+  }, [games]);
+  const titles = useMemo(() => [...games.keys()], [games]);
+
+  // Page Recherche : les résultats s'affichent pendant la saisie (pas besoin de valider).
+  useEffect(() => {
+    if (!live) return;
+    const initial = new URLSearchParams(window.location.search).get("q");
+    if (initial) setQ(initial);
+  }, [live]);
+  useEffect(() => {
+    if (!live) return;
+    const term = q.trim();
+    const current = new URLSearchParams(window.location.search).get("q") ?? "";
+    if (term === current || (term.length > 0 && term.length < 2)) return;
+    const timer = window.setTimeout(() => router.replace(term ? `/recherche?q=${encodeURIComponent(term)}` : "/recherche", { scroll: false }), 250);
+    return () => window.clearTimeout(timer);
+  }, [q, live, router]);
+
+  const suggestions = open ? suggestTitles(q, titles, 5, (t) => alt.get(t) ?? []) : [];
+  const animeShown = open && !live ? anime : [];
 
   // Jeu avec une fiche sur le site : on l'ouvre directement ; sinon, recherche sur son titre.
   const openGame = (title: string) => {
