@@ -592,6 +592,7 @@ html[data-splash="off"] .splash { display: none; }
 :root[data-style="capsule"] .logo-gradient { background-image: linear-gradient(90deg, var(--accent), var(--accent-2)); }
 
 /* Couleurs du style Capsule (Réglages → Style du site) : teinte claire / sombre et seconde couleur du dégradé. */
+:root[data-style="capsule"][data-tint="gamingbase"] { --accent: #6246ea; --accent-2: #0b7f95; } /* violet du logo, par défaut */
 :root[data-style="capsule"][data-tint="rose"] { --accent: #e0234e; --accent-2: #ff9f0a; }
 :root[data-style="capsule"][data-tint="rouge"] { --accent: #d70015; --accent-2: #ff9f0a; }
 :root[data-style="capsule"][data-tint="orange"] { --accent: #c93400; --accent-2: #e8a800; }
@@ -600,6 +601,7 @@ html[data-splash="off"] .splash { display: none; }
 :root[data-style="capsule"][data-tint="bleu"] { --accent: #0062cc; --accent-2: #2ea7e0; }
 :root[data-style="capsule"][data-tint="indigo"] { --accent: #3634a3; --accent-2: #8944ab; }
 :root[data-style="capsule"][data-tint="violet"] { --accent: #8944ab; --accent-2: #e0234e; }
+:root[data-style="capsule"][data-theme="dark"][data-tint="gamingbase"] { --accent: #7c5cff; --accent-2: #22d3ee; }
 :root[data-style="capsule"][data-theme="dark"][data-tint="rose"] { --accent: #fa2d48; --accent-2: #ff9f0a; }
 :root[data-style="capsule"][data-theme="dark"][data-tint="rouge"] { --accent: #ff453a; --accent-2: #ff9f0a; }
 :root[data-style="capsule"][data-theme="dark"][data-tint="orange"] { --accent: #ff9f0a; --accent-2: #ffd60a; }

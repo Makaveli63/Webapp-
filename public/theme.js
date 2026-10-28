@@ -37,7 +37,7 @@
   }
   function apply() {
     root.setAttribute("data-accent", accent());
-    root.setAttribute("data-tint", read("gb-tint", "rose"));
+    root.setAttribute("data-tint", read("gb-tint", "gamingbase"));
     root.setAttribute("data-glass", read("gb-glass", "verre"));
     var st = style();
     if (st === "capsule") root.setAttribute("data-style", "capsule");

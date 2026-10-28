@@ -18,6 +18,7 @@ const STYLES: { id: Style; label: string; hint: string; icon: typeof Sun }[] = [
 
 // Couleurs du style Capsule (pastille : teinte en mode sombre).
 const TINTS: { id: string; label: string; color: string }[] = [
+  { id: "gamingbase", label: "Violet GamingBase", color: "#7c5cff" },
   { id: "rose", label: "Rose", color: "#fa2d48" },
   { id: "rouge", label: "Rouge", color: "#ff453a" },
   { id: "orange", label: "Orange", color: "#ff9f0a" },
@@ -46,10 +47,10 @@ const save = (key: string, value: string) => {
 export function ThemePicker() {
   const [choice, setChoice] = useState<Choice>("system");
   const [style, setStyle] = useState<Style>("gamingbase");
-  const [tint, setTint] = useState("rose");
+  const [tint, setTint] = useState("gamingbase");
   const [glass, setGlass] = useState("verre");
   useEffect(() => {
-    setTint(document.documentElement.getAttribute("data-tint") ?? "rose");
+    setTint(document.documentElement.getAttribute("data-tint") ?? "gamingbase");
     setGlass(document.documentElement.getAttribute("data-glass") ?? "verre");
     setChoice((document.documentElement.getAttribute("data-theme-choice") as Choice) || "system");
     setStyle(document.documentElement.getAttribute("data-style") === "capsule" ? "capsule" : "gamingbase");
