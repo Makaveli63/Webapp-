@@ -27,8 +27,18 @@
       return "gamingbase";
     }
   }
+  // Style Capsule : couleur (rose par défaut) et transparence (verre par défaut).
+  function read(key, fallback) {
+    try {
+      return localStorage.getItem(key) || fallback;
+    } catch {
+      return fallback;
+    }
+  }
   function apply() {
     root.setAttribute("data-accent", accent());
+    root.setAttribute("data-tint", read("gb-tint", "rose"));
+    root.setAttribute("data-glass", read("gb-glass", "verre"));
     var st = style();
     if (st === "capsule") root.setAttribute("data-style", "capsule");
     else root.removeAttribute("data-style");

@@ -13,7 +13,15 @@ const ACCENTS = [
 /** Choix de la couleur d'accent du site (appliquée sans flash par public/theme.js). */
 export function AccentPicker() {
   const [current, setCurrent] = useState("violet");
-  useEffect(() => setCurrent(document.documentElement.getAttribute("data-accent") ?? "violet"), []);
+  const [capsule, setCapsule] = useState(false);
+  useEffect(() => {
+    setCurrent(document.documentElement.getAttribute("data-accent") ?? "violet");
+    // Le style Capsule a ses propres couleurs (dans « Style du site ») : ce choix-ci est alors masqué.
+    const update = () => setCapsule(document.documentElement.getAttribute("data-style") === "capsule");
+    update();
+    window.addEventListener("gb-theme-change", update);
+    return () => window.removeEventListener("gb-theme-change", update);
+  }, []);
 
   const choose = (id: string) => {
     setCurrent(id);
@@ -25,6 +33,7 @@ export function AccentPicker() {
     document.documentElement.setAttribute("data-accent", id);
   };
 
+  if (capsule) return null;
   return (
     <section aria-labelledby="accent-title" className="glass rounded-xl p-4 sm:p-5">
       <h2 id="accent-title" className="flex items-center gap-2 font-semibold text-heading">

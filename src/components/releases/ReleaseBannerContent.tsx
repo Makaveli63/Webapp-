@@ -55,7 +55,12 @@ export function ReleaseBannerContent({ releases }: { releases: Item[] }) {
         });
       } else {
         const to = collapsed.current ?? from;
-        anim.current = el.animate([frame(from, 30), frame(to, to.height / 2)], { duration: 320, easing: "cubic-bezier(.4, 0, .2, 1)" });
+        // Le contenu s'efface d'abord en fondu, puis l'île se rétracte autour du nom (resté centré).
+        el.querySelector(".island-panel > div")?.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 160, easing: "ease-out", fill: "forwards" });
+        anim.current = el.animate([frame(from, 30), { ...frame(from, 30), offset: 0.3 }, frame(to, to.height / 2)], {
+          duration: 440,
+          easing: "cubic-bezier(.4, 0, .2, 1)",
+        });
         anim.current.onfinish = () => setOpen(false);
       }
     },

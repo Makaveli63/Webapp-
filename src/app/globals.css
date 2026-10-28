@@ -584,7 +584,40 @@ html[data-splash="off"] .splash { display: none; }
 :root[data-style="capsule"] .dyn-blob { display: none; }
 :root[data-style="capsule"] .dyn-bg { opacity: .35; -webkit-mask-image: linear-gradient(#000 0%, transparent 70%); mask-image: linear-gradient(#000 0%, transparent 70%); }
 :root[data-style="capsule"] .dyn-bg:has(.dyn-photo-on) { opacity: .55; }
-:root[data-style="capsule"] .logo-gradient { background-image: linear-gradient(90deg, #fa2d48, #ff6482 60%, #ff9f0a); }
+:root[data-style="capsule"] .logo-gradient { background-image: linear-gradient(90deg, var(--accent), var(--accent-2)); }
+
+/* Couleurs du style Capsule (Réglages → Style du site) : teinte claire / sombre et seconde couleur du dégradé. */
+:root[data-style="capsule"][data-tint="rose"] { --accent: #e0234e; --accent-2: #ff9f0a; }
+:root[data-style="capsule"][data-tint="rouge"] { --accent: #d70015; --accent-2: #ff9f0a; }
+:root[data-style="capsule"][data-tint="orange"] { --accent: #c93400; --accent-2: #e8a800; }
+:root[data-style="capsule"][data-tint="vert"] { --accent: #248a3d; --accent-2: #0a9396; }
+:root[data-style="capsule"][data-tint="turquoise"] { --accent: #0071a4; --accent-2: #248a3d; }
+:root[data-style="capsule"][data-tint="bleu"] { --accent: #0062cc; --accent-2: #2ea7e0; }
+:root[data-style="capsule"][data-tint="indigo"] { --accent: #3634a3; --accent-2: #8944ab; }
+:root[data-style="capsule"][data-tint="violet"] { --accent: #8944ab; --accent-2: #e0234e; }
+:root[data-style="capsule"][data-theme="dark"][data-tint="rose"] { --accent: #fa2d48; --accent-2: #ff9f0a; }
+:root[data-style="capsule"][data-theme="dark"][data-tint="rouge"] { --accent: #ff453a; --accent-2: #ff9f0a; }
+:root[data-style="capsule"][data-theme="dark"][data-tint="orange"] { --accent: #ff9f0a; --accent-2: #ffd60a; }
+:root[data-style="capsule"][data-theme="dark"][data-tint="vert"] { --accent: #30d158; --accent-2: #64d2ff; }
+:root[data-style="capsule"][data-theme="dark"][data-tint="turquoise"] { --accent: #40c8e0; --accent-2: #30d158; }
+:root[data-style="capsule"][data-theme="dark"][data-tint="bleu"] { --accent: #0a84ff; --accent-2: #64d2ff; }
+:root[data-style="capsule"][data-theme="dark"][data-tint="indigo"] { --accent: #5e5ce6; --accent-2: #bf5af2; }
+:root[data-style="capsule"][data-theme="dark"][data-tint="violet"] { --accent: #bf5af2; --accent-2: #ff6482; }
+
+/* Transparence du style Capsule : opaque (cartes pleines), verre (par défaut) ou cristal (très transparent). */
+:root[data-style="capsule"][data-glass="verre"] { --glass-a: 72%; --glass-b: 56%; }
+:root[data-style="capsule"][data-theme="dark"][data-glass="verre"] { --glass-a: 62%; --glass-b: 46%; }
+:root[data-style="capsule"][data-glass="cristal"] { --glass-a: 46%; --glass-b: 30%; }
+:root[data-style="capsule"][data-theme="dark"][data-glass="cristal"] { --glass-a: 38%; --glass-b: 22%; }
+:root[data-style="capsule"]:is([data-glass="verre"], [data-glass="cristal"]) .glass { border-color: var(--glass-edge); box-shadow: inset 0 1px 0 var(--glass-hi), var(--glass-drop); }
+/* Avec du verre, le fond coloré (teinté par la couleur choisie) transparaît derrière les cartes. */
+:root[data-style="capsule"]:is([data-glass="verre"], [data-glass="cristal"]) .dyn-blob { display: block; }
+:root[data-style="capsule"]:is([data-glass="verre"], [data-glass="cristal"]) .dyn-blob-a { background-color: var(--accent); }
+:root[data-style="capsule"]:is([data-glass="verre"], [data-glass="cristal"]) .dyn-blob-b { background-color: var(--accent-2); }
+:root[data-style="capsule"][data-glass="verre"] .dyn-bg { opacity: .3; }
+:root[data-style="capsule"][data-glass="cristal"] .dyn-bg { opacity: .5; -webkit-mask-image: none; mask-image: none; }
+:root[data-style="capsule"][data-glass="cristal"] .tabbar,
+:root[data-style="capsule"][data-glass="cristal"] .topbar .head-btn { background: color-mix(in srgb, var(--surface) 48%, transparent); }
 
 /* ---------- Transition entre les pages : glisse depuis la droite, ou depuis la gauche quand on revient en arrière ---------- */
 .page-in-forward { animation: page-in-forward .32s cubic-bezier(.2,.8,.2,1); }
@@ -632,4 +665,6 @@ html[data-splash="off"] .splash { display: none; }
 :root[data-style="capsule"] .island[data-open] .island-panel > div { animation: island-content .35s ease-out .08s both; }
 @keyframes island-content { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
 :root[data-style="capsule"] .island-bar { padding: .55rem 1rem; }
-:root[data-style="capsule"] .island:not([data-open]) .island-bar { width: auto; max-width: min(92vw, 30rem); }
+/* Le nom reste centré en haut, ouvert comme fermé : rien ne saute pendant l'animation. */
+:root[data-style="capsule"] .island-bar { width: auto; max-width: min(92vw, 30rem); margin: 0 auto; }
+:root[data-style="capsule"] .island-chevron { margin-left: .25rem; }
