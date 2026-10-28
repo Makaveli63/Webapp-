@@ -40,6 +40,10 @@
     "url": "https://news.xbox.com/fr-fr/feed/"
   },
   {
+    "name": "Rockstar Mag",
+    "url": "https://www.rockstarmag.fr/feed/"
+  },
+  {
     "name": "Adala News",
     "url": "https://adala-news.fr/feed/",
     "category": "Anime"

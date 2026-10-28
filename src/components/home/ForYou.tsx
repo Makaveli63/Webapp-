@@ -87,7 +87,7 @@ export function ForYou({ articles }: { articles: ForYouArticle[] }) {
       </h2>
       <p className="mt-0.5 text-sm text-muted">Selon tes suivis, ta bibliothèque et tes plateformes</p>
       {picks.length > 0 ? (
-        <ul className="scroll-row -mx-4 mt-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
+        <ul className="scroll-row -mx-4 mt-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1">
           {picks.map(({ article, reason }) => (
             <li key={article.slug} className="w-[78%] shrink-0 snap-start sm:w-72">
               <Link href={`/actualites/${article.slug}`} className="glass group flex h-full flex-col overflow-hidden rounded-2xl">

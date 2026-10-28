@@ -33,6 +33,8 @@ function LensFilter() {
 /**
  * Barre d'onglets fixe en bas d'écran, à portée de pouce (mobile uniquement).
  * On peut glisser le doigt dessus : une bulle de verre suit le doigt et l'onglet est ouvert au lâcher.
+ * Comme sur iOS 26 : en faisant défiler vers le bas, elle se rétracte en bulle (onglet actif seul) ;
+ * elle revient quand on remonte ou qu'on la touche.
  */
 export function MobileTabBar() {
   const router = useRouter();
@@ -52,6 +54,39 @@ export function MobileTabBar() {
   // Onglet choisi dont la page n'est pas encore affichée : la bulle y va tout de suite.
   const [pending, setPending] = useState<number | null>(null);
   const [width, setWidth] = useState(0);
+  const [collapsed, setCollapsed] = useState(false);
+  const nav = useRef<HTMLElement>(null);
+  const pathname = usePathname();
+
+  // Défilement vers le bas : la barre se rétracte ; vers le haut (ou en haut de page) : elle revient.
+  useEffect(() => {
+    let lastY = window.scrollY;
+    let run = 0; // distance parcourue dans le même sens
+    const onScroll = () => {
+      const y = window.scrollY;
+      const d = y - lastY;
+      lastY = y;
+      if (y < 80) {
+        run = 0;
+        return setCollapsed(false);
+      }
+      run = Math.sign(d) === Math.sign(run) ? run + d : d;
+      if (run > 30) setCollapsed(true);
+      else if (run < -30) setCollapsed(false);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+  useEffect(() => setCollapsed(false), [pathname]);
+  // Pendant le passage barre ↔ bulle, le contenu est coupé aux bords de la barre.
+  const firstMorph = useRef(true);
+  useEffect(() => {
+    const el = nav.current;
+    if (!el || firstMorph.current) return void (firstMorph.current = false);
+    el.dataset.morph = "";
+    const t = window.setTimeout(() => delete el.dataset.morph, 550);
+    return () => window.clearTimeout(t);
+  }, [collapsed]);
 
   // Réfraction réelle seulement là où le navigateur l'applique au fond (Chrome, Android) ; Safari garde le flou.
   useEffect(() => {
@@ -96,10 +131,22 @@ export function MobileTabBar() {
     el.style.setProperty("opacity", target >= 0 || pressed ? "1" : "0");
   }, [dragX, target, slot, width, pressed]);
 
+  // Onglet gardé dans la bulle rétractée (CSSOM, compatible avec la CSP).
+  useLayoutEffect(() => {
+    nav.current?.style.setProperty("--tb-i", String(Math.max(0, target)));
+  }, [target]);
+
   const relX = (e: PointerEvent) => e.clientX - (list.current?.getBoundingClientRect().left ?? 0);
 
   const down = (e: PointerEvent<HTMLUListElement>) => {
     if (e.pointerType === "mouse" && e.button !== 0) return;
+    // Bulle rétractée : le toucher la redéploie, sans changer d'onglet.
+    if (collapsed) {
+      setCollapsed(false);
+      handled.current = true;
+      window.setTimeout(() => (handled.current = false), 400);
+      return;
+    }
     start.current = { x: e.clientX, moved: false, lastX: e.clientX, lastT: e.timeStamp };
     stretch.current = 1;
     e.currentTarget.setPointerCapture(e.pointerId);
@@ -142,6 +189,8 @@ export function MobileTabBar() {
 
   return (
     <nav
+      ref={nav}
+      data-collapsed={collapsed ? "" : undefined}
       aria-label="Navigation principale"
       className="tabbar fixed inset-x-0 bottom-0 z-40 glass-bar border-t pb-[env(safe-area-inset-bottom)] md:hidden"
     >
@@ -158,7 +207,7 @@ export function MobileTabBar() {
         {ITEMS.map(({ href, label, icon: Icon }, i) => {
           const current = active === href;
           return (
-            <li key={href} className="relative z-10">
+            <li key={href} data-current={i === target ? "" : undefined} className="relative z-10">
               <Link
                 href={href}
                 aria-current={current ? "page" : undefined}
@@ -168,8 +217,8 @@ export function MobileTabBar() {
                   hover === i ? "text-accent" : "text-muted"
                 }`}
               >
-                <Icon className={`size-5 transition-transform duration-200 ${pressed && hover === i ? "scale-125" : ""}`} aria-hidden />
-                {label}
+                <Icon className={`tab-icon size-5 transition-transform duration-200 ${pressed && hover === i ? "scale-125" : ""}`} aria-hidden />
+                <span className="tab-label">{label}</span>
               </Link>
             </li>
           );

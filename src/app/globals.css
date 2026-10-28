@@ -109,7 +109,8 @@ body {
   transition: --fade-l .25s ease, --fade-r .25s ease;
   scroll-padding-inline: 1rem; /* les cartes aimantées gardent la marge de l'écran (téléphone) */
 }
-@media (min-width: 640px) { .scroll-row { scroll-padding-inline: 0; } }
+@media (min-width: 640px) { .scroll-row:not(.snap-x) { scroll-padding-inline: 0; } }
+.scroll-row.snap-x[data-fade] { --fade-l: 2rem; --fade-r: 2rem; }
 .scroll-row[data-fade] {
   -webkit-mask-image: linear-gradient(to right, transparent, #000 var(--fade-l), #000 calc(100% - var(--fade-r)), transparent);
   mask-image: linear-gradient(to right, transparent, #000 var(--fade-l), #000 calc(100% - var(--fade-r)), transparent);
@@ -640,6 +641,27 @@ html[data-ptr] body { overscroll-behavior-y: none; }
   :root[data-style="capsule"] .tabbar a.text-muted { color: var(--heading); }
   :root[data-style="capsule"] .tab-lens { background: rgb(120 120 128 / .16); }
   :root[data-style="capsule"][data-theme="dark"] .tab-lens { background: rgb(118 118 128 / .26); }
+  /* Rétractée en bulle au défilement (comme iOS 26) : seul l'onglet actif reste, sans libellé.
+     Largeur intérieure de la barre : 100vw − marges (2 × 14px) − padding (2 × 5px) − bord (2 × 1px). */
+  :root[data-style="capsule"] .tabbar {
+    --tb-slot: calc((100vw - 40px) / 5);
+    --tb-bubble: 3.4rem;
+    transition: right .5s cubic-bezier(.2, .9, .3, 1.08);
+  }
+  :root[data-style="capsule"] .tabbar > ul { width: calc(100vw - 40px); transition: transform .5s cubic-bezier(.2, .9, .3, 1.08); }
+  :root[data-style="capsule"] .tabbar li { transition: opacity .25s ease; }
+  :root[data-style="capsule"] .tabbar .tab-label { transition: opacity .2s ease; }
+  :root[data-style="capsule"] .tabbar .tab-icon { transition: transform .4s cubic-bezier(.2, .9, .3, 1.2); }
+  /* Coupé seulement rétractée ou pendant l'animation : la bulle qui suit le doigt peut déborder de la barre. */
+  :root[data-style="capsule"] .tabbar[data-collapsed], :root[data-style="capsule"] .tabbar[data-morph] { overflow: hidden; }
+  :root[data-style="capsule"] .tabbar[data-collapsed] { right: calc(100% - 14px - var(--tb-bubble) - 12px); }
+  :root[data-style="capsule"] .tabbar[data-collapsed] > ul {
+    transform: translateX(calc(var(--tb-i, 0) * -1 * var(--tb-slot) - (var(--tb-slot) - var(--tb-bubble)) / 2));
+  }
+  :root[data-style="capsule"] .tabbar[data-collapsed] li:not([data-current]) { opacity: 0; pointer-events: none; }
+  :root[data-style="capsule"] .tabbar[data-collapsed] .tab-label { opacity: 0; }
+  :root[data-style="capsule"] .tabbar[data-collapsed] .tab-icon { transform: translateY(7px) scale(1.15); }
+  :root[data-style="capsule"] .tabbar[data-collapsed] .tab-lens { opacity: 0 !important; }
 
 }
 
@@ -869,7 +891,7 @@ html.vt-back::view-transition-new(root) { animation-name: vt-new-back; }
 /* Pendant l'animation d'ouverture, la barre d'onglets du site (Android, navigateur) n'apparaît pas encore. */
 html:not([data-splash="off"]) .tabbar { animation: tabbar-in .4s ease-out 1.9s both; }
 @keyframes tabbar-in { from { opacity: 0; transform: translateY(12px); } }
-@media (prefers-reduced-motion: reduce) { html .tabbar { animation: none; } }
+@media (prefers-reduced-motion: reduce) { html .tabbar { animation: none; } html .tabbar, html .tabbar > ul, html .tabbar li, html .tabbar .tab-icon { transition: none !important; } }
 
 /* Confirmation « Suivre » : bulle de verre fumé sous l'en-tête, comme l'île des sorties, qui sort de l'île. */
 .follow-toast {

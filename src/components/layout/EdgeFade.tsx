@@ -4,7 +4,7 @@ import { useEffect } from "react";
 
 /**
  * Rangées qui défilent horizontalement (.scroll-row) : fondu sur le bord où il reste du contenu,
- * au lieu d'une carte coupée net. data-fade = "end" | "start" | "both" (aucun si tout tient).
+ * au lieu d'une carte coupée net ; des deux côtés pour les carrousels. data-fade = "end" | "start" | "both" (aucun si tout tient).
  */
 export function EdgeFade() {
   useEffect(() => {
@@ -12,7 +12,9 @@ export function EdgeFade() {
       const max = el.scrollWidth - el.clientWidth;
       const start = el.scrollLeft > 20; // marge de la rangée (cartes aimantées à 1rem du bord)
       const end = el.scrollLeft < max - 20;
-      const next = start && end ? "both" : start ? "start" : end ? "end" : "";
+      // Carrousels de cartes : fondu des deux côtés dès que la rangée défile (les cartes débordent dans la marge).
+      const carousel = el.classList.contains("snap-x") && max > 4;
+      const next = carousel || (start && end) ? "both" : start ? "start" : end ? "end" : "";
       if ((el.dataset.fade ?? "") !== next) {
         if (next) el.dataset.fade = next;
         else delete el.dataset.fade;

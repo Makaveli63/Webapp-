@@ -36,8 +36,14 @@ struct WebContainer: UIViewControllerRepresentable {
     func updateUIViewController(_ controller: WebViewController, context: Context) {}
 }
 
+/// Vue web dont la zone sûre reste celle de l'écran : sous la barre d'onglets d'UIKit, elle inclurait la barre,
+/// que le site gère déjà lui-même (env(safe-area-inset-bottom) + hauteur de la barre).
+private final class GBWebView: WKWebView {
+    override var safeAreaInsets: UIEdgeInsets { window?.safeAreaInsets ?? super.safeAreaInsets }
+}
+
 final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler, UIScrollViewDelegate,
-    UITabBarDelegate {
+    UITabBarControllerDelegate {
     private static let home = URL(string: "https://makaveli63.github.io/Webapp-/")!
     private static let host = "makaveli63.github.io"
     private static let path = "/Webapp-"
@@ -48,7 +54,16 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
 
     /// Vraie barre d'onglets d'iOS : effet « Liquid Glass » d'Apple et bulle qui suit le doigt (iOS 26 et plus).
     /// Elle remplace celle du site, masquée dans l'app (attribut data-native-tabs).
-    private let tabBar = UITabBar()
+    /// Gérée par un UITabBarController : sur iOS 26, elle se rétracte en bulle quand on fait défiler vers le bas
+    /// et revient quand on remonte (comme les applis d'Apple). Une seule vue web, déplacée dans l'onglet affiché.
+    private let tabController = UITabBarController()
+    private var tabBar: UITabBar { tabController.tabBar }
+    private lazy var hosts: [UIViewController] = Self.tabs.enumerated().map { index, tab in
+        let host = UIViewController()
+        host.view.backgroundColor = .clear
+        host.tabBarItem = UITabBarItem(title: tab.title, image: tab.icon == "flower" ? Self.flowerIcon() : UIImage(systemName: tab.icon), tag: index)
+        return host
+    }
     private static let tabs: [(title: String, icon: String, path: String)] = [
         ("Accueil", "house", "/"),
         ("Tests", "star", "/tests"),
@@ -140,7 +155,7 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         """
         config.userContentController.addUserScript(WKUserScript(source: noZoom, injectionTime: .atDocumentEnd, forMainFrameOnly: true))
 
-        webView = WKWebView(frame: .zero, configuration: config)
+        webView = GBWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = self
         webView.uiDelegate = self
         webView.allowsBackForwardNavigationGestures = true // balayer depuis le bord pour revenir en arrière
@@ -158,26 +173,25 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         webView.scrollView.backgroundColor = background
         let root = UIView()
         root.backgroundColor = background
-        webView.frame = root.bounds
         webView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-        root.addSubview(webView)
-        tabBar.items = Self.tabs.enumerated().map { index, tab in
-            UITabBarItem(title: tab.title, image: tab.icon == "flower" ? Self.flowerIcon() : UIImage(systemName: tab.icon), tag: index)
+        tabController.viewControllers = hosts
+        tabController.delegate = self
+        if #available(iOS 26.0, *) { tabController.tabBarMinimizeBehavior = .onScrollDown }
+        // iPad : barre en bas comme sur iPhone (et non les onglets en haut d'iPadOS 18, sous l'en-tête du site).
+        if #available(iOS 18.0, *), UIDevice.current.userInterfaceIdiom == .pad {
+            tabController.traitOverrides.horizontalSizeClass = .compact
         }
-        tabBar.selectedItem = tabBar.items?.first
-        tabBar.delegate = self
+        tabController.view.backgroundColor = .clear
+        tabController.view.frame = root.bounds
+        tabController.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        addChild(tabController)
+        root.addSubview(tabController.view)
+        tabController.didMove(toParent: self)
+        attachWebView(to: 0)
         // Cachée pendant l'animation d'ouverture du site ; elle apparaît quand le site le signale (ou après 3,5 s).
         // Masquage complet (isHidden) : la barre « Liquid Glass » d'iOS 26 ne respecte pas toujours la transparence.
-        tabBar.isHidden = true
-        tabBar.alpha = 0
+        if #available(iOS 18.0, *) { tabController.isTabBarHidden = true } else { tabBar.isHidden = true }
         DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) { [weak self] in self?.showTabBar() }
-        tabBar.translatesAutoresizingMaskIntoConstraints = false
-        root.addSubview(tabBar)
-        NSLayoutConstraint.activate([
-            tabBar.leadingAnchor.constraint(equalTo: root.leadingAnchor),
-            tabBar.trailingAnchor.constraint(equalTo: root.trailingAnchor),
-            tabBar.bottomAnchor.constraint(equalTo: root.bottomAnchor),
-        ])
         view = root
         Self.current = self
         removeKeyboardBar()
@@ -185,10 +199,17 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         Self.pending = nil
     }
 
+    private var tabBarShown = false
     private func showTabBar() {
-        guard tabBar.isHidden else { return }
-        tabBar.isHidden = false
-        UIView.animate(withDuration: 0.35) { self.tabBar.alpha = 1 }
+        guard !tabBarShown else { return }
+        tabBarShown = true
+        if #available(iOS 18.0, *) {
+            tabController.setTabBarHidden(false, animated: true) // la barre monte en glissant, comme dans les applis d'Apple
+        } else {
+            tabBar.alpha = 0
+            tabBar.isHidden = false
+            UIView.animate(withDuration: 0.35) { self.tabBar.alpha = 1 }
+        }
     }
 
     /// Couleur d'accent du site (« #fa2d48 ») pour l'onglet sélectionné.
@@ -199,10 +220,26 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
                                    blue: CGFloat(value & 0xff) / 255, alpha: 1)
     }
 
+    /// La vue web passe dans l'onglet affiché ; c'est elle que la barre surveille pour se rétracter.
+    private func attachWebView(to index: Int) {
+        guard hosts.indices.contains(index) else { return }
+        let host = hosts[index]
+        if webView.superview !== host.view {
+            webView.frame = host.view.bounds
+            host.view.addSubview(webView)
+        }
+        host.setContentScrollView(webView.scrollView, for: .bottom)
+    }
+
+    func tabBarController(_ controller: UITabBarController, shouldSelect viewController: UIViewController) -> Bool {
+        if let index = hosts.firstIndex(of: viewController) { attachWebView(to: index) }
+        return true
+    }
+
     // Onglet touché : le site change de page sans se recharger (navigation de l'app web).
-    func tabBar(_ tabBar: UITabBar, didSelect item: UITabBarItem) {
-        guard Self.tabs.indices.contains(item.tag) else { return }
-        let path = Self.tabs[item.tag].path
+    func tabBarController(_ controller: UITabBarController, didSelect viewController: UIViewController) {
+        guard let index = hosts.firstIndex(of: viewController), Self.tabs.indices.contains(index) else { return }
+        let path = Self.tabs[index].path
         webView.evaluateJavaScript(
             "window.gbNavigate ? window.gbNavigate('\(path)') : (location.href = '\(Self.path)\(path)/'.replace('//', '/'))",
             completionHandler: nil)
@@ -214,7 +251,10 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         let match = Self.tabs.enumerated()
             .filter { $0.element.path == "/" ? (page == "/" || page.isEmpty || page.hasPrefix("/actualites")) : page.hasPrefix($0.element.path) }
             .max { $0.element.path.count < $1.element.path.count }
-        tabBar.selectedItem = match.flatMap { tabBar.items?[$0.offset] }
+        // Page hors onglets (fiche, article…) : l'onglet d'origine reste sélectionné.
+        guard let index = match?.offset, tabController.selectedIndex != index else { return }
+        attachWebView(to: index)
+        tabController.selectedIndex = index
     }
 
     func viewForZooming(in scrollView: UIScrollView) -> UIView? { nil }
