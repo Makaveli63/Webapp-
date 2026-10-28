@@ -126,6 +126,16 @@ struct LiveLockScreenView: View {
                 .layoutPriority(1)
         }
         .padding(14)
+        .background {
+            // Image du jeu en fond, floutée et assombrie (comme les widgets).
+            if let data = context.attributes.image, let image = UIImage(data: data) {
+                ZStack {
+                    Image(uiImage: image).resizable().scaledToFill().blur(radius: 18)
+                    LinearGradient(colors: [.black.opacity(0.55), .black.opacity(0.75)], startPoint: .leading, endPoint: .trailing)
+                }
+            }
+        }
+        .clipped()
     }
 }
 
@@ -140,7 +150,10 @@ struct ReleaseLiveActivity: Widget {
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
-                    LiveGameImage(data: context.attributes.image, width: 44, height: 58)
+                    // Décalée vers l'intérieur : loin du coin arrondi de l'île.
+                    LiveGameImage(data: context.attributes.image, width: 44, height: 58, corner: 10)
+                        .padding(.leading, 10)
+                        .padding(.top, 4)
                 }
                 DynamicIslandExpandedRegion(.center) {
                     Text(context.attributes.title)
@@ -154,6 +167,7 @@ struct ReleaseLiveActivity: Widget {
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
+                            .minimumScaleFactor(0.8)
                         Spacer(minLength: 8)
                         // Jours et minuteur ensemble, en bas sur toute la largeur : loin des bords arrondis.
                         LiveCountdownText(state: context.state)
@@ -162,6 +176,8 @@ struct ReleaseLiveActivity: Widget {
                             .minimumScaleFactor(0.75)
                             .layoutPriority(1)
                     }
+                    .padding(.horizontal, 12) // loin des bords arrondis, à gauche comme à droite
+                    .padding(.bottom, 2)
                 }
             } compactLeading: {
                 LiveGameImage(data: context.attributes.image, width: 22, height: 22, corner: 11)
@@ -172,6 +188,7 @@ struct ReleaseLiveActivity: Widget {
             } minimal: {
                 LiveGameImage(data: context.attributes.image, width: 22, height: 22, corner: 11)
             }
+            .contentMargins(.horizontal, 18, for: .expanded)
             .widgetURL(appLink(context.attributes.path))
         }
     }
