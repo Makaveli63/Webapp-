@@ -37,6 +37,11 @@ final class AppBridge {
     }
 
     @JavascriptInterface
+    public void setLiveActivity(boolean on) {
+        activity.runOnUiThread(() -> activity.setLiveActivity(on));
+    }
+
+    @JavascriptInterface
     public void setPins(String json) {
         try {
             JSONArray in = new JSONArray(json);
@@ -49,6 +54,7 @@ final class AppBridge {
             if (value.equals(WidgetData.pinsJson(ctx))) return; // rien n'a changé
             WidgetData.savePins(ctx, value);
             WidgetData.refreshAll(ctx);
+            LiveCountdown.refreshAsync(ctx); // le compte à rebours en direct suit le nouveau jeu épinglé
         } catch (Exception ignored) {
             // donnée invalide : ignorée
         }

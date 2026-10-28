@@ -331,5 +331,6 @@ struct GamingBaseWidgets: WidgetBundle {
         ReleaseWidget()
         NewsWidget()
         FreeWidget()
+        ReleaseLiveActivity()
     }
 }

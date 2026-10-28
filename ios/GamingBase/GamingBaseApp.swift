@@ -16,7 +16,10 @@ struct GamingBaseApp: App {
                 .onOpenURL { WebViewController.open($0) } // lien venant d'un widget
                 .onChange(of: scenePhase) { phase in
                     // À chaque ouverture : nouvelles actus vérifiées, résumé du soir mis à jour.
-                    if phase == .active { Task { _ = await NewsAlerts.check(notify: true) } }
+                    if phase == .active {
+                        Task { _ = await NewsAlerts.check(notify: true) }
+                        Task { await LiveActivities.refresh() }
+                    }
                     if phase == .background { NewsAlerts.schedule() }
                 }
         }
@@ -113,12 +116,23 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
             }
             return
         }
+        // Interrupteur « Compte à rebours en direct » (Live Activity) du site.
+        if let on = body["liveActivity"] as? Bool {
+            Task { @MainActor [weak self] in
+                let result = await LiveActivities.setEnabled(on)
+                self?.webView.evaluateJavaScript(
+                    "window.dispatchEvent(new CustomEvent('gb-live',{detail:{enabled:\(result.enabled),denied:\(result.denied)}}))",
+                    completionHandler: nil)
+            }
+            return
+        }
         guard let pins = body["pins"] as? [String] else { return }
         let clean = pins.prefix(20).filter { $0.range(of: "^[a-z0-9-]{1,80}$", options: .regularExpression) != nil }
         let defaults = AppGroup.defaults
         if defaults?.stringArray(forKey: AppGroup.pinsKey) == Array(clean) { return }
         defaults?.set(Array(clean), forKey: AppGroup.pinsKey)
         WidgetCenter.shared.reloadAllTimelines()
+        Task { await LiveActivities.refresh() } // nouveau jeu épinglé : la Live Activity suit
     }
 
     private static func isSite(_ url: URL) -> Bool {

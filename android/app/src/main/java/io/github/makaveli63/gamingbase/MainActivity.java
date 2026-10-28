@@ -157,9 +157,40 @@ public class MainActivity extends Activity {
         notifyPage(on, false);
     }
 
+    // ---------- Compte à rebours en direct (notification persistante du jeu épinglé) ----------
+
+    private static final int LIVE_REQUEST = 43;
+
+    void setLiveActivity(boolean on) {
+        if (on && Build.VERSION.SDK_INT >= 33
+                && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[] {Manifest.permission.POST_NOTIFICATIONS}, LIVE_REQUEST);
+            return; // suite dans onRequestPermissionsResult
+        }
+        LiveCountdown.setEnabled(this, on);
+        notifyLive(on, false);
+    }
+
+    private void notifyLive(boolean enabled, boolean denied) {
+        web.evaluateJavascript("window.dispatchEvent(new CustomEvent('gb-live',{detail:{enabled:" + enabled
+                + ",denied:" + denied + "}}))", null);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        LiveCountdown.refreshAsync(this); // à chaque retour dans l'app
+    }
+
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] results) {
         super.onRequestPermissionsResult(requestCode, permissions, results);
+        if (requestCode == LIVE_REQUEST) {
+            boolean ok = results.length > 0 && results[0] == PackageManager.PERMISSION_GRANTED;
+            LiveCountdown.setEnabled(this, ok);
+            notifyLive(ok, !ok);
+            return;
+        }
         if (requestCode != NOTIF_REQUEST) return;
         boolean granted = results.length > 0 && results[0] == PackageManager.PERMISSION_GRANTED;
         NewsJob.setEnabled(this, granted);

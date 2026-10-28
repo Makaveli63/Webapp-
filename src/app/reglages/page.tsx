@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { AppNotificationsToggle } from "@/components/app/AppNotificationsToggle";
+import { LiveActivityToggle } from "@/components/app/LiveActivityToggle";
 import { AccentPicker } from "@/components/settings/AccentPicker";
 import { ThemePicker } from "@/components/settings/ThemePicker";
 import { SyncPanel } from "@/components/sync/SyncPanel";
@@ -14,6 +15,7 @@ export default function SettingsPage() {
         <p className="mt-2 text-muted">Notifications, synchronisation entre tes appareils, thème et couleur du site.</p>
       </header>
       <AppNotificationsToggle />
+      <LiveActivityToggle />
       <SyncPanel />
       <ThemePicker />
       <AccentPicker />

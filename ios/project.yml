@@ -23,6 +23,8 @@ targets:
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         ITSAppUsesNonExemptEncryption: false
+        # Live Activity « compte à rebours du jeu épinglé » (écran verrouillé et Dynamic Island)
+        NSSupportsLiveActivities: true
         UIBackgroundModes:
           - fetch
         # Domaines de l'app : nécessaires au mode hors connexion (service worker) dans la vue web.
