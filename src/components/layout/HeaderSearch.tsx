@@ -7,63 +7,64 @@ import { createPortal } from "react-dom";
 import { SearchBar } from "./SearchBar";
 
 /**
- * Loupe de l'en-tête (téléphone, tablette et ordinateur) : touchée, elle s'étire vers la gauche jusqu'à devenir le champ
- * de recherche, comme sur iOS ; les résultats s'affichent dessous, sans changer de page.
- * « Annuler » referme : le champ se rétracte dans la loupe.
+ * Loupe de l'en-tête (téléphone, tablette et ordinateur) : touchée, c'est la bulle de la loupe elle-même qui
+ * s'allonge vers la gauche jusqu'à devenir le champ de recherche, comme sur iOS. Les autres boutons restent
+ * en place, la page reste visible derrière ; les résultats s'affichent sous le champ, sans changer de page.
+ * La croix (champ vide), Échap ou un toucher à côté referment : le champ se rétracte dans la loupe.
  */
-const EASE = "cubic-bezier(.2, .9, .25, 1)";
+// Ressort : s'étire vite, dépasse à peine, se pose (repli sur une courbe simple si linear() n'existe pas).
+const SPRING_STEPS =
+  "linear(0, 0.009, 0.035 2.1%, 0.141 4.4%, 0.723 12.9%, 0.938 16.7%, 1.017 19.4%, 1.067, 1.099 24.3%, 1.108 26%, 1.104, 1.088 30.6%, 1.019 39.2%, 0.996 43.3%, 0.986 47.6%, 0.991 57.2%, 1)";
+const spring = () => (CSS.supports("animation-timing-function", SPRING_STEPS) ? SPRING_STEPS : "cubic-bezier(.3, 1.25, .45, 1)");
 const reduced = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
 export function HeaderSearch({ active }: { active: boolean }) {
   const [open, setOpen] = useState(false);
   const [closing, setClosing] = useState(false);
   const pathname = usePathname();
   const loupe = useRef<HTMLButtonElement>(null);
+  const box = useRef<HTMLDivElement>(null);
   const field = useRef<HTMLDivElement>(null);
-  // Point de départ : la loupe (position et taille), mesurée au toucher.
-  const from = useRef<DOMRect | null>(null);
 
-  // Image de départ de l'étirement : champ réduit à la taille de la loupe, à sa place.
-  const frames = () => {
-    const el = field.current;
-    const start = from.current;
-    if (!el || !start) return null;
-    const end = el.getBoundingClientRect();
-    const dx = start.right - end.right;
-    const scale = Math.min(1, start.height / end.height);
-    const left = Math.max(0, end.width - start.width / scale);
-    return {
-      field: [
-        { clipPath: `inset(0 0 0 ${left}px round 999px)`, transform: `translateX(${dx}px) scale(${scale})`, opacity: 0.5 },
-        { clipPath: "inset(0 0 0 0 round 999px)", transform: "translateX(0) scale(1)", opacity: 1 },
-      ],
-      // La petite loupe du champ suit le bord gauche qui s'étire.
-      icon: [{ transform: `translateX(${left + (start.width / scale - 40) / 2}px)` }, { transform: "translateX(0)" }],
-    };
+  // Le champ se termine exactement au bord droit de la loupe : il en sort, et les boutons voisins ne bougent pas.
+  const anchor = () => {
+    const nav = document.getElementById("gb-topnav");
+    const b = loupe.current?.getBoundingClientRect();
+    if (!nav || !b || !box.current) return;
+    box.current.style.setProperty("--hs-right", `${Math.max(0, nav.getBoundingClientRect().right - b.right)}px`);
   };
-  const play = (f: NonNullable<ReturnType<typeof frames>>, options: KeyframeAnimationOptions, reverse = false) => {
+  const stretch = (from: number, to: number, options: KeyframeAnimationOptions) => {
     const el = field.current!;
-    el.dataset.stretching = "1";
-    const anim = el.animate(reverse ? [...f.field].reverse() : f.field, options);
-    el.querySelector("form > svg")?.animate(reverse ? [...f.icon].reverse() : f.icon, options);
+    el.dataset.stretching = "";
+    const anim = el.animate([{ width: `${from}px` }, { width: `${to}px` }], options);
     return anim;
   };
 
   useLayoutEffect(() => {
     if (!open) return;
-    const f = reduced() ? null : frames();
-    if (!f) return void (field.current && delete field.current.dataset.stretching);
-    const anim = play(f, { duration: 420, easing: EASE });
+    anchor();
+    const el = field.current;
+    const size = loupe.current?.offsetWidth ?? 44;
+    if (!el) return;
+    if (reduced()) return void delete el.dataset.stretching;
+    const anim = stretch(size, el.getBoundingClientRect().width, { duration: 560, easing: spring() });
     anim.onfinish = anim.oncancel = () => field.current && delete field.current.dataset.stretching;
+  }, [open]);
+  useEffect(() => {
+    if (!open) return;
+    window.addEventListener("resize", anchor);
+    return () => window.removeEventListener("resize", anchor);
   }, [open]);
 
   const close = useCallback(() => {
     setClosing(true);
-    const f = reduced() ? null : frames();
-    if (f) play(f, { duration: 260, easing: "cubic-bezier(.4, 0, .2, 1)", fill: "forwards" }, true);
+    const el = field.current;
+    const animate = el && !reduced();
+    if (animate) stretch(el.getBoundingClientRect().width, loupe.current?.offsetWidth ?? 44, { duration: 300, easing: "cubic-bezier(.4, 0, .2, 1)", fill: "forwards" });
     window.setTimeout(() => {
       setOpen(false);
       setClosing(false);
-    }, f ? 260 : 200);
+    }, animate ? 300 : 150);
   }, []);
   useEffect(() => setOpen(false), [pathname]);
   useEffect(() => {
@@ -78,28 +79,22 @@ export function HeaderSearch({ active }: { active: boolean }) {
       <button
         type="button"
         ref={loupe}
-        onClick={() => {
-          from.current = loupe.current?.getBoundingClientRect() ?? null;
-          setOpen(true);
-        }}
+        onClick={() => setOpen(true)}
         aria-label="Rechercher"
         aria-expanded={open}
-        className={`head-btn -mr-1 flex size-11 items-center justify-center rounded-full ${active ? "text-accent" : "text-muted"} hover:text-fg`}
+        className={`hs-loupe head-btn -mr-1 flex size-11 items-center justify-center rounded-full ${active ? "text-accent" : "text-muted"} hover:text-fg`}
       >
         <SearchIcon className="size-5" aria-hidden />
       </button>
       {open &&
         createPortal(
-          <div className="header-search">
-            {/* data-stretching dès l'ouverture : le texte du champ n'apparaît qu'une fois la barre étirée. */}
-            <div ref={field} data-stretching="" className="hs-field min-w-0 flex-1">
+          <div ref={box} className="header-search">
+            {/* data-stretching dès l'ouverture : le texte du champ n'apparaît qu'une fois la bulle étirée. */}
+            <div ref={field} data-stretching="" className="hs-field">
               <SearchBar spotlight autoFocus onDone={close} onCancel={close} />
             </div>
-            <button type="button" onClick={close} className="hs-cancel shrink-0 text-[15px] font-semibold text-accent">
-              Annuler
-            </button>
           </div>,
-          document.getElementById("gb-topnav") ?? document.body, // dans l'en-tête, par-dessus le logo et les boutons
+          document.getElementById("gb-topnav") ?? document.body, // dans l'en-tête, par-dessus le logo
         )}
       {open && createPortal(<div aria-hidden className="search-scrim" onClick={close} />, document.body)}
     </>

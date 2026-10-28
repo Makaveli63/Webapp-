@@ -975,46 +975,59 @@ html[data-native-tabs] .listen-player { bottom: calc(env(safe-area-inset-bottom)
 .foryou-reason { background: rgb(14 14 18 / .62); -webkit-backdrop-filter: blur(12px) saturate(160%); backdrop-filter: blur(12px) saturate(160%); }
 
 /* Recherche de l'en-tête (façon iOS) : la loupe s'étire en champ sur toute la largeur, « Annuler » à droite */
+/* Recherche de l'en-tête : la bulle de la loupe s'allonge vers la gauche (voir HeaderSearch). */
 .header-search {
   position: absolute;
-  inset: 0;
+  top: 0;
+  bottom: 0;
+  left: 1rem;
+  right: var(--hs-right, 1rem); /* bord droit = bord droit de la loupe */
   z-index: 5;
   display: flex;
   align-items: center;
-  gap: .75rem;
-  padding-inline: 1rem;
+  justify-content: flex-end;
 }
-.hs-field { transform-origin: right center; }
-/* Grand écran : champ de largeur raisonnable, à droite de l'en-tête, comme sur apple.com */
-@media (min-width: 1024px) { .header-search { justify-content: flex-end; } .hs-field { flex: 0 1 36rem; } }
-/* Pendant l'étirement : seule la loupe du champ se voit, le texte et les boutons arrivent ensuite. */
+/* Même bulle de verre que la loupe, simplement plus longue. */
+.hs-field {
+  width: 100%;
+  height: 2.75rem;
+  border-radius: 9999px;
+  border: 1px solid var(--glass-edge, var(--border));
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  -webkit-backdrop-filter: blur(20px) saturate(200%);
+  backdrop-filter: blur(20px) saturate(200%);
+  box-shadow: inset 0 1px 0 var(--glass-hi, transparent), 0 6px 18px -10px rgb(0 0 0 / .5);
+}
+@media (min-width: 1024px) { .hs-field { max-width: 36rem; } }
+/* Téléphone et tablette : les résultats prennent toute la largeur, jusqu'au bord droit de l'écran. */
+@media (max-width: 1023px) { .hs-field .spotlight-results { right: calc(1rem - var(--hs-right, 1rem)); } }
+.hs-field > form, .hs-field input { height: 100%; }
+/* Pendant l'étirement : coupé à la bulle ; seule la loupe se voit, le texte et la croix arrivent ensuite. */
+.hs-field[data-stretching] { overflow: hidden; }
 .hs-field[data-stretching] input::placeholder { color: transparent; }
-.hs-field[data-stretching] input + button, .hs-field[data-stretching] form > button { opacity: 0; }
-.hs-field input::placeholder { transition: color .2s ease; }
-.hs-field form > button { transition: opacity .2s ease; }
-.hs-cancel { animation: hs-fade .3s ease .12s both; }
-@keyframes hs-fade { from { opacity: 0; transform: translateX(8px); } }
-/* Le reste de l'en-tête s'efface pendant la recherche */
-.topbar nav > :not(.header-search) { transition: opacity .2s ease; }
-html[data-search] .topbar nav > :not(.header-search) { opacity: 0; pointer-events: none; }
-html[data-search="closing"] .hs-cancel { opacity: 0; transition: opacity .15s ease; }
-html[data-search="closing"] .topbar nav > :not(.header-search) { opacity: 1; }
-/* Champ façon iOS : capsule grise pleine, sans contour, curseur à la couleur de l'appli */
-.spotlight-input { background: color-mix(in srgb, var(--muted) 16%, var(--surface)); box-shadow: none; caret-color: var(--accent); -webkit-appearance: none; appearance: none; }
+.hs-field[data-stretching] form > button { opacity: 0; }
+.hs-field input::placeholder { transition: color .25s ease; }
+.hs-field form > button { transition: opacity .25s ease; }
+/* La loupe d'origine laisse place à la bulle ; le logo et les liens glissent et s'effacent dessous. */
+html[data-search] .topbar .hs-loupe { opacity: 0; pointer-events: none; }
+.topbar nav > a, .topbar nav > ul { transition: opacity .25s ease, transform .35s cubic-bezier(.2, .9, .25, 1); }
+html[data-search] .topbar nav > a, html[data-search] .topbar nav > ul { opacity: 0; transform: translateX(-12px); pointer-events: none; }
+html[data-search="closing"] .topbar nav > a, html[data-search="closing"] .topbar nav > ul { opacity: 1; transform: none; }
+/* Champ transparent : c'est la bulle qui porte le fond. Curseur à la couleur de l'appli. */
+.spotlight-input { background: transparent; box-shadow: none; caret-color: var(--accent); -webkit-appearance: none; appearance: none; }
 .spotlight-input:focus { outline: none; box-shadow: none; }
 .spotlight-input::-webkit-search-cancel-button { display: none; }
+/* Voile léger : on reste sur la page, juste un peu en retrait. */
 .search-scrim {
   position: fixed;
   inset: 0;
   z-index: 35;
-  background: rgb(0 0 0 / .28);
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
+  background: rgb(0 0 0 / .14);
   animation: hs-fade-in .25s ease both;
 }
-html[data-search="closing"] .search-scrim { opacity: 0; transition: opacity .2s ease; }
+html[data-search="closing"] .search-scrim { opacity: 0; transition: opacity .25s ease; }
 @keyframes hs-fade-in { from { opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { .hs-field, .hs-cancel, .search-scrim { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .search-scrim { animation: none; } .topbar nav > a, .topbar nav > ul { transition: none; } }
 html[data-search] .release-banner { opacity: 0; pointer-events: none; transition: opacity .2s ease; }
 .spotlight-results { background: color-mix(in srgb, var(--surface) 94%, transparent) !important; }
 .spotlight-chips { background: color-mix(in srgb, var(--surface) 96%, transparent); border-bottom: 1px solid var(--border); }

@@ -180,7 +180,11 @@ export function SearchBar({
 
   return (
     <form role="search" onSubmit={submit} className={`relative ${className}`}>
-      <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" aria-hidden />
+      {/* En-tête : la loupe est à la place exacte de celle du bouton dont le champ est sorti. */}
+      <Search
+        className={`pointer-events-none absolute top-1/2 -translate-y-1/2 text-muted ${spotlight ? "left-[11px] size-5" : "left-3 size-4"}`}
+        aria-hidden
+      />
       <input
         type="search"
         value={q}
@@ -206,16 +210,17 @@ export function SearchBar({
         aria-label="Rechercher"
         className={`w-full text-base placeholder:text-muted focus:outline-none ${
           spotlight
-            ? "spotlight-input rounded-full border-0 py-2.5 pl-9"
+            ? "spotlight-input rounded-full border-0 py-2.5 pl-10"
             : "rounded-lg border border-border bg-surface py-2.5 pl-9 focus:border-accent md:py-2 md:text-sm"
         } ${canSpeak ? (spotlight ? "pr-16" : "pr-10") : spotlight ? "pr-9" : "pr-3"}`}
       />
-      {spotlight && q && (
+      {/* En-tête : la croix efface le texte, ou referme la recherche quand le champ est vide. */}
+      {spotlight && (
         <button
           type="button"
           onMouseDown={(e) => e.preventDefault()}
-          onClick={() => setQ("")}
-          aria-label="Effacer"
+          onClick={() => (q ? setQ("") : onCancel?.())}
+          aria-label={q ? "Effacer" : "Fermer la recherche"}
           className={`absolute top-1/2 flex size-7 -translate-y-1/2 items-center justify-center text-muted ${canSpeak ? "right-9" : "right-2"}`}
         >
           <CircleX className="size-[18px]" fill="currentColor" stroke="var(--surface)" aria-hidden />
