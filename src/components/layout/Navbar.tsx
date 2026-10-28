@@ -40,7 +40,14 @@ export function Navbar() {
         <SearchBar className="ml-auto hidden w-44 lg:block xl:w-56" />
 
         <div className="ml-auto flex items-center gap-1 sm:gap-4 lg:ml-0">
-          <AdminLink active={pathname.startsWith("/admin")} />
+          <Link
+            href={SEARCH_LINK.href}
+            aria-label="Rechercher"
+            aria-current={pathname.startsWith("/recherche") ? "page" : undefined}
+            className={`head-btn -mr-1 flex size-11 items-center justify-center rounded-full ${pathname.startsWith("/recherche") ? "text-accent" : "text-muted"} hover:text-fg lg:hidden`}
+          >
+            <SearchIcon className="size-5" aria-hidden />
+          </Link>
           <Link
             href="/favoris"
             aria-label="Mon espace"
@@ -51,13 +58,7 @@ export function Navbar() {
             <span className="hidden whitespace-nowrap text-sm font-semibold sm:inline lg:hidden 2xl:inline">Mon espace</span>
           </Link>
 
-          <Link
-            href={SEARCH_LINK.href}
-            aria-label="Rechercher"
-            className="head-btn -mr-1 flex size-11 items-center justify-center rounded-full text-muted hover:text-fg lg:hidden"
-          >
-            <SearchIcon className="size-5" aria-hidden />
-          </Link>
+          <AdminLink active={pathname.startsWith("/admin")} />
           <Link
             href="/reglages"
             aria-label="Réglages"
