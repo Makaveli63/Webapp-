@@ -26,7 +26,7 @@ const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 export const metadata: Metadata = {
   title: { default: "GamingBase", template: "%s · GamingBase" },
-  description: "L'actualité du jeu vidéo et de l'anime en français : news, tests, sorties et épisodes, mis à jour toutes les 2 heures.",
+  description: "L'actualité du jeu vidéo et de l'anime en français : news, tests, sorties et épisodes, mis à jour toutes les heures.",
   manifest: `${BASE_PATH}/manifest.webmanifest`,
   // « ?v= » : oblige les navigateurs à recharger l'icône de l'onglet (ils la gardent longtemps en mémoire).
   icons: {

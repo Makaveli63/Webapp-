@@ -679,6 +679,17 @@ async function main() {
   writeJson(ARCHIVE_FILE, all);
   writeJson(ARTICLES_FILE, all);
   console.log(`[rss] ${final.length} articles du jour, ${all.length} avec l'archive (${ARCHIVE_DAYS} jours).`);
+  // État de la mise à jour, affiché dans le tableau de bord administrateur (sources en échec, résumés IA…).
+  writeJson(path.join(CACHE_DIR, "status.json"), {
+    at: new Date().toISOString(),
+    feeds: feeds.map((f, i) => {
+      const r = results[i];
+      return r.status === "fulfilled" ? { name: f.name, count: r.value.length } : { name: f.name, error: String(r.reason?.message ?? "échec").slice(0, 120) };
+    }),
+    today: final.length,
+    ai: final.filter((a) => a.aiSummary).length,
+    aiEnabled: !!process.env.AI_API_KEY?.trim(),
+  });
 }
 
 /** Connexion à l'IA pour un autre script (traduction des résumés d'anime) ; null sans AI_API_KEY. */

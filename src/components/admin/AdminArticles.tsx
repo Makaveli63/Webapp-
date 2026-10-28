@@ -13,7 +13,7 @@ interface Row {
 
 const PLATFORMS = ["PS5", "Switch 2", "Xbox", "PC", "Mobile"];
 
-/** Écrire ses propres articles : publiés sur le site à la mise à jour suivante (moins de 2 h). */
+/** Écrire ses propres articles : publiés sur le site à la mise à jour suivante (moins d’une heure). */
 export function AdminArticles({ password }: { password: string }) {
   const [rows, setRows] = useState<Row[]>([]);
   const [title, setTitle] = useState("");
@@ -51,7 +51,7 @@ export function AdminArticles({ password }: { password: string }) {
         setBody("");
         setScore("");
         setImage("");
-        setMessage("Article enregistré ✅ Il apparaîtra sur le site à la prochaine mise à jour (moins de 2 h).");
+        setMessage("Article enregistré ✅ Il apparaîtra sur le site à la prochaine mise à jour (moins d’une heure).");
         load();
       } else {
         setMessage(

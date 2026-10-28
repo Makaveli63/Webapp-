@@ -9,7 +9,7 @@ import { AniListResults } from "@/components/search/AniListResults";
 import { WikipediaResults } from "@/components/search/WikipediaResults";
 import { aliasesOf } from "@/lib/aliases";
 import { canon, correctQuery, normalize } from "@/lib/fuzzy";
-import { isPlatformId, onPlatform, type PlatformId } from "@/lib/platform-filter";
+import { articleOnPlatform, isPlatformId, onPlatform, showsAnime, type PlatformId } from "@/lib/platform-filter";
 import { PlatformChips } from "./PlatformChips";
 import { loadSearchIndex } from "@/lib/search-index";
 import type { SearchIndex } from "@/types";
@@ -110,10 +110,11 @@ export function SearchResults() {
   const found = corrected ? fixed : exact;
   // Les animes ont leur propre section (base AniList complète) : les jeux et les animes ne se mélangent pas.
   const games = found.games.filter((g) => !g.id.startsWith("anilist-") && onPlatform(g.platforms, platform));
-  const articles = found.articles.filter((a) => onPlatform(a.platforms, platform));
+  const articles = found.articles.filter((a) => articleOnPlatform(a, platform));
   const shownQuery = corrected ?? q;
-  // Les animes n'ont pas de plateforme : masqués quand on filtre par console.
-  const total = articles.length + games.length + (platform ? 0 : animeCount);
+  // Les animes n'ont pas de console : masqués quand on filtre par console.
+  const anime = showsAnime(platform);
+  const total = articles.length + games.length + (anime ? animeCount : 0);
 
   if (!q) return <p className="mt-4 text-muted">Recherchez un jeu, une console, un éditeur…</p>;
 
@@ -141,7 +142,7 @@ export function SearchResults() {
             [
               ["all", "Tout", total],
               ["games", "🎮 Jeux", games.length],
-              ...(platform ? [] : ([["anime", "🌸 Animes", animeCount]] as const)),
+              ...(anime ? ([["anime", "🌸 Animes", animeCount]] as const) : []),
               ["news", "📰 Actus", articles.length],
             ] as const
           ).map(([id, label, n]) => (
@@ -163,7 +164,7 @@ export function SearchResults() {
           value={platform}
           onChange={(id) => {
             setPlatform(id);
-            if (id && tab === "anime") setTab("all");
+            if (!showsAnime(id) && tab === "anime") setTab("all");
           }}
           className="mt-2 pb-1"
         />
@@ -185,7 +186,7 @@ export function SearchResults() {
         </section>
       )}
 
-      <div className={!platform && (tab === "all" || tab === "anime") ? undefined : "hidden"}>
+      <div className={anime && (tab === "all" || tab === "anime") ? undefined : "hidden"}>
         <AniListResults query={parseQuery(shownQuery).words.join(" ")} onCount={setAnimeCount} />
       </div>
 

@@ -13,6 +13,7 @@ import {
   timeAgo,
   voterId,
 } from "@/lib/social";
+import { DislikeButton } from "./DislikeButton";
 import { LikeButton } from "./LikeButton";
 
 interface Comment {
@@ -152,6 +153,7 @@ export function Comments({ slug }: { slug: string }) {
                 <p className="mt-0.5 whitespace-pre-line break-words text-sm text-fg">{c.body}</p>
                 <div className="-ml-2 mt-1 flex items-center gap-2">
                   <LikeButton type="comment" id={c.id} initial={{ likes: Number(c.likes), liked: c.liked }} />
+                  <DislikeButton type="comment" id={c.id} />
                   <button
                     type="button"
                     onClick={() => report(c.id)}

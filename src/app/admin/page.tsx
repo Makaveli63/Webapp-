@@ -8,7 +8,7 @@ export default function AdminPage() {
   return (
     <div>
       <h1 className="text-2xl font-extrabold text-heading sm:text-3xl">Tableau de bord</h1>
-      <p className="mt-2 text-muted">Fréquentation, j&apos;aime et modération des commentaires. Réservé à l&apos;administrateur.</p>
+      <p className="mt-2 text-muted">Fréquentation, état du site, j&apos;aime et modération des commentaires. Réservé à l&apos;administrateur.</p>
       <AdminDashboard />
     </div>
   );

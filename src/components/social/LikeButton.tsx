@@ -2,7 +2,7 @@
 
 import { Heart } from "lucide-react";
 import { useEffect, useState } from "react";
-import { rpc, socialEnabled, voterId } from "@/lib/social";
+import { emitReaction, onReaction, rpc, socialEnabled, voterId } from "@/lib/social";
 
 interface Props {
   type: "article" | "comment";
@@ -23,6 +23,14 @@ export function LikeButton({ type, id, initial, className = "" }: Props) {
       .then((rows) => rows[0] && setState({ likes: Number(rows[0].likes), liked: rows[0].liked }))
       .catch(() => {});
   }, [id, type, initial]);
+  // « Je n'aime pas » choisi sur le même contenu : le j'aime est retiré (le serveur fait de même).
+  useEffect(
+    () =>
+      onReaction((r) => {
+        if (r.kind === "dislike" && r.type === type && r.id === id) setState((s) => (s.liked ? { liked: false, likes: Math.max(0, s.likes - 1) } : s));
+      }),
+    [id, type],
+  );
 
   if (!socialEnabled) return null;
 
@@ -31,6 +39,7 @@ export function LikeButton({ type, id, initial, className = "" }: Props) {
     const liked = !state.liked;
     setState({ liked, likes: Math.max(0, state.likes + (liked ? 1 : -1)) });
     if (liked) {
+      emitReaction({ type, id, kind: "like" });
       setPop(true);
       setTimeout(() => setPop(false), 400);
     }

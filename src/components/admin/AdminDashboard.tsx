@@ -7,6 +7,7 @@ import { loadSearchIndex } from "@/lib/search-index";
 import { setPageGlow } from "@/lib/background";
 import { ADMIN_ERRORS, ADMIN_SESSION_KEY, rpc, setAdminDevice, socialEnabled, timeAgo } from "@/lib/social";
 import { AdminArticles } from "./AdminArticles";
+import { AdminStatus } from "./AdminStatus";
 import { BarList, DailyChart, type DailyPoint } from "./charts";
 
 interface Stats {
@@ -202,6 +203,8 @@ export function AdminDashboard() {
           note={`${t.comments_total} au total${t.reported ? ` · ${t.reported} signalé(s) à vérifier` : ""}`}
         />
       </div>
+
+      <AdminStatus />
 
       <section className="rounded-xl glass p-4">
         <div className="flex items-center justify-between gap-3">

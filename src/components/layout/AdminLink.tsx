@@ -19,7 +19,7 @@ export function AdminLink({ active }: { active: boolean }) {
       }`}
     >
       <ShieldCheck className="size-4" aria-hidden />
-      <span className="hidden sm:inline">Admin</span>
+      <span className="hidden sm:inline md:hidden">Admin</span>
     </Link>
   );
 }

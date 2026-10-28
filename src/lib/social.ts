@@ -27,7 +27,8 @@ const ERRORS: Record<string, string> = {
 const SQL_FILES: Record<string, string> = {
   track_view: "stats.sql", admin_set_password: "stats.sql", admin_stats: "stats.sql", admin_moderate: "stats.sql",
   admin_set_notifications: "notifications.sql",
-  vote_poll: "extras.sql", get_poll: "extras.sql", sync_save: "extras.sql", sync_load: "extras.sql",
+  sync_save: "extras.sql", sync_load: "extras.sql",
+  toggle_dislike: "dislikes.sql", get_dislikes: "dislikes.sql",
   rate_game: "community.sql", get_game_rating: "community.sql", predict_game: "community.sql", get_predictions: "community.sql",
   get_my_activity: "community.sql", get_author_badges: "community.sql", admin_publish_article: "community.sql",
   admin_delete_article: "community.sql", get_published_articles: "community.sql",
@@ -52,6 +53,18 @@ export async function rpc<T>(fn: string, args: Record<string, unknown>): Promise
     throw new Error("Service momentanément indisponible, réessayez plus tard.");
   }
   return res.json() as Promise<T>;
+}
+
+/** J'aime et je n'aime pas s'excluent : chaque bouton prévient l'autre quand il s'active. */
+export type Reaction = { type: "article" | "comment"; id: string; kind: "like" | "dislike" };
+const REACTION_EVENT = "gb-reaction";
+export function emitReaction(r: Reaction) {
+  window.dispatchEvent(new CustomEvent<Reaction>(REACTION_EVENT, { detail: r }));
+}
+export function onReaction(handler: (r: Reaction) => void): () => void {
+  const listener = (e: Event) => handler((e as CustomEvent<Reaction>).detail);
+  window.addEventListener(REACTION_EVENT, listener);
+  return () => window.removeEventListener(REACTION_EVENT, listener);
 }
 
 /** Identifiant anonyme du visiteur (sur cet appareil) : permet de retirer son propre « j'aime ». */

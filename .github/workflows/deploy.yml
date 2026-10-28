@@ -3,9 +3,9 @@ name: Publier le site
 on:
   push:
     branches: [main]
-  # Reconstruit le site toutes les 2 heures pour récupérer les nouveaux articles RSS.
+  # Reconstruit le site toutes les heures pour récupérer les nouveaux articles RSS.
   schedule:
-    - cron: "17 */2 * * *"
+    - cron: "17 * * * *"
     # Jeudi, juste après le changement des jeux gratuits Epic (17 h à Paris = 15 h ou 16 h UTC).
     - cron: "5 15,16 * * 4"
   workflow_dispatch:

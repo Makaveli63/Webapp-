@@ -7,7 +7,7 @@ import { createPortal } from "react-dom";
 import { SearchBar } from "./SearchBar";
 
 /**
- * Loupe de l'en-tête (mobile et tablette) : touchée, elle s'étire vers la gauche jusqu'à devenir le champ
+ * Loupe de l'en-tête (téléphone, tablette et ordinateur) : touchée, elle s'étire vers la gauche jusqu'à devenir le champ
  * de recherche, comme sur iOS ; les résultats s'affichent dessous, sans changer de page.
  * « Annuler » referme : le champ se rétracte dans la loupe.
  */
@@ -49,9 +49,9 @@ export function HeaderSearch({ active }: { active: boolean }) {
   };
 
   useLayoutEffect(() => {
-    if (!open || reduced()) return;
-    const f = frames();
-    if (!f) return;
+    if (!open) return;
+    const f = reduced() ? null : frames();
+    if (!f) return void (field.current && delete field.current.dataset.stretching);
     const anim = play(f, { duration: 420, easing: EASE });
     anim.onfinish = anim.oncancel = () => field.current && delete field.current.dataset.stretching;
   }, [open]);
@@ -84,14 +84,15 @@ export function HeaderSearch({ active }: { active: boolean }) {
         }}
         aria-label="Rechercher"
         aria-expanded={open}
-        className={`head-btn -mr-1 flex size-11 items-center justify-center rounded-full ${active ? "text-accent" : "text-muted"} hover:text-fg lg:hidden`}
+        className={`head-btn -mr-1 flex size-11 items-center justify-center rounded-full ${active ? "text-accent" : "text-muted"} hover:text-fg`}
       >
         <SearchIcon className="size-5" aria-hidden />
       </button>
       {open &&
         createPortal(
-          <div className="header-search lg:hidden">
-            <div ref={field} className="hs-field min-w-0 flex-1">
+          <div className="header-search">
+            {/* data-stretching dès l'ouverture : le texte du champ n'apparaît qu'une fois la barre étirée. */}
+            <div ref={field} data-stretching="" className="hs-field min-w-0 flex-1">
               <SearchBar spotlight autoFocus onDone={close} onCancel={close} />
             </div>
             <button type="button" onClick={close} className="hs-cancel shrink-0 text-[15px] font-semibold text-accent">
@@ -100,7 +101,7 @@ export function HeaderSearch({ active }: { active: boolean }) {
           </div>,
           document.getElementById("gb-topnav") ?? document.body, // dans l'en-tête, par-dessus le logo et les boutons
         )}
-      {open && createPortal(<div aria-hidden className="search-scrim lg:hidden" onClick={close} />, document.body)}
+      {open && createPortal(<div aria-hidden className="search-scrim" onClick={close} />, document.body)}
     </>
   );
 }

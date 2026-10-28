@@ -7,7 +7,7 @@ import { useEffect, useId, useMemo, useState, type FormEvent, type KeyboardEvent
 import { animeHref, https, searchAnime, titleOf, type AniMedia } from "@/lib/anilist";
 import { aliasesOf } from "@/lib/aliases";
 import { canon, prepareTitles, suggestTitles } from "@/lib/fuzzy";
-import { onPlatform, type PlatformId } from "@/lib/platform-filter";
+import { articleOnPlatform, onPlatform, showsAnime, type PlatformId } from "@/lib/platform-filter";
 import { loadSearchIndex } from "@/lib/search-index";
 import { PlatformChips } from "./PlatformChips";
 import type { SearchGame } from "@/types";
@@ -32,7 +32,7 @@ export function SearchBar({
   onCancel?: () => void;
 }) {
   const router = useRouter();
-  const [articles, setArticles] = useState<{ slug: string; title: string; hay: string; source: string; platforms: string[] }[]>([]);
+  const [articles, setArticles] = useState<{ slug: string; title: string; hay: string; source: string; platforms: string[]; category: string }[]>([]);
   const [platform, setPlatform] = useState<PlatformId | null>(null);
   const listId = useId();
   const [q, setQ] = useState("");
@@ -93,7 +93,7 @@ export function SearchBar({
       loadSearchIndex()
         .then((i) => {
           setGames(new Map(i.games.filter((g) => !g.id.startsWith("anilist-")).map((g) => [g.title, g])));
-          if (spotlight) setArticles(i.articles.map((a) => ({ slug: a.slug, title: a.title, source: a.source.name, platforms: a.platforms, hay: ` ${canon(`${a.title} ${a.tags.join(" ")}`)} ` })));
+          if (spotlight) setArticles(i.articles.map((a) => ({ slug: a.slug, title: a.title, source: a.source.name, platforms: a.platforms, category: a.category, hay: ` ${canon(`${a.title} ${a.tags.join(" ")}`)} ` })));
         })
         .catch(() => {});
   };
@@ -132,11 +132,11 @@ export function SearchBar({
 
   // Page Recherche : les résultats s'affichent déjà dessous, pas de liste par-dessus les filtres.
   const suggestions = useMemo(() => (open && !live ? suggestTitles(q, prepared, 5) : []), [open, live, q, prepared]);
-  // Les animes n'ont pas de plateforme : masqués quand on filtre par console.
-  const animeShown = open && !live && !platform ? anime : [];
+  // Les animes n'ont pas de console : masqués quand on filtre par console.
+  const animeShown = open && !live && showsAnime(platform) ? anime : [];
   // En-tête : les actus qui contiennent tous les mots tapés.
   const words = spotlight && q.trim().length >= 2 ? canon(q).split(" ").filter(Boolean) : [];
-  const articlesShown = words.length ? articles.filter((a) => onPlatform(a.platforms, platform) && words.every((w) => a.hay.includes(w))).slice(0, 4) : [];
+  const articlesShown = words.length ? articles.filter((a) => articleOnPlatform(a, platform) && words.every((w) => a.hay.includes(w))).slice(0, 4) : [];
 
   // Jeu avec une fiche sur le site : on l'ouvre directement ; sinon, recherche sur son titre.
   const openGame = (title: string) => {
@@ -242,8 +242,10 @@ export function SearchBar({
               <PlatformChips value={platform} onChange={setPlatform} />
             </li>
           )}
-          {spotlight && platform && q.trim().length >= 2 && suggestions.length + articlesShown.length === 0 && (
-            <li role="presentation" className="px-3 py-3 text-sm text-muted">Rien sur cette plateforme pour « {q.trim()} ».</li>
+          {spotlight && platform && q.trim().length >= 2 && suggestions.length + articlesShown.length + animeShown.length === 0 && (
+            <li role="presentation" className="px-3 py-3 text-sm text-muted">
+              {platform === "anime" ? "Aucun anime" : "Rien sur cette plateforme"} pour « {q.trim()} ».
+            </li>
           )}
           {suggestions.length > 0 && (
             <li role="presentation" className="px-3 pb-1 pt-2 text-xs font-semibold uppercase tracking-wide text-muted">

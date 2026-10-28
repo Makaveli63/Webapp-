@@ -5,8 +5,6 @@ import { ListenNews } from "@/components/home/ListenNews";
 import { PromosTeaser } from "@/components/home/PromosTeaser";
 import { QuickLinks } from "@/components/home/QuickLinks";
 import { VideosTeaser } from "@/components/home/VideosTeaser";
-import { PollCard } from "@/components/poll/PollCard";
-import { currentPoll } from "@/lib/polls";
 import { NewsSection } from "@/components/news/NewsSection";
 import { UpcomingReleases } from "@/components/releases/UpcomingReleases";
 import { WeekReleasesTeaser } from "@/components/releases/WeekReleasesTeaser";
@@ -26,7 +24,7 @@ export default async function HomePage() {
           Le jeu vidéo et l&apos;anime, <span className="logo-gradient">au même endroit</span>.
         </h1>
         <p className="mt-2 max-w-2xl text-muted sm:mt-3">
-          Les dernières news jeux vidéo et anime, les tests, les sorties, les nouveaux épisodes et les jeux gratuits, mis à jour toutes les 2 heures.
+          Les dernières news jeux vidéo et anime, les tests, les sorties, les nouveaux épisodes et les jeux gratuits, mis à jour toutes les heures.
         </p>
       </section>
 
@@ -52,7 +50,6 @@ export default async function HomePage() {
         }))}
       />
       <NewsSection id="latest-title" title="Dernières actualités" href="/actualites" articles={latest.filter((a) => a.category !== "Anime").slice(0, 6)} />
-      <PollCard poll={currentPoll()} />
       <WeekReleasesTeaser />
       <FreeGamesTeaser />
       <AnimeTeaser />

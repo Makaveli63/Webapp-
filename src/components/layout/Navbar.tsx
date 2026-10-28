@@ -7,9 +7,8 @@ import { Logo } from "@/components/ui/Logo";
 import { AdminLink } from "./AdminLink";
 import { activeHref, NAV_LINKS } from "./nav-links";
 import { HeaderSearch } from "./HeaderSearch";
-import { SearchBar } from "./SearchBar";
 
-/** En-tête : navigation complète sur ordinateur, logo + recherche sur mobile (onglets en bas d'écran). */
+/** En-tête : navigation complète sur ordinateur, logo + loupe partout (onglets en bas d'écran sur mobile). */
 export function Navbar() {
   const pathname = usePathname();
   const active = activeHref(pathname);
@@ -37,9 +36,8 @@ export function Navbar() {
           ))}
         </ul>
 
-        <SearchBar className="ml-auto hidden w-52 lg:block xl:w-64" />
 
-        <div className="ml-auto flex items-center gap-1 sm:gap-4 md:gap-1 lg:ml-0 lg:gap-4">
+        <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-4 md:gap-1 lg:gap-3">
           <HeaderSearch active={pathname.startsWith("/recherche")} />
           <Link
             href="/favoris"
@@ -48,7 +46,7 @@ export function Navbar() {
             className={`head-btn -mr-1 flex h-11 items-center justify-center gap-1.5 rounded-full px-2.5 hover:text-fg ${mySpace ? "text-accent" : "text-muted"}`}
           >
             <CircleUserRound className="size-5" aria-hidden />
-            <span className="hidden whitespace-nowrap text-sm font-semibold sm:inline md:hidden 2xl:inline">Mon espace</span>
+            <span className="hidden whitespace-nowrap text-sm font-semibold sm:inline md:hidden">Mon espace</span>
           </Link>
 
           <AdminLink active={pathname.startsWith("/admin")} />

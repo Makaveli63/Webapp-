@@ -985,6 +985,8 @@ html[data-native-tabs] .listen-player { bottom: calc(env(safe-area-inset-bottom)
   padding-inline: 1rem;
 }
 .hs-field { transform-origin: right center; }
+/* Grand écran : champ de largeur raisonnable, à droite de l'en-tête, comme sur apple.com */
+@media (min-width: 1024px) { .header-search { justify-content: flex-end; } .hs-field { flex: 0 1 36rem; } }
 /* Pendant l'étirement : seule la loupe du champ se voit, le texte et les boutons arrivent ensuite. */
 .hs-field[data-stretching] input::placeholder { color: transparent; }
 .hs-field[data-stretching] input + button, .hs-field[data-stretching] form > button { opacity: 0; }

@@ -10,6 +10,7 @@ import { ReadingControls } from "@/components/news/ReadingControls";
 import { ShareButton } from "@/components/share/ShareButton";
 import { Comments } from "@/components/social/Comments";
 import { PageTheme } from "@/components/theme/PageTheme";
+import { DislikeButton } from "@/components/social/DislikeButton";
 import { LikeButton } from "@/components/social/LikeButton";
 import { RemoteImage } from "@/components/ui/RemoteImage";
 import { VideoPlayer } from "@/components/ui/VideoPlayer";
@@ -101,6 +102,7 @@ export default async function ArticlePage({ params }: Props) {
         <div className="flex shrink-0 flex-wrap items-center gap-1.5">
           <ReadingControls />
           <LikeButton type="article" id={article.slug} className="glass-pill h-[30px] pr-3 ring-1 ring-inset ring-border" />
+          <DislikeButton type="article" id={article.slug} className="glass-pill h-[30px] ring-1 ring-inset ring-border" />
           <ShareButton title={article.title} path={`/actualites/${article.slug}/`} />
           <FavoriteButton article={article} withLabel />
         </div>
