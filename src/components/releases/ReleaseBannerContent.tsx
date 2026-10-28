@@ -2,7 +2,8 @@
 
 import { ChevronDown, Hourglass, Pin } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { PlatformBadge } from "@/components/ui/Badge";
 import { Countdown } from "@/components/ui/Countdown";
 import { RemoteImage } from "@/components/ui/RemoteImage";
@@ -24,14 +25,48 @@ export function ReleaseBannerContent({ releases }: { releases: Item[] }) {
   const [next] = pinnedFirst(releases, pins);
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
+  const collapsed = useRef<DOMRect | null>(null);
+  const anim = useRef<Animation | null>(null);
   const pinned = !!pins?.includes(next.id);
   const Icon = pinned ? Pin : Hourglass;
+
+  // Style Capsule : l'île grandit et rétrécit en continu (largeur, hauteur, arrondi), mesurée avant et après.
+  const toggle = useCallback(
+    (wanted?: boolean) => {
+      const el = box.current;
+      const target = wanted ?? !open;
+      if (target === open) return;
+      const smooth =
+        el && document.documentElement.dataset.style === "capsule" && !matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (!el || !smooth) {
+        setOpen(target);
+        return;
+      }
+      anim.current?.cancel();
+      const from = el.getBoundingClientRect();
+      const frame = (r: DOMRect, radius: number) => ({ width: `${r.width}px`, height: `${r.height}px`, borderRadius: `${radius}px` });
+      if (target) {
+        collapsed.current = from;
+        flushSync(() => setOpen(true));
+        const to = el.getBoundingClientRect();
+        anim.current = el.animate([frame(from, from.height / 2), frame(to, 30)], {
+          duration: 460,
+          easing: "cubic-bezier(.2, .9, .25, 1.12)",
+        });
+      } else {
+        const to = collapsed.current ?? from;
+        anim.current = el.animate([frame(from, 30), frame(to, to.height / 2)], { duration: 320, easing: "cubic-bezier(.4, 0, .2, 1)" });
+        anim.current.onfinish = () => setOpen(false);
+      }
+    },
+    [open],
+  );
 
   // Se referme en touchant ailleurs ou avec Échap.
   useEffect(() => {
     if (!open) return;
     const close = (e: Event) => {
-      if (e instanceof KeyboardEvent ? e.key === "Escape" : !box.current?.contains(e.target as Node)) setOpen(false);
+      if (e instanceof KeyboardEvent ? e.key === "Escape" : !box.current?.contains(e.target as Node)) toggle(false);
     };
     document.addEventListener("pointerdown", close);
     document.addEventListener("keydown", close);
@@ -39,13 +74,13 @@ export function ReleaseBannerContent({ releases }: { releases: Item[] }) {
       document.removeEventListener("pointerdown", close);
       document.removeEventListener("keydown", close);
     };
-  }, [open]);
+  }, [open, toggle]);
 
   return (
     <div ref={box} className="island" data-open={open ? "1" : undefined}>
       <button
         type="button"
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => toggle()}
         aria-expanded={open}
         className="island-bar mx-auto flex w-full max-w-6xl items-center gap-2 px-4 py-2 text-left text-sm"
       >

@@ -614,11 +614,11 @@ html[data-splash="off"] .splash { display: none; }
   width: fit-content;
   max-width: min(92vw, 30rem);
   margin: 0 auto;
+  overflow: hidden; /* le contenu reste dans l'île pendant qu'elle grandit */
   border-radius: 9999px;
   background: #000;
   color: #fff;
   box-shadow: 0 0 0 1px rgb(255 255 255 / .08), 0 14px 34px -12px rgb(0 0 0 / .6);
-  transition: border-radius .35s cubic-bezier(.2,.9,.3,1.2);
   --heading: #fff;
   --muted: #a1a1aa;
   --border: rgb(255 255 255 / .2);
@@ -626,13 +626,10 @@ html[data-splash="off"] .splash { display: none; }
 :root[data-style="capsule"] .island[data-open] {
   width: min(92vw, 30rem);
   border-radius: 30px;
-  animation: island-pop .45s cubic-bezier(.2,.9,.3,1.25);
 }
+/* L'agrandissement est animé en JavaScript (taille réelle avant / après) : pas de transition CSS en plus. */
+:root[data-style="capsule"] .island-panel { transition: none; }
+:root[data-style="capsule"] .island[data-open] .island-panel > div { animation: island-content .35s ease-out .08s both; }
+@keyframes island-content { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
 :root[data-style="capsule"] .island-bar { padding: .55rem 1rem; }
 :root[data-style="capsule"] .island:not([data-open]) .island-bar { width: auto; max-width: min(92vw, 30rem); }
-@keyframes island-pop {
-  0%   { transform: scale(.92, .8); }
-  60%  { transform: scale(1.02, 1.03); }
-  100% { transform: scale(1); }
-}
-@media (prefers-reduced-motion: reduce) { :root[data-style="capsule"] .island[data-open] { animation: none; } }
