@@ -110,6 +110,9 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         }
         tabBar.selectedItem = tabBar.items?.first
         tabBar.delegate = self
+        // Masquée pendant l'animation d'ouverture du site ; elle apparaît quand le site le signale (ou après 3,5 s).
+        tabBar.alpha = 0
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) { [weak self] in self?.showTabBar() }
         tabBar.translatesAutoresizingMaskIntoConstraints = false
         root.addSubview(tabBar)
         NSLayoutConstraint.activate([
@@ -121,6 +124,19 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         Self.current = self
         webView.load(URLRequest(url: Self.pending ?? Self.home))
         Self.pending = nil
+    }
+
+    private func showTabBar() {
+        guard tabBar.alpha < 1 else { return }
+        UIView.animate(withDuration: 0.35) { self.tabBar.alpha = 1 }
+    }
+
+    /// Couleur d'accent du site (« #fa2d48 ») pour l'onglet sélectionné.
+    private func applyAccent(_ hex: String) {
+        let clean = hex.trimmingCharacters(in: .whitespaces).replacingOccurrences(of: "#", with: "")
+        guard clean.count == 6, let value = UInt32(clean, radix: 16) else { return }
+        tabBar.tintColor = UIColor(red: CGFloat((value >> 16) & 0xff) / 255, green: CGFloat((value >> 8) & 0xff) / 255,
+                                   blue: CGFloat(value & 0xff) / 255, alpha: 1)
     }
 
     // Onglet touché : le site change de page sans se recharger (navigation de l'app web).
@@ -164,6 +180,15 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
                     "window.dispatchEvent(new CustomEvent('gb-notif',{detail:{enabled:\(enabled),denied:\(denied)}}))",
                     completionHandler: nil)
             }
+            return
+        }
+        // Fin de l'animation d'ouverture du site : la barre d'onglets apparaît.
+        if body["tabsReady"] as? Bool == true {
+            showTabBar()
+            return
+        }
+        if let accent = body["accent"] as? String {
+            applyAccent(accent)
             return
         }
         // Changement de page sur le site : la barre d'onglets suit.
