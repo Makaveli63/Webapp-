@@ -100,6 +100,22 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 .scroll-row::-webkit-scrollbar { display: none; }
+/* Fondu sur le bord où la rangée continue (voir EdgeFade) ; les largeurs s'animent en douceur. */
+@property --fade-l { syntax: "<length-percentage>"; inherits: false; initial-value: 0px; }
+@property --fade-r { syntax: "<length-percentage>"; inherits: false; initial-value: 0px; }
+.scroll-row {
+  --fade-l: 0px;
+  --fade-r: 0px;
+  transition: --fade-l .25s ease, --fade-r .25s ease;
+  scroll-padding-inline: 1rem; /* les cartes aimantées gardent la marge de l'écran (téléphone) */
+}
+@media (min-width: 640px) { .scroll-row { scroll-padding-inline: 0; } }
+.scroll-row[data-fade] {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 var(--fade-l), #000 calc(100% - var(--fade-r)), transparent);
+  mask-image: linear-gradient(to right, transparent, #000 var(--fade-l), #000 calc(100% - var(--fade-r)), transparent);
+}
+.scroll-row[data-fade="end"], .scroll-row[data-fade="both"] { --fade-r: clamp(2rem, 8%, 5rem); }
+.scroll-row[data-fade="start"], .scroll-row[data-fade="both"] { --fade-l: clamp(2rem, 8%, 5rem); }
 
 /* Typographie des articles rendus depuis Markdown */
 .prose-article { line-height: 1.75; font-size: 1.05rem; }

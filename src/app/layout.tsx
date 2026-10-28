@@ -8,6 +8,7 @@ import { PageTransition } from "@/components/layout/PageTransition";
 import { NativeTabsBridge } from "@/components/app/NativeTabsBridge";
 import { NotifBridge } from "@/components/app/NotifBridge";
 import { StaleBuildGuard } from "@/components/app/ErrorScreen";
+import { EdgeFade } from "@/components/layout/EdgeFade";
 import { ListenPlayer } from "@/components/layout/ListenPlayer";
 import { AppleTransitions } from "@/components/layout/AppleTransitions";
 import { Splash } from "@/components/splash/Splash";
@@ -91,6 +92,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <NativeTabsBridge />
         <NotifBridge />
         <StaleBuildGuard />
+        <EdgeFade />
         <AppleTransitions />
         <Tracker />
         <PullToRefresh />
