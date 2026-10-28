@@ -6,6 +6,20 @@ import { AnimeFollow } from "@/components/tracker/AnimeFollow";
 import { EpisodeTracker } from "@/components/tracker/EpisodeTracker";
 import { animeHref, FORMATS, https, nextOf, originalOf, searchAnime, STATUS, streamingOf, titleOf, type AniMedia } from "@/lib/anilist";
 
+// Mots qui ne font pas partie du titre (« cyberpunk netflix », « solo leveling saison 2 anime »).
+const NOISE = new Set(["anime", "animes", "manga", "serie", "series", "netflix", "crunchyroll", "adn", "prime", "disney", "amazon", "film", "vf", "vostfr", "streaming", "episode", "episodes"]);
+
+/** Recherche AniList sans les mots parasites ; sans résultat, on réessaie en retirant le dernier mot. */
+async function animeSearch(query: string, signal: AbortSignal): Promise<AniMedia[]> {
+  let words = query.split(" ").filter((w) => w && !NOISE.has(w.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()));
+  if (!words.length) words = query.split(" ").filter(Boolean);
+  for (let tries = 0; words.length && tries < 3; tries++, words = words.slice(0, -1)) {
+    const found = await searchAnime(words.join(" "), signal);
+    if (found.length) return found;
+  }
+  return [];
+}
+
 const dayFmt = new Intl.DateTimeFormat("fr-FR", { weekday: "long", day: "numeric", month: "long" });
 
 /** Recherche en direct dans la base d'animes d'AniList (API publique et gratuite) ; chaque anime ouvre sa fiche. */
@@ -16,7 +30,7 @@ export function AniListResults({ query, onCount }: { query: string; onCount?: (n
     if (!query) return;
     const controller = new AbortController();
     setMedia(null);
-    searchAnime(query, controller.signal)
+    animeSearch(query, controller.signal)
       .then(setMedia)
       .catch((err) => {
         if (err?.name !== "AbortError") setMedia([]);
@@ -30,7 +44,7 @@ export function AniListResults({ query, onCount }: { query: string; onCount?: (n
   if (!query || (media && media.length === 0)) return null;
   return (
     <section className="mt-10">
-      <h2 className="text-lg font-bold text-heading">Animes</h2>
+      <h2 className="text-lg font-bold text-heading">✨ Animes</h2>
       {media === null ? (
         <p className="mt-3 text-sm text-muted">Recherche en cours…</p>
       ) : (

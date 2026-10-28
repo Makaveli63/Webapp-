@@ -32,6 +32,8 @@ const matchesGame = (words: string[], g: SearchIndex["games"][number]) => {
 
 // Petits mots ignorés (« 007 first light sur ps5 ») et noms de plateformes traités comme un filtre.
 const STOP_WORDS = new Set(["sur", "le", "la", "les", "de", "des", "du", "un", "une", "jeu", "jeux", "pour", "en", "et", "l", "d", "video"]);
+// Mots de contexte (streaming, type de contenu) ignorés pour trouver un titre.
+const NOISE = new Set(["anime", "animes", "manga", "serie", "series", "netflix", "crunchyroll", "adn", "prime", "disney", "amazon", "film", "vf", "vostfr", "streaming"]);
 const PLATFORM_WORDS: Record<string, RegExp> = {
   ps5: /^PS5$/, ps4: /^PS4$/, playstation: /^PS/, xbox: /^Xbox/, switch: /^Switch/, nintendo: /^Switch/,
   pc: /^PC$/, steam: /^PC$/, mobile: /^(Mobile|iOS|Android)$/, ios: /^(Mobile|iOS)$/, android: /^(Mobile|Android)$/,
@@ -57,10 +59,15 @@ const onPlatforms = (list: string[], platforms: RegExp[]) =>
 function runSearch(index: SearchIndex | null, query: string) {
   const { words, platforms } = parseQuery(query);
   if (!index || !words.length) return { articles: [], games: [] };
-  const games = index.games.filter((g) => matchesGame(words, g));
+  // « cyberpunk netflix » : la plateforme de streaming n'est pas dans le titre du jeu.
+  const core = words.filter((w) => !NOISE.has(w));
+  const titleWords = core.length ? core : words;
+  const games = index.games.filter((g) => matchesGame(titleWords, g));
   const onPlatform = games.filter((g) => onPlatforms(g.platforms, platforms));
+  const articlesFor = (w: string[]) => index.articles.filter((a) => matches(w, a.title, a.excerpt, a.source.name, ...a.tags) && onPlatforms(a.platforms, platforms));
+  const articles = articlesFor(words);
   return {
-    articles: index.articles.filter((a) => matches(words, a.title, a.excerpt, a.source.name, ...a.tags) && onPlatforms(a.platforms, platforms)),
+    articles: articles.length || titleWords === words ? articles : articlesFor(titleWords),
     // Plateformes parfois incomplètes dans les bases de jeux : sans résultat sur la plateforme, on montre quand même le jeu.
     games: onPlatform.length ? onPlatform : games,
   };
@@ -71,6 +78,8 @@ export function SearchResults() {
   const [index, setIndex] = useState<SearchIndex | null>(null);
   const [error, setError] = useState(false);
   const [animeCount, setAnimeCount] = useState(0);
+  const [tab, setTab] = useState<"all" | "games" | "anime" | "news">("all");
+  const [moreGames, setMoreGames] = useState(false);
 
   // L'index (actus + jeux) n'est téléchargé que pour la recherche.
   useEffect(() => {
@@ -83,7 +92,10 @@ export function SearchResults() {
   // Aucun résultat : on corrige les fautes de frappe (« cal of dutty » → « call of duty »).
   const corrected = index && q && exact.articles.length + exact.games.length === 0 ? correctQuery(q, index.vocab) : null;
   const fixed = runSearch(index, corrected ?? "");
-  const { articles, games } = corrected ? fixed : exact;
+  const found = corrected ? fixed : exact;
+  // Les animes ont leur propre section (base AniList complète) : les jeux et les animes ne se mélangent pas.
+  const games = found.games.filter((g) => !g.id.startsWith("anilist-"));
+  const articles = found.articles;
   const shownQuery = corrected ?? q;
   const total = articles.length + games.length + animeCount;
 
@@ -107,20 +119,53 @@ export function SearchResults() {
         </p>
       )}
 
-      {games.length > 0 && (
+      {index && (
+        <div role="tablist" aria-label="Type de résultats" className="mt-4 flex gap-2 overflow-x-auto pb-1">
+          {(
+            [
+              ["all", "Tout", total],
+              ["games", "🎮 Jeux", games.length],
+              ["anime", "✨ Animes", animeCount],
+              ["news", "📰 Actus", articles.length],
+            ] as const
+          ).map(([id, label, n]) => (
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              aria-selected={tab === id}
+              onClick={() => setTab(id)}
+              className={`shrink-0 rounded-full px-3.5 py-1.5 text-sm font-semibold ring-1 ring-inset ${tab === id ? "bg-accent text-white ring-accent" : "glass-pill text-heading ring-border"}`}
+            >
+              {label} <span className={tab === id ? "text-white/80" : "text-muted"}>{n}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {games.length > 0 && (tab === "all" || tab === "games") && (
         <section className="mt-8">
-          <h2 className="text-lg font-bold text-heading">{games.some((g) => g.id.startsWith("anilist-")) ? "Jeux et animes" : "Jeux"}</h2>
+          <h2 className="text-lg font-bold text-heading">🎮 Jeux vidéo</h2>
           <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
-            {games.slice(0, 12).map((g) => (
+            {games.slice(0, moreGames || tab === "games" ? 48 : 8).map((g) => (
               <GameCard key={g.id} game={g} />
             ))}
           </div>
+          {games.length > 8 && !moreGames && tab !== "games" && (
+            <button type="button" onClick={() => setMoreGames(true)} className="mt-3 rounded-full glass-pill px-4 py-1.5 text-sm font-semibold text-heading ring-1 ring-inset ring-border">
+              Voir les {Math.min(games.length, 48)} jeux
+            </button>
+          )}
         </section>
       )}
 
-      {articles.length > 0 && (
+      <div className={tab === "all" || tab === "anime" ? undefined : "hidden"}>
+        <AniListResults query={parseQuery(shownQuery).words.join(" ")} onCount={setAnimeCount} />
+      </div>
+
+      {articles.length > 0 && (tab === "all" || tab === "news") && (
         <section className="mt-8">
-          <h2 className="text-lg font-bold text-heading">Actualités</h2>
+          <h2 className="text-lg font-bold text-heading">📰 Actualités</h2>
           <div className="mt-4 grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
             {articles.slice(0, 60).map((a) => (
               <NewsCard key={a.slug} article={a} />
@@ -129,8 +174,7 @@ export function SearchResults() {
         </section>
       )}
 
-      <AniListResults query={parseQuery(shownQuery).words.join(" ")} onCount={setAnimeCount} />
-      <WikipediaResults query={parseQuery(shownQuery).words.join(" ")} />
+      {tab === "all" && <WikipediaResults query={parseQuery(shownQuery).words.join(" ")} />}
     </>
   );
 }
