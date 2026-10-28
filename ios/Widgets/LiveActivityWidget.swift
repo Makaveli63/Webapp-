@@ -15,6 +15,8 @@ struct LiveCountdownText: View {
     var compact = false
     /// Dynamic Island agrandie : les jours en haut, le minuteur en bas (pour ne jamais couper la ligne).
     var part: Part = .all
+    /// Écran verrouillé : jours en petit au-dessus du minuteur.
+    var stacked = false
 
     var body: some View {
         let now = Date()
@@ -35,6 +37,17 @@ struct LiveCountdownText: View {
                     .monospacedDigit()
                     .frame(maxWidth: 60, alignment: .trailing)
             }
+        } else if stacked {
+            VStack(alignment: .trailing, spacing: 0) {
+                if showDays && days > 0 {
+                    Text(showClock ? "\(days) jour\(days > 1 ? "s" : "")" : "\(days) j")
+                        .font(showClock ? .subheadline.bold() : nil)
+                        .lineLimit(1)
+                }
+                if showClock {
+                    timer(until: boundary, now: now, alignment: .trailing)
+                }
+            }
         } else {
             HStack(spacing: 6) {
                 if showDays && days > 0 && part != .clock {
@@ -45,14 +58,23 @@ struct LiveCountdownText: View {
                     Text("Aujourd'hui").lineLimit(1).fixedSize()
                 }
                 if showClock && part != .days {
-                    Text(timerInterval: now...max(boundary, now.addingTimeInterval(1)), countsDown: true)
-                        .monospacedDigit()
-                        .lineLimit(1)
-                        .multilineTextAlignment(.trailing)
-                        .frame(minWidth: 70, maxWidth: 120, alignment: .trailing)
+                    timer(until: boundary, now: now, alignment: .leading)
                 }
             }
         }
+    }
+}
+
+extension LiveCountdownText {
+    /// Minuteur qui défile tout seul. Sa largeur est fixée (le minuteur prendrait sinon toute la place),
+    /// collée aux jours (à gauche) ou au bord (à droite).
+    func timer(until end: Date, now: Date, alignment: Alignment) -> some View {
+        Text(timerInterval: now...max(end, now.addingTimeInterval(1)), countsDown: true)
+            .monospacedDigit()
+            .lineLimit(1)
+            .multilineTextAlignment(alignment == .leading ? .leading : .trailing)
+            .frame(width: 104, alignment: alignment)
+            .minimumScaleFactor(0.7)
     }
 }
 
@@ -94,12 +116,13 @@ struct LiveLockScreenView: View {
                 Text("Sortie le \(context.state.day)")
                     .font(.caption)
                     .foregroundStyle(.white.opacity(0.7))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             }
             Spacer(minLength: 8)
-            LiveCountdownText(state: context.state)
-                .font(.title3.bold())
+            LiveCountdownText(state: context.state, stacked: true)
+                .font(.title2.bold())
                 .foregroundStyle(liveAccent)
-                .minimumScaleFactor(0.7)
                 .layoutPriority(1)
         }
         .padding(14)
