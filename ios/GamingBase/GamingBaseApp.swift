@@ -28,7 +28,7 @@ struct WebContainer: UIViewControllerRepresentable {
     func updateUIViewController(_ controller: WebViewController, context: Context) {}
 }
 
-final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler {
+final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler, UIScrollViewDelegate {
     private static let home = URL(string: "https://makaveli63.github.io/Webapp-/")!
     private static let host = "makaveli63.github.io"
     private static let path = "/Webapp-"
@@ -56,7 +56,7 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         config.applicationNameForUserAgent = "Mobile/15E148 GamingBaseApp/iOS"
         // Le site transmet ses jeux épinglés (📌) pour le widget « Mon jeu épinglé ».
         config.userContentController.add(WeakHandler(self), name: "gamingbase")
-        // Pas de zoom (pincement ni double tap) dans l'app, comme une app native. Le site dans Safari garde le zoom.
+        // Pas de zoom (pincement ni double tap) dans l'app, comme une app native.
         let noZoom = """
         (function () {
           var m = document.querySelector('meta[name="viewport"]');
@@ -71,6 +71,11 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         webView.uiDelegate = self
         webView.allowsBackForwardNavigationGestures = true // balayer depuis le bord pour revenir en arrière
         webView.scrollView.contentInsetAdjustmentBehavior = .never
+        // Zoom coupé côté natif aussi : la vue défilante ne propose aucune vue à agrandir.
+        webView.scrollView.delegate = self
+        webView.scrollView.minimumZoomScale = 1
+        webView.scrollView.maximumZoomScale = 1
+        webView.scrollView.bouncesZoom = false
         webView.isOpaque = false
         let background = UIColor { $0.userInterfaceStyle == .dark
             ? UIColor(red: 0.043, green: 0.051, blue: 0.071, alpha: 1)
@@ -81,6 +86,12 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         Self.current = self
         webView.load(URLRequest(url: Self.pending ?? Self.home))
         Self.pending = nil
+    }
+
+    func viewForZooming(in scrollView: UIScrollView) -> UIView? { nil }
+
+    func scrollViewWillBeginZooming(_ scrollView: UIScrollView, with view: UIView?) {
+        scrollView.pinchGestureRecognizer?.isEnabled = false
     }
 
     func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {

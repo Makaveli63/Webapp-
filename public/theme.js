@@ -41,6 +41,15 @@
     });
   }
   apply();
+  // Pas de zoom par pincement : Safari sur iPhone ignore « user-scalable=no », on bloque donc le geste lui-même.
+  ["gesturestart", "gesturechange", "gestureend"].forEach(function (type) {
+    document.addEventListener(type, function (e) {
+      e.preventDefault();
+    }, { passive: false });
+  });
+  document.addEventListener("touchmove", function (e) {
+    if (e.touches && e.touches.length > 1) e.preventDefault();
+  }, { passive: false });
   media.addEventListener("change", apply);
   window.addEventListener("gb-theme-change", apply);
   document.addEventListener("DOMContentLoaded", apply);
