@@ -662,6 +662,14 @@ html[data-ptr] body { overscroll-behavior-y: none; }
 :root[data-style="capsule"][data-tint="bleu"] { --accent: #0062cc; --accent-2: #2ea7e0; }
 :root[data-style="capsule"][data-tint="indigo"] { --accent: #3634a3; --accent-2: #8944ab; }
 :root[data-style="capsule"][data-tint="violet"] { --accent: #8944ab; --accent-2: #e0234e; }
+:root[data-style="capsule"][data-tint="lavande"] { --accent: #6e56cf; --accent-2: #d6409f; }
+:root[data-style="capsule"][data-tint="framboise"] { --accent: #c2185b; --accent-2: #8944ab; }
+:root[data-style="capsule"][data-tint="corail"] { --accent: #d4462f; --accent-2: #c27c0e; }
+:root[data-style="capsule"][data-tint="or"] { --accent: #9a6b00; --accent-2: #c93400; }
+:root[data-style="capsule"][data-tint="menthe"] { --accent: #00807a; --accent-2: #0062cc; }
+:root[data-style="capsule"][data-tint="cyan"] { --accent: #0077b6; --accent-2: #5e5ce6; }
+:root[data-style="capsule"][data-tint="marron"] { --accent: #8b5e3c; --accent-2: #c93400; }
+:root[data-style="capsule"][data-tint="graphite"] { --accent: #48484a; --accent-2: #6246ea; }
 :root[data-style="capsule"][data-theme="dark"][data-tint="gamingbase"] { --accent: #7c5cff; --accent-2: #22d3ee; }
 :root[data-style="capsule"][data-theme="dark"][data-tint="rose"] { --accent: #fa2d48; --accent-2: #ff9f0a; }
 :root[data-style="capsule"][data-theme="dark"][data-tint="rouge"] { --accent: #ff453a; --accent-2: #ff9f0a; }
@@ -671,6 +679,14 @@ html[data-ptr] body { overscroll-behavior-y: none; }
 :root[data-style="capsule"][data-theme="dark"][data-tint="bleu"] { --accent: #0a84ff; --accent-2: #64d2ff; }
 :root[data-style="capsule"][data-theme="dark"][data-tint="indigo"] { --accent: #5e5ce6; --accent-2: #bf5af2; }
 :root[data-style="capsule"][data-theme="dark"][data-tint="violet"] { --accent: #bf5af2; --accent-2: #ff6482; }
+:root[data-style="capsule"][data-theme="dark"][data-tint="lavande"] { --accent: #b4a0ff; --accent-2: #ff8cc6; }
+:root[data-style="capsule"][data-theme="dark"][data-tint="framboise"] { --accent: #ff375f; --accent-2: #bf5af2; }
+:root[data-style="capsule"][data-theme="dark"][data-tint="corail"] { --accent: #ff6b57; --accent-2: #ffb340; }
+:root[data-style="capsule"][data-theme="dark"][data-tint="or"] { --accent: #e0a800; --accent-2: #ff9f0a; }
+:root[data-style="capsule"][data-theme="dark"][data-tint="menthe"] { --accent: #63e6e2; --accent-2: #64d2ff; }
+:root[data-style="capsule"][data-theme="dark"][data-tint="cyan"] { --accent: #64d2ff; --accent-2: #7d7aff; }
+:root[data-style="capsule"][data-theme="dark"][data-tint="marron"] { --accent: #c49a6c; --accent-2: #ff9f0a; }
+:root[data-style="capsule"][data-theme="dark"][data-tint="graphite"] { --accent: #aeaeb2; --accent-2: #7c5cff; }
 
 /* Transparence du style Capsule : opaque (cartes pleines), verre (par défaut) ou cristal (très transparent). */
 :root[data-style="capsule"][data-glass="verre"] { --glass-a: 72%; --glass-b: 56%; }

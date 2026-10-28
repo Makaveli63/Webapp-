@@ -21,6 +21,14 @@ const TINTS: { id: string; label: string; color: string }[] = [
   { id: "bleu", label: "Bleu", color: "#0a84ff" },
   { id: "indigo", label: "Indigo", color: "#5e5ce6" },
   { id: "violet", label: "Violet", color: "#bf5af2" },
+  { id: "lavande", label: "Lavande", color: "#b4a0ff" },
+  { id: "framboise", label: "Framboise", color: "#ff375f" },
+  { id: "corail", label: "Corail", color: "#ff6b57" },
+  { id: "or", label: "Or", color: "#e0a800" },
+  { id: "menthe", label: "Menthe", color: "#63e6e2" },
+  { id: "cyan", label: "Cyan", color: "#64d2ff" },
+  { id: "marron", label: "Marron", color: "#c49a6c" },
+  { id: "graphite", label: "Graphite", color: "#8e8e93" },
 ];
 const GLASS: { id: string; label: string; hint: string }[] = [
   { id: "opaque", label: "Opaque", hint: "Cartes pleines" },
