@@ -81,13 +81,66 @@ enum NewsAlerts {
         var digest = false
         var anime: Bool? = true
         var games: [String] = []
+        /// Jeux et animes suivis (🔔) : nom affiché et façons de l'écrire dans les titres d'actus.
+        var follows: [Follow]? = []
+        /// Prochains épisodes des animes suivis.
+        var episodes: [Episode]? = []
+    }
+
+    struct Follow: Codable {
+        let t: String
+        let a: [String]
+    }
+
+    struct Episode: Codable {
+        let title: String
+        let episode: Int
+        let atMs: Double
+        let path: String
+    }
+
+    private static let episodeIdsKey = "notif.episodeIds"
+
+    /// Nouvel épisode d'un anime suivi : notification programmée à l'heure de sortie (sans réveiller l'app).
+    static func scheduleEpisodes() async {
+        let center = UNUserNotificationCenter.current()
+        center.removePendingNotificationRequests(withIdentifiers: defaults.stringArray(forKey: episodeIdsKey) ?? [])
+        guard enabled else { return defaults.set([String](), forKey: episodeIdsKey) }
+        let now = Date()
+        var ids: [String] = []
+        for ep in (prefs.episodes ?? []).prefix(30) {
+            let at = Date(timeIntervalSince1970: ep.atMs / 1000)
+            guard at > now, ep.path.hasPrefix("/Webapp-/") else { continue }
+            let content = UNMutableNotificationContent()
+            content.title = "▶️ Nouvel épisode : \(ep.title)"
+            content.body = "L'épisode \(ep.episode) est disponible."
+            content.sound = .default
+            content.userInfo = ["path": ep.path]
+            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: at.timeIntervalSince(now), repeats: false)
+            let id = "ep-\(ep.path)-\(ep.episode)"
+            try? await center.add(UNNotificationRequest(identifier: id, content: content, trigger: trigger))
+            ids.append(id)
+        }
+        defaults.set(ids, forKey: episodeIdsKey)
+    }
+
+    /// Nom du jeu ou de l'anime suivi dont parle l'article, s'il y en a un.
+    static func followed(_ a: Feed.News, _ p: Prefs) -> String? {
+        let title = norm(a.title)
+        for f in p.follows ?? [] where f.a.contains(where: { let n = norm($0); return n.count >= 6 && title.contains(n) }) {
+            return f.t
+        }
+        return nil
     }
 
     static func savePrefs(_ raw: [String: Any]) {
         guard JSONSerialization.isValidJSONObject(raw), let data = try? JSONSerialization.data(withJSONObject: raw),
               data.count < 20_000, (try? JSONDecoder().decode(Prefs.self, from: data)) != nil else { return }
         defaults.set(data, forKey: prefsKey)
-        Task { await refreshDigest() } // programmé (ou retiré) tout de suite
+        Task {
+            await refreshDigest() // programmé (ou retiré) tout de suite
+            await scheduleEpisodes()
+        }
     }
 
     private static var prefs: Prefs {
@@ -132,6 +185,7 @@ enum NewsAlerts {
             _ = await check(notify: false) // mémorise les articles actuels : pas d'avalanche au départ
             schedule()
             await refreshDigest()
+            await scheduleEpisodes()
         }
         return granted
     }
@@ -164,8 +218,20 @@ enum NewsAlerts {
         defaults.set(Array((feed.news.map(\.path) + seen).prefix(200)), forKey: seenKey)
         guard notify, !seen.isEmpty else { return 0 }
         let p = prefs
-        let fresh = unseen.filter { matches($0, p) }
         let center = UNUserNotificationCenter.current()
+        // Jeux et animes suivis (🔔) : notifiés tout de suite, même hors des filtres et du résumé du soir.
+        var hits = 0
+        for article in unseen {
+            guard let name = followed(article, p) else { continue }
+            let content = UNMutableNotificationContent()
+            content.title = "🔔 \(name)"
+            content.body = article.title
+            content.sound = .default
+            content.userInfo = ["path": article.path]
+            try? await center.add(UNNotificationRequest(identifier: article.path, content: content, trigger: nil))
+            hits += 1
+        }
+        let fresh = unseen.filter { followed($0, p) == nil && matches($0, p) }
 
         // Résumé du soir : les articles sont mis de côté et la notification de 19 h est PROGRAMMÉE à l'avance
         // (iOS l'affiche à l'heure pile, même si l'app n'est pas réveillée à ce moment-là).
@@ -178,9 +244,9 @@ enum NewsAlerts {
             pending = Array(pending.suffix(50))
             defaults.set(try? JSONEncoder().encode(pending), forKey: pendingKey)
             await scheduleDigest(pending, now: now)
-            return 0
+            return hits
         }
-        guard !fresh.isEmpty else { return 0 }
+        guard !fresh.isEmpty else { return hits }
 
         if fresh.count > 3 {
             let content = UNMutableNotificationContent()
@@ -199,7 +265,7 @@ enum NewsAlerts {
                 try? await center.add(UNNotificationRequest(identifier: article.path, content: content, trigger: nil))
             }
         }
-        return fresh.count
+        return hits + fresh.count
     }
 }
 

@@ -2,6 +2,7 @@ import { CalendarPlus, Clock, ExternalLink, Star } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { FollowButton } from "@/components/app/FollowButton";
 import { CollectionButtons } from "@/components/collection/CollectionButtons";
 import { DealCard } from "@/components/deals/DealCard";
 import { GameProgress } from "@/components/tracker/GameProgress";
@@ -97,6 +98,7 @@ export default async function GamePage({ params }: Props) {
               <Clock className="size-4 text-accent" aria-hidden /> Environ <strong>{game.playtime} h</strong> de jeu
             </span>
           )}
+          <FollowButton item={{ id: `jeu-${game.slug}`, kind: "game", title: game.title, href: `/jeux/${game.slug}/` }} />
           <ShareButton title={game.title} path={`/jeux/${game.slug}/`} />
           <CollectionButtons game={{ id: game.releaseId ? `sortie-${game.releaseId}` : `jeu-${game.slug}`, title: game.title, image: game.image }} />
         </div>

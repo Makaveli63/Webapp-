@@ -4,6 +4,7 @@ import { ArrowLeft, ExternalLink, PlayCircle } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { FollowButton } from "@/components/app/FollowButton";
 import { AnimeFollow } from "@/components/tracker/AnimeFollow";
 import { EpisodeTracker } from "@/components/tracker/EpisodeTracker";
 import { Countdown } from "@/components/ui/Countdown";
@@ -114,6 +115,10 @@ export function AnimeDetail() {
         <div className="flex flex-wrap items-center gap-2 p-4 sm:px-6">
           <EpisodeTracker anime={info(media)} />
           <AnimeFollow anime={info(media)} />
+          <FollowButton
+            item={{ id: `anilist-${media.id}`, kind: "anime", title: titleOf(media), href: `/anime/fiche?id=${media.id}`, next: nextOf(media) }}
+            titles={[media.title.romaji, media.title.english]}
+          />
           {trailer && <TrailerButton video={{ youtube: trailer }} title={titleOf(media)} />}
           {links.map((l) => (
             <a key={l.site} href={l.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded-full bg-surface px-3 py-1.5 text-xs font-semibold text-heading ring-1 ring-inset ring-border hover:ring-accent">

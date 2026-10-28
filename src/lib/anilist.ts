@@ -142,3 +142,14 @@ export async function getFranchise(start: AniMedia, signal?: AbortSignal): Promi
 
 /** Lien vers la fiche d'un anime sur le site (« anilist-123 » ou 123). */
 export const animeHref = (id: string | number) => `/anime/fiche?id=${String(id).replace(/^anilist-/, "")}`;
+
+/** Prochain épisode de plusieurs animes d'un coup (suivis 🔔). */
+export async function nextEpisodes(ids: number[], signal?: AbortSignal): Promise<AniMedia[]> {
+  if (!ids.length) return [];
+  const data = await gql<{ Page: { media: AniMedia[] } }>(
+    `query ($ids: [Int]) { Page(perPage: 50) { media(id_in: $ids, type: ANIME) { id nextAiringEpisode { episode airingAt } } } }`,
+    { ids: ids.slice(0, 50) },
+    signal,
+  );
+  return data.Page?.media ?? [];
+}

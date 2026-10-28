@@ -1,0 +1,87 @@
+"use client";
+
+import { readFollows } from "@/lib/follows";
+
+export const NOTIF_KEY = "gb-notif";
+export const PREFS_KEY = "gb-notif-prefs";
+export const PREFS_EVENT = "gb-notif-prefs-change";
+
+/** Réglages envoyés aux applications (filtrage des articles avant notification). */
+export interface Prefs {
+  platforms: string[]; // vide = toutes
+  testsOnly: boolean;
+  myGames: boolean; // seulement les jeux de Ma collection
+  digest: boolean; // un résumé par jour (vers 19 h) au lieu d'une notification par article
+  anime: boolean; // inclure l'actu anime
+}
+export const DEFAULT_PREFS: Prefs = { platforms: [], testsOnly: false, myGames: false, digest: false, anime: true };
+
+export function readPrefs(): Prefs {
+  try {
+    return { ...DEFAULT_PREFS, ...JSON.parse(localStorage.getItem(PREFS_KEY) ?? "{}") };
+  } catch {
+    return DEFAULT_PREFS;
+  }
+}
+
+/** Titres de Ma collection (jeux voulus et possédés) pour le filtre « mes jeux ». */
+function collectionTitles(): string[] {
+  try {
+    const c = JSON.parse(localStorage.getItem("gb-collection") ?? "{}");
+    return [...(c.wanted ?? []), ...(c.owned ?? [])].map((g: { title?: string }) => g.title).filter((t): t is string => typeof t === "string").slice(0, 200);
+  } catch {
+    return [];
+  }
+}
+
+type AppWindow = Window & {
+  GamingBaseApp?: { setNotifications?: (on: boolean) => void; setNotificationPrefs?: (json: string) => void }; // Android
+  webkit?: { messageHandlers?: { gamingbase?: { postMessage: (m: unknown) => void } } }; // iPhone
+};
+
+export const inApp = () => typeof navigator !== "undefined" && navigator.userAgent.includes("GamingBaseApp");
+
+/** Réglages + jeux et animes suivis (🔔) + prochains épisodes, envoyés à l'app. */
+export function sendPrefs(prefs: Prefs = readPrefs()) {
+  const follows = readFollows();
+  const now = Date.now();
+  const payload = {
+    ...prefs,
+    games: collectionTitles(),
+    follows: follows.map((f) => ({ t: f.title, a: f.aliases })),
+    episodes: follows
+      .filter((f) => f.next && Date.parse(f.next.at) > now - 86_400_000)
+      .map((f) => ({ title: f.title, episode: f.next!.episode, atMs: Date.parse(f.next!.at), path: `/Webapp-${f.href}` })),
+  };
+  const w = window as AppWindow;
+  try {
+    w.GamingBaseApp?.setNotificationPrefs?.(JSON.stringify(payload));
+    w.webkit?.messageHandlers?.gamingbase?.postMessage({ notifPrefs: payload });
+  } catch {
+    /* hors application */
+  }
+}
+
+export function notificationsOn(): boolean {
+  try {
+    return localStorage.getItem(NOTIF_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+/** Allume (ou coupe) les notifications dans l'app ; la réponse arrive par l'événement « gb-notif ». */
+export function sendToApp(on: boolean) {
+  const w = window as AppWindow;
+  try {
+    localStorage.setItem(NOTIF_KEY, on ? "1" : "0");
+  } catch {
+    /* stockage indisponible */
+  }
+  try {
+    w.GamingBaseApp?.setNotifications?.(on);
+    w.webkit?.messageHandlers?.gamingbase?.postMessage({ notifications: on });
+  } catch {
+    /* hors application */
+  }
+}

@@ -1,5 +1,6 @@
 "use client";
 
+import { FOLLOWS_EVENT, FOLLOWS_KEY } from "@/lib/follows";
 import { rpc } from "@/lib/social";
 import { cleanTracker, mergeTrackers, TRACKER_EVENT, TRACKER_KEY, type Tracker } from "@/lib/tracker";
 
@@ -21,6 +22,8 @@ interface Payload {
   suivi?: Tracker;
   /** Réglages d'affichage : style, couleur, transparence, thème clair / sombre, couleur du style GamingBase */
   affichage?: Record<string, string>;
+  /** Jeux et animes suivis pour les notifications (🔔) */
+  suivis?: Item[];
 }
 
 // Clés des réglages d'affichage synchronisés (public/theme.js les lit au chargement de chaque page).
@@ -89,6 +92,7 @@ function local(): Payload {
     notif,
     suivi: cleanTracker(readJson<unknown>(TRACKER_KEY, {})),
     affichage: displayLocal(),
+    suivis: readJson<Item[]>(FOLLOWS_KEY, []),
   };
 }
 
@@ -112,6 +116,7 @@ function merge(mine: Payload, theirs: Partial<Payload> | null): Payload {
     suivi: mergeTrackers(cleanTracker(mine.suivi), cleanTracker(theirs.suivi)),
     // Affichage : le dernier appareil modifié l'emporte (celui-ci s'il a des changements).
     affichage: mine.affichage ?? theirs.affichage,
+    suivis: union(mine.suivis ?? [], theirs.suivis ?? [], "id").slice(0, 60),
   };
 }
 
@@ -124,13 +129,14 @@ function apply(p: Payload) {
     localStorage.setItem("gb-collection", JSON.stringify({ owned: p.collection.owned, wanted: p.collection.wanted.filter((g) => !owned.has(g.id)) }));
     if (p.notif) localStorage.setItem("gb-notif-prefs", p.notif);
     if (p.suivi) localStorage.setItem(TRACKER_KEY, JSON.stringify(cleanTracker(p.suivi)));
+    if (Array.isArray(p.suivis)) localStorage.setItem(FOLLOWS_KEY, JSON.stringify(p.suivis.filter((f) => f && typeof f.id === "string").slice(0, 60)));
     for (const [k, v] of Object.entries(p.affichage ?? {})) {
       if (DISPLAY_KEYS.includes(k) && typeof v === "string" && /^[a-z0-9-]{1,20}$/.test(v)) localStorage.setItem(k, v);
     }
   } catch {
     /* stockage indisponible */
   }
-  for (const e of ["gb-favoris-change", "gb-epingles-change", "gb-collection-change", "gb-notif-prefs-change", TRACKER_EVENT, "gb-theme-change"]) {
+  for (const e of ["gb-favoris-change", "gb-epingles-change", "gb-collection-change", "gb-notif-prefs-change", TRACKER_EVENT, "gb-theme-change", FOLLOWS_EVENT]) {
     window.dispatchEvent(new Event(e));
   }
 }
@@ -140,7 +146,7 @@ function apply(p: Payload) {
 // l'autre appareil n'a rien changé : on envoie l'état local tel quel (suppressions comprises).
 // Sinon, et seulement si on a aussi des changements, on fusionne les deux.
 const META_KEY = "gb-sync-meta";
-const CHANGE_EVENTS = ["gb-favoris-change", "gb-epingles-change", "gb-collection-change", "gb-notif-prefs-change", TRACKER_EVENT, "gb-theme-change"];
+const CHANGE_EVENTS = ["gb-favoris-change", "gb-epingles-change", "gb-collection-change", "gb-notif-prefs-change", TRACKER_EVENT, "gb-theme-change", FOLLOWS_EVENT];
 let applying = false;
 
 interface Meta {

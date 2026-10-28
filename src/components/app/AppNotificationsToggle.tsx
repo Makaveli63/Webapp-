@@ -1,65 +1,12 @@
 "use client";
 
 import { Bell, BellOff } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
+import { toggleFollow, useFollows } from "@/lib/follows";
+import { DEFAULT_PREFS, NOTIF_KEY as KEY, PREFS_EVENT, PREFS_KEY, readPrefs, sendPrefs, sendToApp, type Prefs } from "@/lib/notif-prefs";
 
-const KEY = "gb-notif";
-const PREFS_KEY = "gb-notif-prefs";
-
-/** Réglages envoyés aux applications (filtrage des articles avant notification). */
-interface Prefs {
-  platforms: string[]; // vide = toutes
-  testsOnly: boolean;
-  myGames: boolean; // seulement les jeux de Ma collection
-  digest: boolean; // un résumé par jour (vers 19 h) au lieu d'une notification par article
-  anime: boolean; // inclure l'actu anime
-}
-const DEFAULT_PREFS: Prefs = { platforms: [], testsOnly: false, myGames: false, digest: false, anime: true };
 const PLATFORM_CHOICES = ["PS5", "Switch 2", "Xbox", "PC"];
-
-function readPrefs(): Prefs {
-  try {
-    return { ...DEFAULT_PREFS, ...JSON.parse(localStorage.getItem(PREFS_KEY) ?? "{}") };
-  } catch {
-    return DEFAULT_PREFS;
-  }
-}
-
-/** Titres de Ma collection (jeux voulus et possédés) pour le filtre « mes jeux ». */
-function collectionTitles(): string[] {
-  try {
-    const c = JSON.parse(localStorage.getItem("gb-collection") ?? "{}");
-    return [...(c.wanted ?? []), ...(c.owned ?? [])].map((g: { title?: string }) => g.title).filter((t): t is string => typeof t === "string").slice(0, 200);
-  } catch {
-    return [];
-  }
-}
-
-function sendPrefs(prefs: Prefs) {
-  const payload = { ...prefs, games: collectionTitles() };
-  const w = window as AppWindow & { GamingBaseApp?: { setNotificationPrefs?: (json: string) => void } };
-  try {
-    w.GamingBaseApp?.setNotificationPrefs?.(JSON.stringify(payload));
-    w.webkit?.messageHandlers?.gamingbase?.postMessage({ notifPrefs: payload });
-  } catch {
-    /* hors application */
-  }
-}
-
-type AppWindow = Window & {
-  GamingBaseApp?: { setNotifications?: (on: boolean) => void }; // Android
-  webkit?: { messageHandlers?: { gamingbase?: { postMessage: (m: unknown) => void } } }; // iPhone
-};
-
-function sendToApp(on: boolean) {
-  const w = window as AppWindow;
-  try {
-    w.GamingBaseApp?.setNotifications?.(on);
-    w.webkit?.messageHandlers?.gamingbase?.postMessage({ notifications: on });
-  } catch {
-    /* hors application */
-  }
-}
 
 /**
  * Interrupteur des notifications de nouveaux articles, affiché uniquement dans les applications
@@ -70,6 +17,7 @@ export function AppNotificationsToggle() {
   const [on, setOn] = useState(false);
   const [message, setMessage] = useState("");
   const [prefs, setPrefs] = useState<Prefs>(DEFAULT_PREFS);
+  const follows = useFollows();
 
   useEffect(() => {
     const app = navigator.userAgent.includes("GamingBaseApp");
@@ -93,7 +41,7 @@ export function AppNotificationsToggle() {
       sendPrefs(latest);
     };
     window.addEventListener("gb-collection-change", resend);
-    window.addEventListener("gb-notif-prefs-change", resend);
+    window.addEventListener(PREFS_EVENT, resend);
     const onResult = (e: Event) => {
       const { enabled, denied } = (e as CustomEvent<{ enabled: boolean; denied: boolean }>).detail ?? {};
       setOn(!!enabled);
@@ -108,7 +56,7 @@ export function AppNotificationsToggle() {
     return () => {
       window.removeEventListener("gb-notif", onResult);
       window.removeEventListener("gb-collection-change", resend);
-      window.removeEventListener("gb-notif-prefs-change", resend);
+      window.removeEventListener(PREFS_EVENT, resend);
     };
   }, []);
 
@@ -118,11 +66,6 @@ export function AppNotificationsToggle() {
     const next = !on;
     setOn(next);
     setMessage("");
-    try {
-      localStorage.setItem(KEY, next ? "1" : "0");
-    } catch {
-      /* stockage indisponible */
-    }
     sendToApp(next);
   };
 
@@ -135,7 +78,7 @@ export function AppNotificationsToggle() {
       /* stockage indisponible */
     }
     sendPrefs(next);
-    window.dispatchEvent(new Event("gb-notif-prefs-change")); // synchronisation entre appareils
+    window.dispatchEvent(new Event(PREFS_EVENT)); // synchronisation entre appareils
   };
   const togglePlatform = (p: string) =>
     update({ platforms: prefs.platforms.includes(p) ? prefs.platforms.filter((x) => x !== p) : [...prefs.platforms, p] });
@@ -192,6 +135,29 @@ export function AppNotificationsToggle() {
             onChange={(v) => update({ myGames: v })}
           />
           <Option label="Inclure l'actu anime" hint="Séries, films et annonces anime." checked={prefs.anime} onChange={(v) => update({ anime: v })} />
+          <div>
+            <p className="text-sm font-semibold text-heading">🔔 Jeux et animes suivis</p>
+            <p className="text-xs text-muted">
+              Chaque actu qui en parle arrive tout de suite (même hors des filtres et du résumé du soir), et chaque nouvel épisode d&apos;un anime suivi aussi.
+              Touchez « Suivre » sur la fiche d&apos;un jeu ou d&apos;un anime.
+            </p>
+            {follows && follows.length > 0 ? (
+              <ul className="mt-2 flex flex-wrap gap-2">
+                {follows.map((f) => (
+                  <li key={f.id} className="glass-pill inline-flex items-center gap-1 rounded-full py-1 pl-3 pr-1 text-sm ring-1 ring-inset ring-border">
+                    <Link href={f.href} className="max-w-[14rem] truncate font-semibold text-heading">
+                      {f.kind === "anime" ? "✨" : "🎮"} {f.title}
+                    </Link>
+                    <button type="button" onClick={() => toggleFollow(f)} aria-label={`Ne plus suivre ${f.title}`} className="rounded-full px-2 text-muted hover:text-fg">
+                      ×
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-2 text-xs text-muted">Aucun pour l&apos;instant.</p>
+            )}
+          </div>
           <Option
             label="Résumé du soir"
             hint="Une seule notification par jour, vers 19 h, au lieu d'une par article."

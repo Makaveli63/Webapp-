@@ -41,6 +41,71 @@ public class NewsJob extends JobService {
     static void savePrefs(Context ctx, String json) {
         ctx.getSharedPreferences(PREFS, MODE_PRIVATE).edit().putString("prefs", json).apply();
         scheduleEvening(ctx);
+        scheduleEpisodes(ctx);
+    }
+
+    /** Nom du jeu ou de l'anime suivi (🔔) dont parle l'article, sinon null. */
+    static String followed(JSONObject a, JSONObject p) {
+        JSONArray follows = p.optJSONArray("follows");
+        String title = norm(a.optString("title"));
+        for (int i = 0; follows != null && i < follows.length(); i++) {
+            JSONObject f = follows.optJSONObject(i);
+            JSONArray aliases = f != null ? f.optJSONArray("a") : null;
+            for (int j = 0; aliases != null && j < aliases.length(); j++) {
+                String n = norm(aliases.optString(j));
+                if (n.length() >= 6 && title.contains(n)) return f.optString("t");
+            }
+        }
+        return null;
+    }
+
+    /** Réveil à la sortie du prochain épisode d'un anime suivi. */
+    static void scheduleEpisodes(Context ctx) {
+        AlarmManager am = ctx.getSystemService(AlarmManager.class);
+        PendingIntent pi = PendingIntent.getBroadcast(ctx, 4245, new Intent(ctx, Evening.class),
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        if (am == null) return;
+        JSONArray eps = prefs(ctx).optJSONArray("episodes");
+        long now = System.currentTimeMillis();
+        long next = Long.MAX_VALUE;
+        for (int i = 0; eps != null && i < eps.length(); i++) {
+            JSONObject e = eps.optJSONObject(i);
+            long at = e != null ? e.optLong("atMs") : 0;
+            if (at > now && at < next) next = at;
+        }
+        if (!isEnabled(ctx) || next == Long.MAX_VALUE) {
+            am.cancel(pi);
+            return;
+        }
+        am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, next + 60_000L, pi);
+    }
+
+    /** Épisodes sortis des animes suivis, pas encore notifiés. */
+    static void notifyEpisodes(Context ctx) {
+        if (!isEnabled(ctx) || !canNotify(ctx)) return;
+        SharedPreferences prefs = ctx.getSharedPreferences(PREFS, MODE_PRIVATE);
+        Set<String> done = new LinkedHashSet<>(prefs.getStringSet("episodesDone", new HashSet<>()));
+        JSONArray eps = prefs(ctx).optJSONArray("episodes");
+        long now = System.currentTimeMillis();
+        boolean changed = false;
+        for (int i = 0; eps != null && i < eps.length(); i++) {
+            JSONObject e = eps.optJSONObject(i);
+            if (e == null) continue;
+            long at = e.optLong("atMs");
+            String path = e.optString("path");
+            String key = path + "#" + e.optInt("episode");
+            if (at > now || at < now - 2 * 86_400_000L || done.contains(key) || !path.startsWith("/Webapp-/")) continue;
+            done.add(key);
+            changed = true;
+            int id = key.hashCode();
+            channel(ctx).notify(id, build(ctx, "▶️ Nouvel épisode : " + e.optString("title"),
+                    "L'épisode " + e.optInt("episode") + " est disponible.", path, id));
+        }
+        if (changed) {
+            Set<String> keep = new LinkedHashSet<>();
+            for (String k : done) if (keep.size() < 200) keep.add(k);
+            prefs.edit().putStringSet("episodesDone", keep).apply();
+        }
     }
 
     /**
@@ -74,9 +139,11 @@ public class NewsJob extends JobService {
             Context app = ctx.getApplicationContext();
             new Thread(() -> {
                 try {
+                    notifyEpisodes(app);
                     check(app, true);
                 } finally {
                     scheduleEvening(app);
+                    scheduleEpisodes(app);
                     result.finish();
                 }
             }).start();
@@ -134,6 +201,7 @@ public class NewsJob extends JobService {
         ctx.getSharedPreferences(PREFS, MODE_PRIVATE).edit().putBoolean("enabled", on).apply();
         JobScheduler js = ctx.getSystemService(JobScheduler.class);
         scheduleEvening(ctx);
+        scheduleEpisodes(ctx);
         if (!on) {
             js.cancel(JOB_ID);
             return;
@@ -149,8 +217,10 @@ public class NewsJob extends JobService {
     @Override
     public boolean onStartJob(JobParameters params) {
         new Thread(() -> {
+            notifyEpisodes(getApplicationContext());
             check(getApplicationContext(), true);
             scheduleEvening(getApplicationContext()); // aussi après un redémarrage du téléphone
+            scheduleEpisodes(getApplicationContext());
             WidgetData.refreshAll(getApplicationContext()); // les widgets profitent des nouvelles données
             jobFinished(params, false);
         }).start();
@@ -184,7 +254,16 @@ public class NewsJob extends JobService {
         if (!notify || firstRun) return;
         JSONObject p = prefs(ctx);
         List<JSONObject> matched = new ArrayList<>();
-        for (JSONObject a : fresh) if (matches(a, p)) matched.add(a);
+        for (JSONObject a : fresh) {
+            // Jeux et animes suivis (🔔) : notifiés tout de suite, même hors des filtres et du résumé du soir.
+            String name = followed(a, p);
+            if (name != null) {
+                if (canNotify(ctx)) {
+                    String path = a.optString("path");
+                    channel(ctx).notify(path.hashCode(), build(ctx, "🔔 " + name, a.optString("title"), path, path.hashCode()));
+                }
+            } else if (matches(a, p)) matched.add(a);
+        }
 
         // Résumé du soir : on met de côté, et on envoie une seule notification par jour à partir de 19 h.
         if (p.optBoolean("digest")) {
