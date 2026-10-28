@@ -776,6 +776,11 @@ html[data-vt] .page-in-forward, html[data-vt] .page-in-back { animation: none; }
 html[data-native-tabs] .tabbar { display: none; }
 /* iPad : les onglets sont déjà dans la barre native en bas, l'en-tête ne garde que les autres rubriques. */
 html[data-native-tabs] .topbar li[data-tab] { display: none; }
+/* La barre native est aussi là sur iPad (vertical et horizontal) : le bas de page et les messages restent au-dessus. */
+@media (min-width: 768px) {
+  html[data-native-tabs] .site-footer { padding-bottom: calc(4rem + env(safe-area-inset-bottom)); }
+  html[data-native-tabs] [role="status"].fixed { bottom: calc(4.5rem + env(safe-area-inset-bottom)); }
+}
 
 /* Android (Chrome) : la bulle réfracte vraiment ce qu'il y a dessous (filtre SVG #gb-lens), comme le verre liquide. */
 html[data-refract] .tab-lens-drag {

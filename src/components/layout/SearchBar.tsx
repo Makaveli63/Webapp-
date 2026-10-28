@@ -133,7 +133,7 @@ export function SearchBar({ className = "", autoFocus = false }: { className?: s
         }}
         onBlur={() => setTimeout(() => setOpen(false), 150)}
         onKeyDown={onKeyDown}
-        placeholder="Rechercher un jeu, une console…"
+        placeholder="Rechercher…"
         enterKeyHint="search"
         autoFocus={autoFocus}
         autoComplete="off"
