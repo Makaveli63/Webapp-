@@ -136,7 +136,16 @@ public class LiveCountdown extends JobService {
         // Passage de jour : nouvelle mise à jour (et le minuteur repart pour 24 h).
         if (showDays && days > 0) scheduleTick(ctx, boundary + 1000);
         Bitmap image = WidgetData.image(release.optString("image", null));
-        if (image != null) b.setLargeIcon(Bitmap.createScaledBitmap(image, 256, Math.max(1, 256 * image.getHeight() / Math.max(1, image.getWidth())), true));
+        if (image != null) {
+            Bitmap icon = Bitmap.createScaledBitmap(image, 256, Math.max(1, 256 * image.getHeight() / Math.max(1, image.getWidth())), true);
+            b.setLargeIcon(icon);
+            // Notification déroulée : l'image du jeu en grand (équivalent du fond en image sur iPhone).
+            int w = Math.min(image.getWidth(), 720);
+            Bitmap big = Bitmap.createScaledBitmap(image, w, Math.max(1, w * image.getHeight() / Math.max(1, image.getWidth())), true);
+            Notification.BigPictureStyle style = new Notification.BigPictureStyle().bigPicture(big).setSummaryText(text);
+            if (Build.VERSION.SDK_INT >= 31) style.showBigPictureWhenCollapsed(false);
+            b.setStyle(style);
+        }
         // Android 16 : demande l'affichage en « Live Update » (équivalent de Notification.Builder#setRequestPromotedOngoing).
         Bundle extras = new Bundle();
         extras.putBoolean("android.requestPromotedOngoing", true);
