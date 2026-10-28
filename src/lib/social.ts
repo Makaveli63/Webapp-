@@ -21,6 +21,8 @@ const ERRORS: Record<string, string> = {
   CODE_INVALIDE: "Code de synchronisation invalide (16 caractères).",
   TROP_DE_REQUETES: "Trop de synchronisations : réessaie dans une heure.",
   DONNEES_INVALIDES: "Données trop volumineuses pour être synchronisées.",
+  PSEUDO_PRIS: "Ce pseudo est déjà pris par un autre joueur.",
+  PSEUDO_FORMAT: "Le pseudo doit faire 3 à 20 caractères : lettres, chiffres, point, tiret ou _.",
 };
 
 /** Fichier SQL qui crée chaque fonction : le message d'erreur indique le bon fichier à exécuter. */
@@ -29,6 +31,7 @@ const SQL_FILES: Record<string, string> = {
   admin_set_notifications: "notifications.sql",
   sync_save: "extras.sql", sync_load: "extras.sql",
   toggle_dislike: "dislikes.sql", get_dislikes: "dislikes.sql",
+  check_pseudo: "profiles.sql", save_player: "profiles.sql", get_player: "profiles.sql", get_players: "profiles.sql",
   rate_game: "community.sql", get_game_rating: "community.sql", predict_game: "community.sql", get_predictions: "community.sql",
   get_my_activity: "community.sql", get_author_badges: "community.sql", admin_publish_article: "community.sql",
   admin_delete_article: "community.sql", get_published_articles: "community.sql",

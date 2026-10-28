@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { aliasesOf, toggleFollow, useFollows, type Follow } from "@/lib/follows";
 import { inApp, notificationsOn, sendToApp } from "@/lib/notif-prefs";
+import { award } from "@/lib/player";
 
 /**
  * 🔔 « Suivre » un jeu ou un anime : une notification pour chaque actu qui en parle
@@ -37,6 +38,7 @@ export function FollowButton({
     e.stopPropagation();
     const now = toggleFollow({ ...item, aliases: aliasesOf(item.title, ...titles) });
     if (!now) return setHint("");
+    award("follow", item.id, { quiet: true }); // la bulle du suivi s'affiche déjà
     if (!inApp()) return setHint("Les notifications arrivent dans l'application GamingBase.");
     if (!notificationsOn()) sendToApp(true); // demande l'autorisation au premier suivi
     setHint(item.kind === "anime" ? "Tu seras prévenu de chaque actu et de chaque nouvel épisode." : "Tu seras prévenu de chaque actu sur ce jeu.");

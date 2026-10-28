@@ -4,6 +4,7 @@ import Link from "next/link";
 import { LibraryShortcut } from "@/components/tracker/LibraryShortcut";
 import { FavoritesList } from "@/components/news/FavoritesList";
 import { PinnedReleaseGrid } from "@/components/releases/PinnedReleaseGrid";
+import { PlayerCard } from "@/components/player/PlayerCard";
 import { getUpcomingReleases } from "@/lib/releases";
 
 export const metadata: Metadata = { title: "Mon espace" };
@@ -13,8 +14,9 @@ export default function FavoritesPage() {
     <div className="space-y-10">
       <header>
         <h1 className="text-2xl font-extrabold text-heading sm:text-3xl">Mon espace</h1>
-        <p className="mt-2 text-muted">Ta bibliothèque de jeux et d&apos;animes, tes jeux épinglés, et tes articles enregistrés. Les réglages sont dans la roue dentée en haut à droite.</p>
+        <p className="mt-2 text-muted">Ton profil de joueur, ta bibliothèque de jeux et d&apos;animes, tes jeux épinglés et tes articles enregistrés. Les réglages sont dans la roue dentée en haut à droite.</p>
       </header>
+      <PlayerCard />
       <div className="grid gap-3">
         <LibraryShortcut />
         <Link href="/mon-calendrier" className="glass flex items-center gap-4 rounded-2xl p-4 hover:border-accent/60">

@@ -924,6 +924,15 @@ html:not([data-splash="off"]) .tabbar { animation: tabbar-in .4s ease-out 1.9s b
 }
 @keyframes follow-toast-out { to { opacity: 0; transform: translateX(-50%) translateY(-10px) scale(.94); } }
 @media (prefers-reduced-motion: reduce) { .follow-toast { animation: none; } }
+/* Île de l'XP : pastille du niveau, dorée quand on monte de niveau. */
+.xp-toast-level {
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  width: 2rem; height: 2rem; border-radius: 9999px; font-size: .8rem; font-weight: 800; font-variant-numeric: tabular-nums;
+  color: #fff; background: linear-gradient(140deg, #6c4cf5, #a78bfa);
+}
+.xp-toast-up { color: #3a2400; background: linear-gradient(140deg, #d99a1e, #f5d27a); }
+/* Anneau de niveau (profil) */
+.level-ring circle { transition: stroke-dashoffset .9s cubic-bezier(.2, .9, .25, 1); }
 
 /* Récap du mois (Ma bibliothèque) */
 .recap-card { background: radial-gradient(120% 80% at 0% 0%, #8b5cf6, transparent 60%), radial-gradient(120% 80% at 100% 100%, #00b4d8, transparent 60%), #1b1530; }

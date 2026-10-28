@@ -4,6 +4,7 @@ import { Flame, Share2, Trophy } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { aliasesOf } from "@/lib/aliases";
+import { award } from "@/lib/player";
 import { canon, distance, prepareTitles, suggestTitles } from "@/lib/fuzzy";
 
 export interface DailyCandidate {
@@ -105,6 +106,7 @@ export function DailyGame({ candidates }: { candidates: DailyCandidate[] }) {
       s.streak = stats.lastWin === yesterday(game.day) ? stats.streak + 1 : 1;
       s.best = Math.max(s.best, s.streak);
       s.lastWin = game.day;
+      award("daily", game.day);
     } else s.streak = 0;
     setStats(s);
     write(`${KEY}-stats`, s);

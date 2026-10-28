@@ -9,6 +9,7 @@ import { NativeTabsBridge } from "@/components/app/NativeTabsBridge";
 import { NotifBridge } from "@/components/app/NotifBridge";
 import { StaleBuildGuard } from "@/components/app/ErrorScreen";
 import { EdgeFade } from "@/components/layout/EdgeFade";
+import { XpToast } from "@/components/player/XpToast";
 import { ListenPlayer } from "@/components/layout/ListenPlayer";
 import { AppleTransitions } from "@/components/layout/AppleTransitions";
 import { Splash } from "@/components/splash/Splash";
@@ -93,6 +94,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <NotifBridge />
         <StaleBuildGuard />
         <EdgeFade />
+        <XpToast />
         <AppleTransitions />
         <Tracker />
         <PullToRefresh />

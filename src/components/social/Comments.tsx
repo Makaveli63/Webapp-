@@ -13,6 +13,9 @@ import {
   timeAgo,
   voterId,
 } from "@/lib/social";
+import Link from "next/link";
+import { PlayerAvatar } from "@/components/player/PlayerAvatar";
+import { award, levelOf, playersLevels, readPlayer } from "@/lib/player";
 import { DislikeButton } from "./DislikeButton";
 import { LikeButton } from "./LikeButton";
 
@@ -35,16 +38,24 @@ export function Comments({ slug }: { slug: string }) {
   const [reported, setReported] = useState<Set<string>>(new Set());
   // Mot de passe du tableau de bord, si l'administrateur s'est connecté sur /admin/ dans cet onglet.
   const [admin, setAdmin] = useState("");
+  // Profil joueur de cet appareil (pseudo réservé) et niveau des auteurs affichés.
+  const [player, setPlayer] = useState<{ pseudo: string; avatar: number; level: number } | null>(null);
+  const [levels, setLevels] = useState<Record<string, { xp: number; avatar: number }>>({});
 
   const load = useCallback(() => {
     rpc<Comment[]>("get_comments", { p_slug: slug, p_voter: voterId() })
-      .then(setComments)
+      .then((list) => {
+        setComments(list);
+        playersLevels(list.map((c) => c.author)).then(setLevels);
+      })
       .catch(() => setComments([]));
   }, [slug]);
 
   useEffect(() => {
     if (!socialEnabled) return;
-    setPseudo(savedPseudo());
+    const me = readPlayer();
+    if (me.pseudo) setPlayer({ pseudo: me.pseudo, avatar: me.avatar, level: levelOf(me.xp).level });
+    setPseudo(me.pseudo || savedPseudo());
     setAdmin(adminPassword());
     load();
   }, [load]);
@@ -58,6 +69,7 @@ export function Comments({ slug }: { slug: string }) {
     try {
       await rpc<string>("add_comment", { p_slug: slug, p_author: pseudo.trim(), p_body: body.trim(), p_voter: voterId() });
       savePseudo(pseudo.trim());
+      award("comment");
       setBody("");
       load();
     } catch (err) {
@@ -100,16 +112,31 @@ export function Comments({ slug }: { slug: string }) {
       )}
 
       <form onSubmit={submit} className="mt-4 space-y-2 rounded-xl glass p-3">
-        <input
-          value={pseudo}
-          onChange={(e) => setPseudo(e.target.value)}
-          placeholder="Ton pseudo"
-          maxLength={30}
-          required
-          minLength={2}
-          aria-label="Pseudo"
-          className="w-full rounded-lg border border-border bg-bg px-3 py-2 text-base focus:border-accent focus:outline-none md:text-sm"
-        />
+        {player ? (
+          <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted">
+            <PlayerAvatar avatar={player.avatar} className="size-6" iconClass="size-3.5" />
+            <span>
+              En tant que <span className="font-semibold text-heading">{player.pseudo}</span>
+            </span>
+            <span className="whitespace-nowrap rounded-full bg-accent/12 px-2 py-0.5 text-[11px] font-bold text-accent">Niv. {player.level}</span>
+          </p>
+        ) : (
+          <>
+            <input
+              value={pseudo}
+              onChange={(e) => setPseudo(e.target.value)}
+              placeholder="Ton pseudo"
+              maxLength={30}
+              required
+              minLength={2}
+              aria-label="Pseudo"
+              className="w-full rounded-lg border border-border bg-bg px-3 py-2 text-base focus:border-accent focus:outline-none md:text-sm"
+            />
+            <p className="text-xs text-muted">
+              <Link href="/favoris" className="font-semibold text-accent">Crée ton profil de joueur</Link> pour réserver ton pseudo, gagner de l&apos;XP et afficher ton niveau.
+            </p>
+          </>
+        )}
         <textarea
           value={body}
           onChange={(e) => setBody(e.target.value)}
@@ -142,12 +169,17 @@ export function Comments({ slug }: { slug: string }) {
         <ul className="mt-4 divide-y divide-border">
           {comments.map((c) => (
             <li key={c.id} className="flex gap-3 py-3">
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-accent/15 font-bold uppercase text-accent">
-                {c.author.slice(0, 1)}
-              </span>
+              {levels[c.author.toLowerCase()] ? (
+                <PlayerAvatar avatar={levels[c.author.toLowerCase()].avatar} />
+              ) : (
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-accent/15 font-bold uppercase text-accent">
+                  {c.author.slice(0, 1)}
+                </span>
+              )}
               <div className="min-w-0 flex-1">
                 <p className="text-sm">
                   <span className="font-semibold text-heading">{c.author}</span>{" "}
+                  {levels[c.author.toLowerCase()] && <LevelChip xp={levels[c.author.toLowerCase()].xp} />}{" "}
                   <span className="text-muted">· {timeAgo(c.created_at)}</span>
                 </p>
                 <p className="mt-0.5 whitespace-pre-line break-words text-sm text-fg">{c.body}</p>
@@ -178,5 +210,15 @@ export function Comments({ slug }: { slug: string }) {
         </ul>
       )}
     </section>
+  );
+}
+
+/** Niveau d'un auteur à côté de son pseudo ; doré à partir du niveau 50 (Légende). */
+function LevelChip({ xp }: { xp: number }) {
+  const level = levelOf(xp).level;
+  return (
+    <span className={`rounded-full px-1.5 py-0.5 align-middle text-[11px] font-bold tabular-nums ${level >= 50 ? "bg-amber-500/15 text-amber-600 dark:text-amber-400" : "bg-accent/12 text-accent"}`}>
+      Niv. {level}
+    </span>
   );
 }

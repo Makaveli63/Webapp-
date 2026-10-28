@@ -11,6 +11,7 @@ import { ShareButton } from "@/components/share/ShareButton";
 import { Comments } from "@/components/social/Comments";
 import { PageTheme } from "@/components/theme/PageTheme";
 import { DislikeButton } from "@/components/social/DislikeButton";
+import { ReadXp } from "@/components/player/ReadXp";
 import { LikeButton } from "@/components/social/LikeButton";
 import { RemoteImage } from "@/components/ui/RemoteImage";
 import { VideoPlayer } from "@/components/ui/VideoPlayer";
@@ -189,6 +190,7 @@ export default async function ArticlePage({ params }: Props) {
           </div>
         )}
         <Comments slug={article.slug} />
+        <ReadXp slug={article.slug} anime={isAnime} />
       </article>
 
       {related.length > 0 && (
