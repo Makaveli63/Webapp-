@@ -912,3 +912,7 @@ html[data-native-tabs] .listen-player { bottom: calc(env(safe-area-inset-bottom)
 .daily-blur-7 { filter: blur(7px); }
 .daily-blur-3 { filter: blur(3px); }
 .daily-blur-0 { filter: none; transform: none; }
+
+/* Images distantes : fondu doux à leur arrivée (aucun fondu pour celles déjà vues) */
+.remote-img { transition: opacity .35s ease, transform .3s ease; }
+.remote-img-pending { opacity: 0; }
