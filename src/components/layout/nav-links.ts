@@ -6,7 +6,7 @@ import { CalendarDays, Clapperboard, Gamepad2, Gift, House, Newspaper, Search, S
  */
 export const NAV_LINKS = [
   { href: "/", label: "Accueil", icon: House, mobile: true },
-  { href: "/actualites", label: "Actus", icon: Newspaper, mobile: true },
+  { href: "/actualites", label: "Actus", icon: Newspaper, mobile: false },
   { href: "/tests", label: "Tests", icon: Star, mobile: true },
   { href: "/consoles", label: "Consoles", icon: Gamepad2, mobile: false, wide: "never" },
   { href: "/sorties", label: "Sorties", icon: CalendarDays, mobile: true },

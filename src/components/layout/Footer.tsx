@@ -42,7 +42,7 @@ const SECTIONS = [
 
 export function Footer() {
   return (
-    <footer className="mt-16 border-t border-border bg-surface/50 pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:mt-20 md:pb-0">
+    <footer className="site-footer mt-16 border-t border-border bg-surface/50 pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:mt-20 md:pb-0">
       <div className="mx-auto grid max-w-6xl grid-cols-2 gap-8 px-4 py-10 sm:gap-10 sm:py-12 lg:grid-cols-4">
         <div className="col-span-2 lg:col-span-1">
           <Link href="/" aria-label="GamingBase, accueil">

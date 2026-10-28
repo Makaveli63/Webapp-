@@ -45,7 +45,7 @@ export function Navbar() {
             href="/favoris"
             aria-label="Mon espace"
             aria-current={mySpace ? "page" : undefined}
-            className={`-mr-1 flex h-11 items-center justify-center gap-1.5 rounded-full px-2.5 hover:text-fg ${mySpace ? "text-accent" : "text-muted"}`}
+            className={`head-btn -mr-1 flex h-11 items-center justify-center gap-1.5 rounded-full px-2.5 hover:text-fg ${mySpace ? "text-accent" : "text-muted"}`}
           >
             <CircleUserRound className="size-5" aria-hidden />
             <span className="hidden whitespace-nowrap text-sm font-semibold sm:inline lg:hidden 2xl:inline">Mon espace</span>
@@ -54,7 +54,7 @@ export function Navbar() {
           <Link
             href={SEARCH_LINK.href}
             aria-label="Rechercher"
-            className="-mr-1 flex size-11 items-center justify-center rounded-full text-muted hover:text-fg lg:hidden"
+            className="head-btn -mr-1 flex size-11 items-center justify-center rounded-full text-muted hover:text-fg lg:hidden"
           >
             <SearchIcon className="size-5" aria-hidden />
           </Link>
@@ -62,7 +62,7 @@ export function Navbar() {
             href="/reglages"
             aria-label="Réglages"
             aria-current={pathname.startsWith("/reglages") ? "page" : undefined}
-            className={`-mr-2 flex size-11 items-center justify-center rounded-full hover:text-fg ${pathname.startsWith("/reglages") ? "text-accent" : "text-muted"}`}
+            className={`head-btn -mr-2 flex size-11 items-center justify-center rounded-full hover:text-fg ${pathname.startsWith("/reglages") ? "text-accent" : "text-muted"}`}
           >
             <Settings className="size-5" aria-hidden />
           </Link>
