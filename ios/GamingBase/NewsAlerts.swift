@@ -21,25 +21,46 @@ enum NewsAlerts {
         let at: Date
     }
 
-    /// (Re)programme le résumé du soir : le prochain 19 h avec les articles en attente, puis un rappel
+    /// Heure du résumé choisie sur le site (« 08:00 », « 19:00 »…), 19 h par défaut.
+    private static func digestClock() -> (hour: Int, minute: Int) {
+        let parts = (prefs.digestTime ?? "19:00").split(separator: ":").compactMap { Int($0) }
+        guard parts.count == 2, (0...23).contains(parts[0]), (0...59).contains(parts[1]) else { return (19, 0) }
+        return (parts[0], parts[1])
+    }
+
+    /// « ☀️ Ton résumé du matin », « 🌙 Ton résumé du soir »… selon l'heure choisie.
+    private static func digestTitle(hour: Int) -> String {
+        switch hour {
+        case 5..<11: return "☀️ Ton résumé du matin"
+        case 11..<14: return "📰 Ton résumé du midi"
+        case 14..<18: return "📰 Ton résumé de l'après-midi"
+        default: return "🌙 Ton résumé du soir"
+        }
+    }
+
+    /// (Re)programme le résumé du jour : la prochaine heure choisie avec les articles en attente, puis un rappel
     /// les 6 soirs suivants. iOS réveille rarement l'app en arrière-plan : sans ces rappels programmés
     /// à l'avance, le résumé ne partirait pas les jours où l'app n'a rien pu mettre de côté.
     static func scheduleDigest(_ pending: [Pending], now: Date) async {
         let center = UNUserNotificationCenter.current()
         center.removePendingNotificationRequests(withIdentifiers: digestIds)
         let cal = Calendar.current
-        var fire = cal.date(bySettingHour: 19, minute: 0, second: 0, of: now) ?? now
+        let clock = digestClock()
+        let title = digestTitle(hour: clock.hour)
+        var fire = cal.date(bySettingHour: clock.hour, minute: clock.minute, second: 0, of: now) ?? now
         if fire <= now { fire = cal.date(byAdding: .day, value: 1, to: fire) ?? fire }
         for (index, id) in digestIds.enumerated() {
             guard let day = cal.date(byAdding: .day, value: index, to: fire) else { continue }
             let content = UNMutableNotificationContent()
             content.threadIdentifier = "digest" // regroupées sur l'iPhone et l'Apple Watch
             if index == 0, !pending.isEmpty {
-                content.title = "🌙 Ton résumé du soir : \(pending.count) actu\(pending.count > 1 ? "s" : "")"
+                content.title = "\(title) : \(pending.count) actu\(pending.count > 1 ? "s" : "")"
                 content.body = pending.prefix(4).map { "• \($0.news.title)" }.joined(separator: "\n")
             } else {
-                content.title = "🌙 Ton résumé du soir"
-                content.body = "Les actus du jour t'attendent : touche pour voir ce qui est sorti aujourd'hui."
+                content.title = title
+                content.body = clock.hour < 11
+                    ? "Les actus d'hier et de la nuit t'attendent : touche pour les voir."
+                    : "Les actus du jour t'attendent : touche pour voir ce qui est sorti aujourd'hui."
             }
             content.sound = .default
             content.userInfo = ["path": "/Webapp-/actualites/"]
@@ -81,6 +102,8 @@ enum NewsAlerts {
         var testsOnly = false
         var myGames = false
         var digest = false
+        /// Heure du résumé, « HH:MM » (heure du téléphone)
+        var digestTime: String? = "19:00"
         var anime: Bool? = true
         var games: [String] = []
         /// Jeux et animes suivis (🔔) : nom affiché et façons de l'écrire dans les titres d'actus.
@@ -312,7 +335,7 @@ enum NewsAlerts {
         }
         let fresh = unseen.filter { followed($0, p) == nil && matches($0, p) }
 
-        // Résumé du soir : les articles sont mis de côté et la notification de 19 h est PROGRAMMÉE à l'avance
+        // Résumé du jour : les articles sont mis de côté et la notification (à l’heure choisie) est PROGRAMMÉE à l’avance
         // (iOS l'affiche à l'heure pile, même si l'app n'est pas réveillée à ce moment-là).
         if p.digest {
             let now = Date()

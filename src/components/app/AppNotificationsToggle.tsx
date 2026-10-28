@@ -165,11 +165,36 @@ export function AppNotificationsToggle() {
             onChange={(v) => update({ priceAlerts: v })}
           />
           <Option
-            label="Résumé du soir"
-            hint="Une seule notification par jour, vers 19 h, au lieu d'une par article."
+            label={`Résumé ${digestMoment(prefs.digestTime)}`}
+            hint={`Une seule notification par jour, à ${clockLabel(prefs.digestTime)}, au lieu d'une par article.`}
             checked={prefs.digest}
             onChange={(v) => update({ digest: v })}
           />
+          {prefs.digest && (
+            <div className="ml-8 flex flex-wrap items-center gap-2">
+              {DIGEST_PRESETS.map(([label, time]) => (
+                <button
+                  key={time}
+                  type="button"
+                  aria-pressed={prefs.digestTime === time}
+                  onClick={() => update({ digestTime: time })}
+                  className={`rounded-full px-3 py-1.5 text-xs font-semibold ring-1 ring-inset ${prefs.digestTime === time ? "bg-accent text-white ring-accent" : "glass-pill text-heading ring-border"}`}
+                >
+                  {label}
+                </button>
+              ))}
+              <label className="inline-flex items-center gap-1.5 text-xs text-muted">
+                ou à
+                <input
+                  type="time"
+                  value={prefs.digestTime}
+                  onChange={(e) => /^\d{2}:\d{2}$/.test(e.target.value) && update({ digestTime: e.target.value })}
+                  aria-label="Heure du résumé"
+                  className="rounded-lg border border-border bg-bg px-2 py-1 text-sm text-heading"
+                />
+              </label>
+            </div>
+          )}
         </div>
       )}
     </section>
@@ -192,3 +217,19 @@ function Option({ label, hint, checked, onChange }: { label: string; hint: strin
     </label>
   );
 }
+
+/** Raccourcis d'heure du résumé quotidien. */
+const DIGEST_PRESETS = [
+  ["☀️ Matin · 8 h", "08:00"],
+  ["Midi · 12 h", "12:00"],
+  ["🌙 Soir · 19 h", "19:00"],
+] as const;
+
+/** « du matin », « du midi », « de l'après-midi » ou « du soir », selon l'heure choisie. */
+function digestMoment(time: string): string {
+  const h = Number(time.slice(0, 2));
+  return h < 5 || h >= 18 ? "du soir" : h < 11 ? "du matin" : h < 14 ? "du midi" : "de l'après-midi";
+}
+
+/** « 08:00 » → « 8 h », « 07:30 » → « 7 h 30 ». */
+const clockLabel = (time: string) => `${Number(time.slice(0, 2))} h${time.slice(3) === "00" ? "" : ` ${time.slice(3)}`}`;

@@ -13,15 +13,18 @@ export interface Prefs {
   platforms: string[]; // vide = toutes
   testsOnly: boolean;
   myGames: boolean; // seulement les jeux de Ma collection
-  digest: boolean; // un résumé par jour (vers 19 h) au lieu d'une notification par article
+  digest: boolean; // un résumé par jour (à l'heure choisie) au lieu d'une notification par article
+  digestTime: string; // heure du résumé, « HH:MM » (heure du téléphone)
   anime: boolean; // inclure l'actu anime
   priceAlerts: boolean; // promo sur un jeu « Je le veux »
 }
-export const DEFAULT_PREFS: Prefs = { platforms: [], testsOnly: false, myGames: false, digest: false, anime: true, priceAlerts: true };
+export const DEFAULT_PREFS: Prefs = { platforms: [], testsOnly: false, myGames: false, digest: false, digestTime: "19:00", anime: true, priceAlerts: true };
 
 export function readPrefs(): Prefs {
   try {
-    return { ...DEFAULT_PREFS, ...JSON.parse(localStorage.getItem(PREFS_KEY) ?? "{}") };
+    const p: Prefs = { ...DEFAULT_PREFS, ...JSON.parse(localStorage.getItem(PREFS_KEY) ?? "{}") };
+    if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(p.digestTime)) p.digestTime = DEFAULT_PREFS.digestTime;
+    return p;
   } catch {
     return DEFAULT_PREFS;
   }

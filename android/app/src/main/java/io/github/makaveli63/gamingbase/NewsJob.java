@@ -148,11 +148,28 @@ public class NewsJob extends JobService {
      * peut être repoussée de plusieurs heures par Android). Reprogrammé chaque soir pour le lendemain.
      */
     static void scheduleEvening(Context ctx) {
-        alarmAt(ctx, 4244, 19); // résumé du soir et rappel « sort demain »
-        alarmAt(ctx, 4246, 9); // « est sorti ! » le matin du jour J
+        alarmAt(ctx, 4244, 19, 0); // rappel « sort demain »
+        alarmAt(ctx, 4246, 9, 0); // « est sorti ! » le matin du jour J
+        int[] clock = digestClock(prefs(ctx));
+        alarmAt(ctx, 4247, clock[0], clock[1]); // résumé du jour, à l'heure choisie sur le site
     }
 
-    private static void alarmAt(Context ctx, int code, int hour) {
+    /** Heure du résumé choisie sur le site (« 08:00 », « 19:00 »…) : {heure, minute}, 19 h par défaut. */
+    static int[] digestClock(JSONObject p) {
+        String t = p != null ? p.optString("digestTime", "19:00") : "19:00";
+        if (!t.matches("([01]\\d|2[0-3]):[0-5]\\d")) return new int[] {19, 0};
+        return new int[] {Integer.parseInt(t.substring(0, 2)), Integer.parseInt(t.substring(3, 5))};
+    }
+
+    /** « ☀️ Ton résumé du matin », « 🌙 Ton résumé du soir »… selon l'heure choisie. */
+    static String digestTitle(int hour) {
+        if (hour >= 5 && hour < 11) return "☀️ Ton résumé du matin";
+        if (hour >= 11 && hour < 14) return "📰 Ton résumé du midi";
+        if (hour >= 14 && hour < 18) return "📰 Ton résumé de l'après-midi";
+        return "🌙 Ton résumé du soir";
+    }
+
+    private static void alarmAt(Context ctx, int code, int hour, int minute) {
         AlarmManager am = ctx.getSystemService(AlarmManager.class);
         PendingIntent pi = PendingIntent.getBroadcast(ctx, code, new Intent(ctx, Evening.class),
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
@@ -163,7 +180,7 @@ public class NewsJob extends JobService {
         }
         Calendar at = Calendar.getInstance();
         at.set(Calendar.HOUR_OF_DAY, hour);
-        at.set(Calendar.MINUTE, 0);
+        at.set(Calendar.MINUTE, minute);
         at.set(Calendar.SECOND, 0);
         at.set(Calendar.MILLISECOND, 0);
         if (at.getTimeInMillis() <= System.currentTimeMillis()) at.add(Calendar.DAY_OF_YEAR, 1);
@@ -219,7 +236,7 @@ public class NewsJob extends JobService {
         }
     }
 
-    /** Réveil de 19 h : vérifie le site et envoie le résumé, puis programme celui du lendemain. */
+    /** Réveils (19 h, 9 h et heure du résumé) : vérifie le site, envoie le résumé s'il est l'heure, puis reprogramme. */
     public static class Evening extends BroadcastReceiver {
         @Override
         public void onReceive(Context ctx, Intent intent) {
@@ -360,7 +377,7 @@ public class NewsJob extends JobService {
             } else if (matches(a, p)) matched.add(a);
         }
 
-        // Résumé du soir : on met de côté, et on envoie une seule notification par jour à partir de 19 h.
+        // Résumé du jour : on met de côté, et on envoie une seule notification par jour à partir de l'heure choisie.
         if (p.optBoolean("digest")) {
             JSONArray pending;
             try {
@@ -371,7 +388,9 @@ public class NewsJob extends JobService {
             for (JSONObject a : matched) if (pending.length() < 50) pending.put(a);
             Calendar now = Calendar.getInstance();
             String today = now.get(Calendar.YEAR) + "-" + now.get(Calendar.DAY_OF_YEAR);
-            boolean due = now.get(Calendar.HOUR_OF_DAY) >= 19 && !today.equals(prefs.getString("digestDay", ""));
+            int[] clock = digestClock(p);
+            int minutes = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE);
+            boolean due = minutes >= clock[0] * 60 + clock[1] && !today.equals(prefs.getString("digestDay", ""));
             if (!due || pending.length() == 0) {
                 prefs.edit().putString("pending", pending.toString()).apply();
                 return;
@@ -382,7 +401,7 @@ public class NewsJob extends JobService {
             if (!canNotify(ctx)) return;
             StringBuilder titles = new StringBuilder();
             for (int i = 0; i < Math.min(4, fresh.size()); i++) titles.append(i > 0 ? "\n" : "").append("• ").append(fresh.get(i).optString("title"));
-            channel(ctx).notify(3000, build(ctx, "🌙 Ton résumé du soir : " + fresh.size() + " actu" + (fresh.size() > 1 ? "s" : ""),
+            channel(ctx).notify(3000, build(ctx, digestTitle(clock[0]) + " : " + fresh.size() + " actu" + (fresh.size() > 1 ? "s" : ""),
                     titles.toString(), "/Webapp-/actualites/", 3000));
             return;
         }
