@@ -550,11 +550,15 @@ html[data-splash="off"] .splash { display: none; }
     padding: 5px;
     border: 1px solid var(--glass-edge);
     border-radius: 9999px;
-    background: color-mix(in srgb, var(--surface) 70%, transparent);
-    -webkit-backdrop-filter: blur(28px) saturate(220%);
-    backdrop-filter: blur(28px) saturate(220%);
-    box-shadow: inset 0 1px 0 var(--glass-hi), 0 16px 40px -12px rgb(0 0 0 / .5);
+    /* Verre clair : on distingue la page en dessous, à peine floutée (comme la barre de l'app Musique). */
+    background: color-mix(in srgb, var(--surface) 40%, transparent);
+    -webkit-backdrop-filter: blur(9px) saturate(200%) brightness(1.04);
+    backdrop-filter: blur(9px) saturate(200%) brightness(1.04);
+    box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 -1px 0 rgb(255 255 255 / .12), 0 16px 40px -12px rgb(0 0 0 / .45);
   }
+  /* Libellés lisibles sur n'importe quel fond, malgré la transparence. */
+  :root[data-style="capsule"] .tabbar a { text-shadow: 0 0 10px color-mix(in srgb, var(--surface) 85%, transparent); }
+  :root[data-style="capsule"][data-glass="opaque"] .tabbar { background: color-mix(in srgb, var(--surface) 82%, transparent); -webkit-backdrop-filter: blur(24px) saturate(200%); backdrop-filter: blur(24px) saturate(200%); }
   :root[data-style="capsule"] .tabbar a { height: 3.4rem; border-radius: 9999px; font-size: 10.5px; font-weight: 600; }
   :root[data-style="capsule"] .tabbar a.text-muted { color: var(--heading); }
   :root[data-style="capsule"] .tab-lens { background: rgb(120 120 128 / .16); }
@@ -617,7 +621,7 @@ html[data-splash="off"] .splash { display: none; }
 :root[data-style="capsule"]:is([data-glass="verre"], [data-glass="cristal"]) .dyn-blob-b { background-color: var(--accent-2); }
 :root[data-style="capsule"][data-glass="verre"] .dyn-bg { opacity: .3; }
 :root[data-style="capsule"][data-glass="cristal"] .dyn-bg { opacity: .5; -webkit-mask-image: none; mask-image: none; }
-:root[data-style="capsule"][data-glass="cristal"] .tabbar,
+:root[data-style="capsule"][data-glass="cristal"] .tabbar { background: color-mix(in srgb, var(--surface) 26%, transparent); }
 :root[data-style="capsule"][data-glass="cristal"] .topbar .head-btn { background: color-mix(in srgb, var(--surface) 48%, transparent); }
 
 /* ---------- Transition entre les pages : glisse depuis la droite, ou depuis la gauche quand on revient en arrière ---------- */
@@ -651,8 +655,8 @@ html[data-splash="off"] .splash { display: none; }
   margin: 0 auto;
   overflow: hidden; /* le contenu reste dans l'île pendant qu'elle grandit */
   border-radius: 9999px;
-  /* Verre fumé : la page transparaît, floutée, derrière l'île. */
-  background: rgb(10 10 14 / .58);
+  /* Verre fumé : la page transparaît, floutée, derrière l'île (assez foncé pour bien lire). */
+  background: rgb(14 14 18 / .74);
   -webkit-backdrop-filter: blur(22px) saturate(180%);
   backdrop-filter: blur(22px) saturate(180%);
   color: #fff;
@@ -667,7 +671,7 @@ html[data-splash="off"] .splash { display: none; }
 :root[data-style="capsule"] .island[data-open] {
   width: min(92vw, 30rem);
   border-radius: 30px;
-  background: rgb(10 10 14 / .68); /* un peu plus dense ouverte, pour bien lire */
+  background: rgb(14 14 18 / .82); /* un peu plus dense ouverte, pour bien lire */
 }
 /* L'agrandissement est animé en JavaScript (taille réelle avant / après) : pas de transition CSS en plus. */
 :root[data-style="capsule"] .island-panel { transition: none; }
@@ -691,16 +695,37 @@ html[data-splash="off"] .splash { display: none; }
   background: color-mix(in srgb, var(--accent) 12%, transparent);
   transition: transform .5s cubic-bezier(.2, .9, .3, 1.25), width .3s ease, opacity .2s, background .2s, box-shadow .2s;
 }
-.tab-lens-drag {
-  transition: transform .14s cubic-bezier(.2, .8, .3, 1), width .3s ease, background .2s, box-shadow .2s;
-  background: rgb(255 255 255 / .1);
-  -webkit-backdrop-filter: blur(1.5px) saturate(2) brightness(1.08);
-  backdrop-filter: blur(1.5px) saturate(2) brightness(1.08);
-  box-shadow:
-    inset 0 0 0 1px rgb(255 255 255 / .55),
-    inset 3px 0 6px -2px rgb(255 64 160 / .45),
-    inset -3px 0 6px -2px rgb(56 200 255 / .45),
-    inset 0 3px 6px -3px rgb(255 230 120 / .4),
-    0 10px 24px -8px rgb(0 0 0 / .45);
+.tab-lens::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  /* Liseré irisé de la bulle de verre (visible seulement quand le doigt est posé). */
+  background: conic-gradient(from 200deg, #ff3b6b, #ffd60a, #34c759, #32d2ff, #7c5cff, #ff3b6b);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity .2s;
 }
+.tab-lens-drag {
+  transition: transform .16s cubic-bezier(.2, .8, .3, 1), width .25s cubic-bezier(.2, .9, .3, 1.2), background .2s, box-shadow .2s;
+  background: rgb(255 255 255 / .07);
+  -webkit-backdrop-filter: blur(1px) saturate(1.9) brightness(1.1) contrast(1.06);
+  backdrop-filter: blur(1px) saturate(1.9) brightness(1.1) contrast(1.06);
+  box-shadow:
+    inset 0 1.5px 1px rgb(255 255 255 / .85),
+    inset 0 -1.5px 3px rgb(255 255 255 / .3),
+    inset 4px 0 10px -6px rgb(255 59 107 / .55),
+    inset -4px 0 10px -6px rgb(50 210 255 / .55),
+    0 10px 28px -8px rgb(0 0 0 / .4);
+}
+.tab-lens-drag::before { opacity: .8; }
+:root[data-style="capsule"] .tab-lens-drag,
+:root[data-style="capsule"][data-theme="dark"] .tab-lens-drag { background: rgb(255 255 255 / .07); }
 @media (prefers-reduced-motion: reduce) { .tab-lens, .tab-lens-drag { transition: none; } }
+
+/* Dans l'île (fond foncé), la couleur d'accent est éclaircie pour rester lisible, en clair comme en sombre. */
+:root[data-style="capsule"] .island .text-accent { color: color-mix(in srgb, var(--accent) 55%, #fff); }

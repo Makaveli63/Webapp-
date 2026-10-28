@@ -20,9 +20,12 @@ export function MobileTabBar() {
 
   const list = useRef<HTMLUListElement>(null);
   const lens = useRef<HTMLSpanElement>(null);
-  const start = useRef<{ x: number; moved: boolean } | null>(null);
+  const start = useRef<{ x: number; moved: boolean; lastX: number; lastT: number } | null>(null);
   const handled = useRef(false);
+  const stretch = useRef(1); // étirement de la bulle selon la vitesse du doigt
   const [dragX, setDragX] = useState<number | null>(null);
+  // Doigt posé sur la barre : la sélection devient une bulle de verre (comme l'app Musique).
+  const [pressed, setPressed] = useState(false);
   // Onglet choisi dont la page n'est pas encore affichée : la bulle y va tout de suite.
   const [pending, setPending] = useState<number | null>(null);
   const [width, setWidth] = useState(0);
@@ -55,24 +58,34 @@ export function MobileTabBar() {
     const el = lens.current;
     if (!el || !slot) return;
     const center = dragX ?? (target + 0.5) * slot;
-    const left = Math.max(0, Math.min(width - slot, center - slot / 2));
-    el.style.setProperty("width", `${slot}px`);
-    el.style.setProperty("transform", `translateX(${left}px) scale(${dragX !== null ? 1.14 : 1})`);
-    el.style.setProperty("opacity", target >= 0 || dragX !== null ? "1" : "0");
-  }, [dragX, target, slot, width]);
+    const lensWidth = pressed ? slot * 1.18 : slot;
+    const left = Math.max(-slot * 0.12, Math.min(width - lensWidth + slot * 0.12, center - lensWidth / 2));
+    const sx = pressed ? stretch.current : 1;
+    const sy = pressed ? 1.22 / Math.sqrt(sx) : 1; // plus large quand le doigt file, un peu moins haute
+    el.style.setProperty("width", `${lensWidth}px`);
+    el.style.setProperty("transform", `translateX(${left}px) scale(${sx}, ${sy})`);
+    el.style.setProperty("opacity", target >= 0 || pressed ? "1" : "0");
+  }, [dragX, target, slot, width, pressed]);
 
   const relX = (e: PointerEvent) => e.clientX - (list.current?.getBoundingClientRect().left ?? 0);
 
   const down = (e: PointerEvent<HTMLUListElement>) => {
     if (e.pointerType === "mouse" && e.button !== 0) return;
-    start.current = { x: e.clientX, moved: false };
+    start.current = { x: e.clientX, moved: false, lastX: e.clientX, lastT: e.timeStamp };
+    stretch.current = 1;
     e.currentTarget.setPointerCapture(e.pointerId);
+    setPressed(true);
   };
   const move = (e: PointerEvent<HTMLUListElement>) => {
     if (!start.current) return;
     // La bulle ne suit le doigt que s'il glisse vraiment (un simple toucher ne la fait pas sauter).
     if (!start.current.moved && Math.abs(e.clientX - start.current.x) < 8) return;
     start.current.moved = true;
+    const dt = Math.max(e.timeStamp - start.current.lastT, 1);
+    const speed = Math.abs(e.clientX - start.current.lastX) / dt; // px par ms
+    stretch.current = 1 + Math.min(speed * 0.18, 0.3);
+    start.current.lastX = e.clientX;
+    start.current.lastT = e.timeStamp;
     const x = relX(e);
     if (dragX !== null && indexAt(x) !== indexAt(dragX)) navigator.vibrate?.(6); // petit retour haptique (Android)
     setDragX(x);
@@ -83,6 +96,7 @@ export function MobileTabBar() {
     const item = ITEMS[index];
     start.current = null;
     setDragX(null);
+    setPressed(false);
     // Le doigt a été capturé par la barre : c'est elle qui ouvre l'onglet (le clic du lien est ignoré).
     handled.current = true;
     window.setTimeout(() => (handled.current = false), 400);
@@ -94,6 +108,7 @@ export function MobileTabBar() {
   const cancel = () => {
     start.current = null;
     setDragX(null);
+    setPressed(false);
   };
 
   return (
@@ -109,7 +124,7 @@ export function MobileTabBar() {
         onPointerUp={up}
         onPointerCancel={cancel}
       >
-        <span ref={lens} aria-hidden className={`tab-lens ${dragX !== null ? "tab-lens-drag" : ""}`} />
+        <span ref={lens} aria-hidden className={`tab-lens ${pressed ? "tab-lens-drag" : ""}`} />
         {ITEMS.map(({ href, label, icon: Icon }, i) => {
           const current = active === href;
           return (
@@ -123,7 +138,7 @@ export function MobileTabBar() {
                   hover === i ? "text-accent" : "text-muted"
                 }`}
               >
-                <Icon className={`size-5 transition-transform ${dragX !== null && hover === i ? "scale-110" : ""}`} aria-hidden />
+                <Icon className={`size-5 transition-transform duration-200 ${pressed && hover === i ? "scale-125" : ""}`} aria-hidden />
                 {label}
               </Link>
             </li>
