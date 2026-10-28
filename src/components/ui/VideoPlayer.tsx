@@ -44,7 +44,7 @@ export function VideoPlayer({ video, title, className = "", autoPlay = false }: 
         >
           {poster && (
             // eslint-disable-next-line @next/next/no-img-element -- site statique
-            <img src={poster} alt="" loading="lazy" referrerPolicy="no-referrer" className="absolute inset-0 h-full w-full object-cover opacity-90" />
+            <img src={poster} alt="" loading="lazy" referrerPolicy="no-referrer" onError={(e) => e.currentTarget.classList.add("invisible")} className="absolute inset-0 h-full w-full object-cover opacity-90" />
           )}
           <span className="relative flex size-16 items-center justify-center rounded-full bg-accent text-white shadow-lg ring-4 ring-white/30 transition-transform group-hover:scale-110">
             <Play className="ml-1 size-7" fill="currentColor" aria-hidden />

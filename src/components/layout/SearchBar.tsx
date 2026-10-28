@@ -123,7 +123,8 @@ export function SearchBar({
     return () => window.clearTimeout(timer);
   }, [q, live, router]);
 
-  const suggestions = useMemo(() => (open ? suggestTitles(q, prepared, 5) : []), [open, q, prepared]);
+  // Page Recherche : les résultats s'affichent déjà dessous, pas de liste par-dessus les filtres.
+  const suggestions = useMemo(() => (open && !live ? suggestTitles(q, prepared, 5) : []), [open, live, q, prepared]);
   const animeShown = open && !live ? anime : [];
   // En-tête : les actus qui contiennent tous les mots tapés.
   const words = spotlight && q.trim().length >= 2 ? canon(q).split(" ").filter(Boolean) : [];

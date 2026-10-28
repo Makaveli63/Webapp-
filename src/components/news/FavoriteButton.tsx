@@ -19,10 +19,10 @@ export function FavoriteButton({ article, withLabel = false, className = "" }: {
       aria-pressed={saved}
       aria-label={saved ? "Retirer des favoris" : "Ajouter aux favoris"}
       title={saved ? "Retirer des favoris" : "Ajouter aux favoris"}
-      className={`inline-flex items-center gap-1.5 rounded-full transition-colors ${saved ? "text-accent" : "text-muted hover:text-fg"} ${className}`}
+      className={`inline-flex items-center gap-1.5 rounded-full transition-colors ${withLabel ? "glass-pill rounded-full px-3 py-1.5 text-xs font-semibold ring-1 ring-inset ring-border" : ""} ${saved ? (withLabel ? "bg-accent text-white ring-accent" : "text-accent") : withLabel ? "text-heading hover:text-fg" : "text-muted hover:text-fg"} ${className}`}
     >
-      <Bookmark className="size-5" fill={saved ? "currentColor" : "none"} aria-hidden />
-      {withLabel && <span className="text-sm font-medium">{saved ? "Enregistré" : "Favori"}</span>}
+      <Bookmark className={withLabel ? "size-3.5" : "size-5"} fill={saved ? "currentColor" : "none"} aria-hidden />
+      {withLabel && <span>{saved ? "Enregistré" : "Favori"}</span>}
     </button>
   );
 }

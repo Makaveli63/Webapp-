@@ -38,11 +38,11 @@ export function ShareButton({ title, path }: { title: string; path: string }) {
   const text = encodeURIComponent(`${title} — sur GamingBase`);
   return (
     <div className="relative">
-      <button type="button" onClick={share} className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-sm text-muted ring-1 ring-inset ring-border hover:text-fg">
-        <Share2 className="size-4" aria-hidden /> Partager
+      <button type="button" onClick={share} className="inline-flex items-center gap-1.5 glass-pill rounded-full px-3 py-1.5 text-xs font-semibold ring-1 ring-inset ring-border text-heading hover:text-fg">
+        <Share2 className="size-3.5" aria-hidden /> Partager
       </button>
       {open && (
-        <div className="glass glass-strong absolute right-0 z-20 mt-2 w-52 rounded-xl p-1.5 text-sm shadow-xl">
+        <div className="share-menu glass glass-strong absolute left-0 z-20 mt-2 w-52 rounded-xl p-1.5 text-sm shadow-xl sm:left-auto sm:right-0">
           <a className="block rounded-lg px-3 py-2 hover:bg-surface-2" target="_blank" rel="noopener noreferrer" href={`https://wa.me/?text=${text}%20${encodeURIComponent(url())}`}>
             WhatsApp
           </a>

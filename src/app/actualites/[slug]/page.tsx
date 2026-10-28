@@ -89,17 +89,18 @@ export default async function ArticlePage({ params }: Props) {
           {article.platforms.map((p) => <PlatformBadge key={p} platform={p} />)}
         </div>
         <h1 className="mt-3 text-2xl font-extrabold leading-tight text-heading sm:text-4xl">{article.title}</h1>
-        <div className="mt-4 flex items-start justify-between gap-4 border-b border-border pb-6">
-        <p className="text-sm text-muted">
+        {/* Sur téléphone : les infos sur toute la largeur, les boutons en dessous (rien n'est écrasé). */}
+        <div className="mt-4 flex flex-col gap-3 border-b border-border pb-6 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+        <p className="min-w-0 text-sm text-muted">
           {article.author !== article.source.name && <>Par {article.author} · </>}
           <time dateTime={article.publishedAt}>{formatDate(article.publishedAt)}</time>
           {" · "}Source : <span className="font-semibold text-fg">{article.source.name}</span>
           {" · "}
           {Math.max(1, Math.round(`${article.aiSummary ?? ""} ${article.content}`.split(/\s+/).length / 220))} min de lecture
         </p>
-        <div className="flex shrink-0 items-center gap-1">
+        <div className="flex shrink-0 flex-wrap items-center gap-1.5">
           <ReadingControls />
-          <LikeButton type="article" id={article.slug} />
+          <LikeButton type="article" id={article.slug} className="glass-pill h-[30px] pr-3 ring-1 ring-inset ring-border" />
           <ShareButton title={article.title} path={`/actualites/${article.slug}/`} />
           <FavoriteButton article={article} withLabel />
         </div>

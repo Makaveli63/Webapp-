@@ -973,3 +973,7 @@ html[data-search="closing"] .search-scrim { opacity: 0; transition: opacity .2s 
 @media (prefers-reduced-motion: reduce) { .hs-field, .hs-cancel, .search-scrim { animation: none; } }
 html[data-search] .release-banner { opacity: 0; pointer-events: none; transition: opacity .2s ease; }
 .spotlight-results { background: color-mix(in srgb, var(--surface) 94%, transparent) !important; }
+
+/* Menu « Aa » : sous le bouton, sans jamais sortir de l'écran */
+.reading-panel { position: absolute; left: 0; top: 2.5rem; width: min(16rem, calc(100vw - 2rem)); background: color-mix(in srgb, var(--surface) 97%, transparent); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); }
+.share-menu { background: color-mix(in srgb, var(--surface) 97%, transparent) !important; }

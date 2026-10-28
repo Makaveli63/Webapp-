@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Type } from "lucide-react";
+import { Check } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 const SIZES = [
@@ -53,12 +53,14 @@ export function ReadingControls() {
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-label="Taille du texte et lecture épurée"
-        className={`head-btn flex size-10 items-center justify-center rounded-full ${open ? "text-accent" : "text-muted hover:text-fg"}`}
+        className={`inline-flex h-[30px] items-center glass-pill rounded-full px-3 py-1.5 text-xs font-semibold ring-1 ring-inset ring-border ${open ? "text-accent" : "text-heading hover:text-fg"}`}
       >
-        <Type className="size-5" aria-hidden />
+        <span className="text-[13px] font-bold tracking-tight" aria-hidden>
+          <span className="text-[10px]">A</span>A
+        </span>
       </button>
       {open && (
-        <div role="dialog" aria-label="Affichage de l'article" className="reading-panel glass-strong absolute right-0 top-12 z-30 w-64 rounded-2xl p-3">
+        <div role="dialog" aria-label="Affichage de l'article" className="reading-panel z-30 rounded-2xl p-3 shadow-xl ring-1 ring-border">
           <p className="px-1 text-xs font-semibold uppercase tracking-wide text-muted">Taille du texte</p>
           <div className="mt-2 grid grid-cols-4 gap-1 rounded-full bg-surface-2 p-1">
             {SIZES.map((s, i) => (
