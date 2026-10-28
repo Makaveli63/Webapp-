@@ -18,15 +18,6 @@
       return "violet";
     }
   }
-  // Style complet du site : « capsule » (par défaut) ou « gamingbase » (l'ancien nom « ios » est repris).
-  function style() {
-    try {
-      var v = localStorage.getItem("gb-style");
-      return v === "ios" ? "capsule" : v || "capsule"; // Capsule par défaut, sur le site comme dans les apps
-    } catch {
-      return "capsule";
-    }
-  }
   // Style Capsule : couleur (rose par défaut) et transparence (verre par défaut).
   function read(key, fallback) {
     try {
@@ -39,15 +30,14 @@
     root.setAttribute("data-accent", accent());
     root.setAttribute("data-tint", read("gb-tint", "gamingbase"));
     root.setAttribute("data-glass", read("gb-glass", "verre"));
-    var st = style();
-    if (st === "capsule") root.setAttribute("data-style", "capsule");
-    else root.removeAttribute("data-style");
+    // Un seul style : Capsule (l'ancien style « GamingBase » a été retiré).
+    root.setAttribute("data-style", "capsule");
     var c = choice();
     var dark = c === "dark" || (c === "system" && media.matches);
     root.setAttribute("data-theme", dark ? "dark" : "light");
     root.setAttribute("data-theme-choice", c);
     document.querySelectorAll('meta[name="theme-color"]').forEach(function (m) {
-      m.setAttribute("content", st === "capsule" ? (dark ? "#000000" : "#f2f2f7") : dark ? "#0b0d12" : "#f6f7fb");
+      m.setAttribute("content", dark ? "#000000" : "#f2f2f7");
     });
   }
   apply();

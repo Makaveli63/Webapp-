@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { AppNotificationsToggle } from "@/components/app/AppNotificationsToggle";
 import { LiveActivityToggle } from "@/components/app/LiveActivityToggle";
-import { AccentPicker } from "@/components/settings/AccentPicker";
 import { ThemePicker } from "@/components/settings/ThemePicker";
 import { SyncPanel } from "@/components/sync/SyncPanel";
 
@@ -18,7 +17,6 @@ export default function SettingsPage() {
       <LiveActivityToggle />
       <SyncPanel />
       <ThemePicker />
-      <AccentPicker />
     </div>
   );
 }

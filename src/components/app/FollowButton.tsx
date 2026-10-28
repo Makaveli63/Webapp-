@@ -43,6 +43,19 @@ export function FollowButton({
   };
 
   const Icon = on ? BellRing : Bell;
+  // Confirmation dans une bulle sombre en haut, comme l'île des sorties (hors de la vignette : son verre l'enfermerait).
+  const toast =
+    hint &&
+    createPortal(
+      <div role="status" className="follow-toast">
+        <BellRing className="size-4 shrink-0 text-accent" aria-hidden />
+        <span className="min-w-0">
+          <span className="block truncate font-semibold">{item.title}</span>
+          <span className="block text-xs text-white/75">{hint}</span>
+        </span>
+      </div>,
+      document.body,
+    );
   if (compact)
     return (
       <>
@@ -58,17 +71,11 @@ export function FollowButton({
         >
           <Icon className="size-4" aria-hidden />
         </button>
-        {hint &&
-          createPortal(
-          <span role="status" className="follow-toast glass-strong fixed inset-x-4 z-50 mx-auto max-w-sm rounded-2xl px-4 py-3 text-center text-sm font-semibold text-heading shadow-xl">
-            🔔 {item.title} : {hint.charAt(0).toLowerCase() + hint.slice(1)}
-          </span>,
-            document.body, // hors de la vignette (son effet de verre enfermerait le message)
-          )}
+        {toast}
       </>
     );
   return (
-    <span className="inline-flex flex-col items-start">
+    <>
       <button
         type="button"
         aria-pressed={on}
@@ -79,7 +86,7 @@ export function FollowButton({
       >
         <Icon className="size-3.5" aria-hidden /> {on ? "Suivi" : "Suivre"}
       </button>
-      {hint && <span role="status" className="mt-1 max-w-[16rem] text-[11px] text-muted">{hint}</span>}
-    </span>
+      {toast}
+    </>
   );
 }
