@@ -43,15 +43,24 @@ interface Stats {
   lastWin?: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const storageCache = new Map<string, any>();
+
 function read<T>(key: string, fallback: T): T {
   try {
-    return { ...fallback, ...JSON.parse(localStorage.getItem(key) ?? "{}") };
+    if (storageCache.has(key)) {
+      return { ...fallback, ...storageCache.get(key) };
+    }
+    const parsed = JSON.parse(localStorage.getItem(key) ?? "{}");
+    storageCache.set(key, parsed);
+    return { ...fallback, ...parsed };
   } catch {
     return fallback;
   }
 }
 function write(key: string, value: unknown) {
   try {
+    storageCache.set(key, value);
     localStorage.setItem(key, JSON.stringify(value));
   } catch {
     /* stockage indisponible */
