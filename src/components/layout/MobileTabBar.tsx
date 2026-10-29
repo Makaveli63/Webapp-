@@ -38,7 +38,8 @@ function LensFilter() {
  */
 export function MobileTabBar() {
   const router = useRouter();
-  const path = activeHref(usePathname());
+  const pathname = usePathname();
+  const path = activeHref(pathname);
   // Les actus n'ont plus d'onglet : elles font partie de l'accueil.
   const active = path === "/actualites" ? "/" : path;
   const activeIndex = ITEMS.findIndex((i) => i.href === active);
@@ -56,7 +57,6 @@ export function MobileTabBar() {
   const [width, setWidth] = useState(0);
   const [collapsed, setCollapsed] = useState(false);
   const nav = useRef<HTMLElement>(null);
-  const pathname = usePathname();
 
   // Défilement vers le bas : la barre se rétracte ; vers le haut (ou en haut de page) : elle revient.
   useEffect(() => {
@@ -180,9 +180,16 @@ export function MobileTabBar() {
     // Le doigt a été capturé par la barre : c'est elle qui ouvre l'onglet (le clic du lien est ignoré).
     handled.current = true;
     window.setTimeout(() => (handled.current = false), 400);
-    if (item && item.href !== active) {
+    if (!item) return;
+    if (item.href !== active) {
       setPending(index);
       router.push(item.href);
+    } else if ((pathname.replace(/\/+$/, "") || "/") !== item.href) {
+      // Onglet déjà actif depuis une page de cette rubrique (un article depuis l'accueil…) : retour à l'onglet, comme sur iOS.
+      router.push(item.href);
+    } else {
+      // Déjà sur l'onglet : retour en haut de la page.
+      window.scrollTo({ top: 0, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
     }
   };
   const cancel = () => {
