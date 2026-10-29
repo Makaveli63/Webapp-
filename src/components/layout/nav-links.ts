@@ -1,4 +1,4 @@
-import { CalendarDays, Clapperboard, Gamepad2, Gift, House, Newspaper, Search, Star, Tag, Trophy } from "lucide-react";
+import { CalendarDays, Clapperboard, Gamepad2, Gift, House, MessageSquare, Newspaper, Search, Star, Tag, Trophy } from "lucide-react";
 import { FlowerIcon } from "@/components/ui/FlowerIcon";
 
 /**
@@ -16,6 +16,7 @@ export const NAV_LINKS = [
   { href: "/promos", label: "Promos", icon: Tag, mobile: false },
   { href: "/videos", label: "Vidéos", icon: Clapperboard, mobile: false, wide: true },
   { href: "/classement", label: "Classement", icon: Trophy, mobile: false, wide: true },
+  { href: "/suggestions", label: "Suggestions", icon: MessageSquare, mobile: false, wide: true },
 ] as const;
 
 export const SEARCH_LINK = { href: "/recherche", label: "Recherche", icon: Search } as const;
