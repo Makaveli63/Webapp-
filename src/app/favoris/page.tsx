@@ -5,6 +5,7 @@ import { LibraryShortcut } from "@/components/tracker/LibraryShortcut";
 import { FavoritesList } from "@/components/news/FavoritesList";
 import { PinnedReleaseGrid } from "@/components/releases/PinnedReleaseGrid";
 import { PlayerCard } from "@/components/player/PlayerCard";
+import { SuggestShortcut } from "@/components/suggestions/SuggestShortcut";
 import { getUpcomingReleases } from "@/lib/releases";
 
 export const metadata: Metadata = { title: "Mon espace" };
@@ -29,6 +30,7 @@ export default function FavoritesPage() {
           </span>
           <ChevronRight className="size-5 shrink-0 text-muted" aria-hidden />
         </Link>
+        <SuggestShortcut />
       </div>
       <section aria-labelledby="pinned-title">
         <h2 id="pinned-title" className="mb-4 text-xl font-bold text-heading">Mes jeux épinglés</h2>
