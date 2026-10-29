@@ -16,6 +16,7 @@ import { NotInterestedButton } from "@/components/app/NotInterestedButton";
 import { LikeButton } from "@/components/social/LikeButton";
 import { RemoteImage } from "@/components/ui/RemoteImage";
 import { VideoPlayer } from "@/components/ui/VideoPlayer";
+import { ArticleGallery } from "@/components/news/ArticleGallery";
 import { OtherScores } from "@/components/tests/ScoreCompare";
 import { otherTests, testedGame } from "@/lib/compare";
 import { aboutGame, getGames } from "@/lib/games";
@@ -154,10 +155,17 @@ export default async function ArticlePage({ params }: Props) {
           <div className="prose-article mt-8" dangerouslySetInnerHTML={{ __html: renderMarkdown(article.content) }} />
         )}
 
+        {article.gallery && article.gallery.length > 0 && (
+          <ArticleGallery images={article.gallery} source={article.source.name} sourceUrl={article.source.url} title={article.title} />
+        )}
+
         {article.video && (
           <section aria-label="Vidéo" className="mt-8">
-            <p className="mb-2 text-xs font-medium uppercase tracking-wider text-accent-2">Vidéo</p>
-            <VideoPlayer video={article.video} title={article.title} />
+            <p className="mb-2 text-xs font-medium uppercase tracking-wider text-accent-2">{article.clips?.length ? "Vidéos" : "Vidéo"}</p>
+            <div className="space-y-3">
+              <VideoPlayer video={article.video} title={article.title} />
+              {article.clips?.map((id, i) => <VideoPlayer key={id} video={{ youtube: id }} title={`${article.title} (vidéo ${i + 2})`} />)}
+            </div>
           </section>
         )}
 

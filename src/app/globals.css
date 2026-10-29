@@ -1093,3 +1093,9 @@ html[data-search] .release-banner { opacity: 0; pointer-events: none; transition
 /* Panneau flottant (« Pas intéressé ») : au-dessus de tout, placé sous son bouton (position calculée). */
 .float-panel { position: fixed; z-index: 70; width: min(16rem, calc(100vw - 2rem)); background: color-mix(in srgb, var(--surface) 97%, transparent); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); }
 .share-menu { background: color-mix(in srgb, var(--surface) 97%, transparent) !important; }
+
+/* Visionneuse d'images d'un article : la page ne défile pas derrière, boutons sous l'encoche. */
+html.viewer-open, html.viewer-open body { overflow: hidden; }
+.viewer-top { padding-top: calc(env(safe-area-inset-top) + 12px); }
+.viewer-bottom { padding-bottom: calc(env(safe-area-inset-bottom) + 12px); }
+.viewer [class*="overflow-x-auto"]::-webkit-scrollbar { display: none; }

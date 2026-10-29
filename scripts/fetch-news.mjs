@@ -177,6 +177,76 @@ function articleVideo(item) {
   return mp4?.startsWith("https://") ? { mp4 } : undefined;
 }
 
+// ---------- Galerie : images et vidéos citées dans l'article ----------
+const MAX_GALLERY = 8;
+const MAX_CLIPS = 3;
+const GALLERY_FILE = path.join(CACHE_DIR, "gallery.json");
+const MAX_GALLERY_PAGES = 15;
+// Titre qui annonce des visuels : on va chercher les images sur la page si le flux n'en donne pas.
+const MEDIA_WORDS = /\b(images?|photos?|captures?|screenshots?|visuels?|galerie|artworks?|vid[ée]os?|trailers?|bande-annonce|gameplay|teasers?)\b/i;
+// Logos, avatars, publicités, pixels de suivi : pas des illustrations de l'article.
+const NOT_ILLUSTRATION = /logo|avatar|gravatar|icon|emoji|sprite|pixel|placeholder|badge|banner-ad|\/ads?\/|doubleclick|feedburner|share|button|\.svg(\?|$)|\.gif(\?|$)/i;
+
+/** Même image en plusieurs tailles (WordPress : « -1024x576.jpg ») : une seule clé. */
+const imageKey = (url) => url.replace(/[?#].*$/, "").replace(/-\d{2,4}x\d{2,4}(?=\.\w+$)/, "").replace(/^https?:\/\/(www\.)?/, "");
+
+/** Images et vidéos YouTube d'un bout de HTML (contenu du flux ou page de l'article). */
+export function mediaFromHtml(html, pageUrl, cover) {
+  const images = [];
+  const seen = new Set(cover ? [imageKey(cover)] : []);
+  for (const tag of html.match(/<img\b[^>]*>/gi) ?? []) {
+    const attr = (name) => new RegExp(`\\b${name}\\s*=\\s*["']([^"']+)["']`, "i").exec(tag)?.[1];
+    const w = Number(attr("width") ?? 0);
+    const h = Number(attr("height") ?? 0);
+    if ((w && w < 300) || (h && h < 160)) continue;
+    // Plus grande variante du srcset, sinon l'image différée (lazy-load), sinon src.
+    const srcset = attr("data-srcset") ?? attr("srcset");
+    const largest = srcset
+      ?.split(",")
+      .map((c) => c.trim().split(/\s+/))
+      .sort((a, b) => parseInt(b[1] ?? "0") - parseInt(a[1] ?? "0"))[0]?.[0];
+    const raw = largest ?? attr("data-lazy-src") ?? attr("data-src") ?? attr("data-original") ?? attr("src");
+    if (!raw || raw.startsWith("data:") || NOT_ILLUSTRATION.test(raw)) continue;
+    let url;
+    try {
+      url = safeUrl(new URL(raw.replace(/&amp;/g, "&"), pageUrl).href.replace(/^http:\/\//, "https://"));
+    } catch {
+      continue;
+    }
+    if (!url?.startsWith("https://") || seen.has(imageKey(url))) continue;
+    seen.add(imageKey(url));
+    images.push(url);
+    if (images.length >= MAX_GALLERY) break;
+  }
+  const clips = [...new Set([...html.matchAll(new RegExp(YOUTUBE_ID.source, "g"))].map((m) => m[1]))].slice(0, MAX_CLIPS + 1);
+  return { images, clips };
+}
+
+/** Partie principale d'une page d'article (sans l'en-tête, le menu, les articles liés ni le pied de page). */
+export function mainContent(html) {
+  const article = /<article\b[\s\S]*?<\/article>/i.exec(html)?.[0];
+  if (article && article.length > 2000) return article;
+  const start = html.search(/class=["'][^"']*\b(entry-content|article-content|post-content|article__content|content-article|article-body|post-body)\b/i);
+  return start >= 0 ? html.slice(start, start + 200_000) : "";
+}
+
+/** Galerie fournie par le flux : images du contenu (hors image principale) et vidéos en plus de la première. */
+function galleryOf(item, link) {
+  const html = String(item["content:encoded"] ?? item.content ?? "");
+  const { images, clips } = mediaFromHtml(html, link, articleImage(item));
+  return { ...(images.length ? { gallery: images } : {}), ...(clips.length > 1 ? { clips: clips.slice(1) } : {}) };
+}
+
+async function fetchPageMedia(url, cover) {
+  if (!/^https:\/\/|^http:\/\/127\.0\.0\.1[:/]/.test(url)) return { images: [], clips: [] }; // 127.0.0.1 : tests locaux
+  const res = await fetch(url, {
+    headers: { "User-Agent": "GamingBase/1.0 (agrégateur RSS)", Accept: "text/html" },
+    signal: AbortSignal.timeout(10_000),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return mediaFromHtml(mainContent(await readLimited(res)), url, cover);
+}
+
 /** Note chiffrée d'un test (« 8/10 », « 16/20 », « 4,5/5 »), si le média l'indique. */
 function extractScore(text) {
   const m = /(?<![\d/])(\d{1,2}(?:[.,]\d)?)\s*\/\s*(5|10|20|100)\b(?!\s*\/\s*\d)/.exec(text ?? ""); // pas une date (01/10/2026)
@@ -440,6 +510,7 @@ async function fetchFeed(feed) {
         source: { name: feed.name, url: link },
         image: articleImage(item),
         video: articleVideo(item),
+        ...galleryOf(item, link),
         external: true,
       };
     })
@@ -736,6 +807,39 @@ async function main() {
   writeJson(IMAGES_FILE, images);
   const withImage = (a) => (!a.image && images[a.slug] ? { ...a, image: images[a.slug] } : a);
 
+  // Articles qui annoncent des images ou des vidéos sans les fournir dans le flux : lus sur la page du média.
+  const galleries = readJson(GALLERY_FILE, {});
+  const needGallery = [...articles, ...readJson(ARCHIVE_FILE, [])]
+    .filter((a, i, all) => a?.slug && !a.gallery?.length && !(a.slug in galleries) && MEDIA_WORDS.test(a.title) && all.findIndex((b) => b?.slug === a.slug) === i)
+    .slice(0, MAX_GALLERY_PAGES);
+  let galleried = 0;
+  for (let i = 0; i < needGallery.length; i += 4) {
+    await Promise.all(
+      needGallery.slice(i, i + 4).map(async (a) => {
+        try {
+          const media = await fetchPageMedia(a.source.url, a.image);
+          const clips = media.clips.filter((id) => id !== a.video?.youtube).slice(0, MAX_CLIPS);
+          galleries[a.slug] = media.images.length || clips.length ? { images: media.images, clips } : null;
+          if (galleries[a.slug]) galleried++;
+        } catch (err) {
+          console.log(`[galerie] ${a.source.name} : page indisponible (${err.message}).`);
+        }
+      }),
+    );
+  }
+  if (needGallery.length) console.log(`[galerie] ${galleried} galerie(s) trouvée(s) sur ${needGallery.length} article(s) consulté(s).`);
+  for (const slug of Object.keys(galleries)) if (!liveSlugs.has(slug)) delete galleries[slug];
+  writeJson(GALLERY_FILE, galleries);
+  const withGallery = (a) => {
+    const g = galleries[a.slug];
+    if (a.gallery?.length || !g) return a;
+    // Pas de vidéo dans le flux : la première de la page devient la vidéo de l'article.
+    const [first, ...rest] = g.clips;
+    const video = a.video ?? (first ? { youtube: first } : undefined);
+    const clips = a.video ? g.clips : rest;
+    return { ...a, ...(video ? { video } : {}), ...(g.images.length ? { gallery: g.images } : {}), ...(clips.length && !a.clips?.length ? { clips } : {}) };
+  };
+
   // Oublie les résumés des articles sortis de la fenêtre de publication.
   const keep = Date.now() - (MAX_AGE_DAYS + 15) * 86_400_000;
   for (const [slug, entry] of Object.entries(cache)) if (Date.parse(entry.at) < keep) delete cache[slug];
@@ -745,7 +849,7 @@ async function main() {
     const summary = cache[a.slug]?.text;
     const score = a.score ?? (a.category === "Test" ? (scores[a.slug] ?? cache[a.slug]?.note) : undefined);
     const title = proofread[a.title] ?? a.title;
-    const withScore = withImage({ ...a, title, ...(score ? { score } : {}) });
+    const withScore = withGallery(withImage({ ...a, title, ...(score ? { score } : {}) }));
     return summary ? { ...withScore, aiSummary: summary, excerpt: clean(summary, 220) } : withScore;
   });
   // Fusion avec l'archive : les articles du jour remplacent leurs anciennes versions.
@@ -755,7 +859,8 @@ async function main() {
     .filter((a) => a?.slug && !fresh.has(a.slug) && Date.parse(a.publishedAt) >= minArchive)
     .map((a) => (proofread[a.title] && proofread[a.title] !== a.title ? { ...a, title: proofread[a.title] } : a))
     .map((a) => (a.category === "Test" && !a.score && scores[a.slug] ? { ...a, score: scores[a.slug] } : a))
-    .map(withImage);
+    .map(withImage)
+    .map(withGallery);
   const all = [...final, ...archived].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt)).slice(0, ARCHIVE_MAX);
   writeJson(ARCHIVE_FILE, all);
   writeJson(ARTICLES_FILE, all);

@@ -42,6 +42,10 @@ export interface Article {
   imageCredit?: string;
   /** Vidéo intégrée par le média dans l'article (YouTube) ou jointe au flux */
   video?: Video;
+  /** Autres images de l'article du média (affichées depuis son site, créditées) */
+  gallery?: string[];
+  /** Autres vidéos YouTube de l'article */
+  clips?: string[];
   /** Résumé original rédigé automatiquement (IA) à partir de la source */
   aiSummary?: string;
   /** true si l'article provient d'un flux RSS externe */

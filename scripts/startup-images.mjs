@@ -1,10 +1,10 @@
 // Images de démarrage iOS (site ajouté à l'écran d'accueil) : la dernière image de l'animation
 // d'ouverture (fond et manette au centre), pour qu'iOS passe de l'icône au site sans écran blanc.
-// Usage, après « npm run build » : node scripts/startup-images.cjs   → public/splash/*.jpg
+// Usage, après « npm run build » : node scripts/startup-images.mjs   → public/splash/*.jpg
 // Les tailles d'écran sont celles de src/lib/startup-images.ts.
-const { chromium } = require("playwright");
-const fs = require("node:fs");
-const path = require("node:path");
+import fs from "node:fs";
+import path from "node:path";
+import { chromium } from "playwright";
 
 const html = fs.readFileSync(path.resolve("out/index.html"), "utf8");
 const svg = html.match(/<svg[^>]*class="splash-logo-icon"[^>]*>.*?<\/svg>/s)?.[0];
@@ -14,7 +14,7 @@ const DEVICES = [...src.matchAll(/\[(\d+), (\d+), (\d)\]/g)].map((m) => m.slice(
 // Mêmes couleurs que --bg et --accent de globals.css.
 const THEMES = { light: { bg: "#f6f7fb", accent: "#6246ea" }, dark: { bg: "#0b0d12", accent: "#7c5cff" } };
 
-(async () => {
+{
   const browser = await chromium.launch();
   fs.mkdirSync("public/splash", { recursive: true });
   for (const [w, h, dpr] of DEVICES) {
@@ -30,4 +30,4 @@ const THEMES = { light: { bg: "#f6f7fb", accent: "#6246ea" }, dark: { bg: "#0b0d
   }
   await browser.close();
   console.log(`[splash] ${DEVICES.length * 2} images dans public/splash/`);
-})();
+}

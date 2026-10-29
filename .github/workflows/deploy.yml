@@ -49,6 +49,12 @@ jobs:
             .cache/news/anime-fr.json
           key: news-summaries-${{ github.run_id }}
           restore-keys: news-summaries-
+      # Galeries d'images des articles (cache à part : ajouter un chemin au cache ci-dessus le viderait).
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .cache/news/gallery.json
+          key: news-gallery-${{ github.run_id }}
+          restore-keys: news-gallery-
       - name: Récupérer les actus et rédiger les résumés
         run: npm run news
         env:

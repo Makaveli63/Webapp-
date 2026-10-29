@@ -1,6 +1,6 @@
 /**
  * Écrans de démarrage d'iOS (site ajouté à l'écran d'accueil). Sans eux, iOS affiche un écran blanc
- * pendant l'ouverture. Images générées par scripts/startup-images.cjs.
+ * pendant l'ouverture. Images générées par scripts/startup-images.mjs.
  * [largeur, hauteur, densité] des écrans d'iPhone et d'iPad, en portrait.
  */
 const DEVICES: [number, number, number][] = [
