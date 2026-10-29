@@ -289,7 +289,7 @@ export function previewImage(html, pageUrl) {
 async function fetchPreviewImage(url) {
   if (!/^https:\/\/|^http:\/\/127\.0\.0\.1[:/]/.test(url)) return undefined; // 127.0.0.1 : tests locaux
   const res = await fetch(url, {
-    headers: { "User-Agent": "GamingBase/1.0 (agrégateur RSS)", Accept: "text/html" },
+    headers: { "User-Agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)", Accept: "text/html" },
     signal: AbortSignal.timeout(8_000),
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -299,7 +299,7 @@ async function fetchPreviewImage(url) {
 async function fetchScore(url) {
   if (!/^https:\/\/|^http:\/\/127\.0\.0\.1[:/]/.test(url)) return undefined; // 127.0.0.1 : tests locaux
   const res = await fetch(url, {
-    headers: { "User-Agent": "GamingBase/1.0 (agrégateur RSS)", Accept: "text/html" },
+    headers: { "User-Agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)", Accept: "text/html" },
     signal: AbortSignal.timeout(10_000),
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -356,7 +356,7 @@ async function getFeed(url) {
   for (let attempt = 1; ; attempt++) {
     try {
       const res = await fetch(url, {
-        headers: { "User-Agent": "GamingBase/1.0 (agrégateur RSS)", Accept: "application/rss+xml, application/atom+xml, application/xml;q=0.9, text/xml;q=0.8" },
+        headers: { "User-Agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)", Accept: "application/rss+xml, application/atom+xml, application/xml;q=0.9, text/xml;q=0.8" },
         signal: AbortSignal.timeout(15_000),
       });
       if (res.ok || attempt >= 2 || !(res.status === 429 || res.status >= 500)) return res;
