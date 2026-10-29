@@ -5,6 +5,7 @@ import { OpenLinksSetting } from "@/components/app/OpenLinksSetting";
 import { SpoilerToggle } from "@/components/settings/SpoilerToggle";
 import { MutedList } from "@/components/settings/MutedList";
 import { VoiceSettings } from "@/components/settings/VoiceSettings";
+import { WebPushToggle } from "@/components/settings/WebPushToggle";
 import { ThemePicker } from "@/components/settings/ThemePicker";
 import { SuggestShortcut } from "@/components/suggestions/SuggestShortcut";
 import { SyncPanel } from "@/components/sync/SyncPanel";
@@ -20,6 +21,7 @@ export default function SettingsPage() {
       </header>
       <SuggestShortcut />
       <AppNotificationsToggle />
+      <WebPushToggle />
       <LiveActivityToggle />
       <OpenLinksSetting />
       <SpoilerToggle />

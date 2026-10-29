@@ -30,8 +30,9 @@ const sha256 = (s) => `'sha256-${createHash("sha256").update(s, "utf8").digest("
 function policy(scriptHashes, styleHashes) {
   return [
     "default-src 'none'",
-    `script-src 'self' ${scriptHashes.join(" ")}`.trim(),
-    `style-src 'self' ${styleHashes.join(" ")}`.trim(),
+    // + SDK des notifications web (OneSignal), chargé seulement quand on les active dans les Réglages.
+    `script-src 'self' https://cdn.onesignal.com ${scriptHashes.join(" ")}`.trim(),
+    `style-src 'self' https://cdn.onesignal.com https://onesignal.com ${styleHashes.join(" ")}`.trim(),
     // Images des médias et des boutiques (flux RSS, Epic, Steam, RAWG…), chargées en HTTPS sans référent.
     "img-src 'self' data: https:",
     "font-src 'self'",
@@ -40,7 +41,7 @@ function policy(scriptHashes, styleHashes) {
     "media-src https:",
     // Recherche en direct sur Wikipédia (API publique, sans cookie).
     // + Supabase (commentaires et « j'aime ») si configuré.
-    `connect-src 'self' https://fr.wikipedia.org https://www.wikidata.org https://graphql.anilist.co https://api.jikan.moe https://kitsu.app ${SUPABASE_ORIGIN}`.trim(),
+    `connect-src 'self' https://fr.wikipedia.org https://www.wikidata.org https://graphql.anilist.co https://api.jikan.moe https://kitsu.app https://onesignal.com https://api.onesignal.com https://*.onesignal.com ${SUPABASE_ORIGIN}`.trim(),
     "manifest-src 'self'",
     "base-uri 'none'",
     "form-action 'self'",

@@ -95,3 +95,44 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+
+  # Notifications web (OneSignal) des nouvelles actus, une fois le site en ligne (le lien de la
+  # notification ouvre donc une page qui existe). Sans le secret ONESIGNAL_API_KEY, rien n'est envoyé.
+  notify:
+    needs: deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # Mêmes chemins que dans « build » : c'est ce qui permet de retrouver l'archive des actus de ce build.
+      - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            .cache/news/summaries.json
+            .cache/news/archive.json
+            .cache/news/proofread.json
+            .cache/news/scores-v2.json
+            .cache/news/images.json
+            .cache/news/games-db.json
+            .cache/news/anime-fr.json
+          key: news-summaries-${{ github.run_id }}
+      # Articles déjà annoncés, d'une exécution à l'autre.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .cache/news/push-state.json
+          key: push-state-${{ github.run_id }}
+          restore-keys: push-state-
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+      - name: Envoyer les notifications web
+        run: node scripts/send-push.mjs
+        env:
+          # Secret ONESIGNAL_API_KEY (clé API REST de OneSignal) : Settings → Secrets and variables → Actions
+          ONESIGNAL_API_KEY: ${{ secrets.ONESIGNAL_API_KEY }}
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
