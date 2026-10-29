@@ -867,12 +867,8 @@ html[data-refract] .tab-lens-drag {
 }
 ::view-transition-old(root) { animation-name: vt-old-out; }
 ::view-transition-new(root) { animation-name: vt-new-in; }
-html.vt-back::view-transition-old(root) { animation-name: vt-old-back; z-index: 1; }
-html.vt-back::view-transition-new(root) { animation-name: vt-new-back; }
 @keyframes vt-new-in { from { transform: translateX(100%); box-shadow: -12px 0 32px rgb(0 0 0 / .22); } to { box-shadow: -12px 0 32px rgb(0 0 0 / 0); } }
 @keyframes vt-old-out { to { transform: translateX(-30%); filter: brightness(.82); } }
-@keyframes vt-old-back { from { box-shadow: -12px 0 32px rgb(0 0 0 / .22); } to { transform: translateX(100%); box-shadow: -12px 0 32px rgb(0 0 0 / 0); } }
-@keyframes vt-new-back { from { transform: translateX(-30%); filter: brightness(.82); } }
 
 /* ---------- Toucher façon iOS : la carte ou le bouton s'enfonce légèrement puis revient en rebondissant ---------- */
 @media (prefers-reduced-motion: no-preference) {
@@ -1070,5 +1066,6 @@ html[data-search] .release-banner { opacity: 0; pointer-events: none; transition
 
 /* Menu « Aa » : sous le bouton, sans jamais sortir de l'écran */
 .reading-panel { position: absolute; left: 0; top: 2.5rem; scroll-margin: 5rem 0 calc(6rem + env(safe-area-inset-bottom)); width: min(16rem, calc(100vw - 2rem)); background: color-mix(in srgb, var(--surface) 97%, transparent); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); }
-.reading-panel-right { left: auto; right: 0; }
+/* Panneau flottant (« Pas intéressé ») : au-dessus de tout, placé sous son bouton (position calculée). */
+.float-panel { position: fixed; z-index: 70; width: min(16rem, calc(100vw - 2rem)); background: color-mix(in srgb, var(--surface) 97%, transparent); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); }
 .share-menu { background: color-mix(in srgb, var(--surface) 97%, transparent) !important; }

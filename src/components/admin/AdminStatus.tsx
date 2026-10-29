@@ -6,6 +6,8 @@ import { timeAgo } from "@/lib/social";
 
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 const RELEASES = "https://github.com/Makaveli63/Webapp-/releases/download";
+// Source AltStore publiée avec chaque IPA (.github/workflows/ios.yml) : AltStore y lit la dernière version.
+const ALTSTORE_SOURCE = `${RELEASES}/ios/altstore.json`;
 // Mise à jour automatique toutes les heures : au-delà de 2 h, quelque chose bloque.
 const LATE_MS = 2 * 3_600_000;
 
@@ -139,7 +141,13 @@ export function AdminStatus() {
         <a href={`${RELEASES}/ios/GamingBase.ipa`} className="inline-flex items-center gap-1.5 rounded-full glass-pill px-3 py-1.5 text-xs font-semibold text-heading ring-1 ring-inset ring-border">
           <Download className="size-3.5" aria-hidden /> iPhone / iPad (IPA, AltStore)
         </a>
+        <a href={`altstore://source?url=${encodeURIComponent(ALTSTORE_SOURCE)}`} className="inline-flex items-center gap-1.5 rounded-full bg-accent px-3 py-1.5 text-xs font-semibold text-white">
+          <Download className="size-3.5" aria-hidden /> Ajouter la source AltStore
+        </a>
       </div>
+      <p className="mt-2 text-xs text-muted">
+        Source AltStore / SideStore (mises à jour automatiques) : <span className="select-all break-all font-mono text-fg">{ALTSTORE_SOURCE}</span>
+      </p>
     </section>
   );
 }

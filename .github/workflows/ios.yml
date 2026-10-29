@@ -81,3 +81,65 @@ jobs:
             gh release create ios --target "$GITHUB_SHA" --title "GamingBase pour iPhone" --notes "$NOTES" --latest=false
           fi
           gh release upload ios "$RUNNER_TEMP/GamingBase.ipa" --clobber
+
+      - name: Source AltStore (altstore.json)
+        # Source à ajouter dans AltStore / SideStore : https://github.com/<dépôt>/releases/download/ios/altstore.json
+        # Elle décrit la dernière IPA (version, taille) : AltStore propose la mise à jour tout seul.
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          python3 - <<'PY'
+          import json, os, datetime
+          ipa = os.path.join(os.environ["RUNNER_TEMP"], "GamingBase.ipa")
+          run = os.environ["GITHUB_RUN_NUMBER"]
+          repo = os.environ["GITHUB_REPOSITORY"]
+          site = "https://makaveli63.github.io/Webapp-"
+          icon = f"{site}/icon-512.png"
+          desc = ("L'actualité du jeu vidéo et de l'anime en français : news, tests, sorties, épisodes, "
+                  "jeux gratuits et promos. Widgets, notifications, compte à rebours en direct et profil de joueur.")
+          source = {
+              "name": "GamingBase",
+              "identifier": "io.github.makaveli63.gamingbase.source",
+              "subtitle": "L'actu jeu vidéo et anime",
+              "description": desc,
+              "iconURL": icon,
+              "website": f"{site}/",
+              "tintColor": "#6c4cf5",
+              "featuredApps": ["io.github.makaveli63.gamingbase"],
+              "apps": [{
+                  "name": "GamingBase",
+                  "bundleIdentifier": "io.github.makaveli63.gamingbase",
+                  "developerName": "Makaveli63",
+                  "subtitle": "L'actu jeu vidéo et anime",
+                  "localizedDescription": desc,
+                  "iconURL": icon,
+                  "tintColor": "#6c4cf5",
+                  "category": "entertainment",
+                  "screenshots": [],
+                  "versions": [{
+                      "version": f"1.0.{run}",
+                      "buildVersion": run,
+                      "date": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                      "localizedDescription": f"Compilation n°{run}. Le contenu vient du site en ligne : il est toujours à jour.",
+                      "downloadURL": f"https://github.com/{repo}/releases/download/ios/GamingBase.ipa",
+                      "size": os.path.getsize(ipa),
+                      "minOSVersion": "16.0",
+                  }],
+                  "appPermissions": {
+                      "entitlements": ["com.apple.security.application-groups"],
+                      "privacy": {
+                          "NSMicrophoneUsageDescription": "Recherche vocale.",
+                          "NSSpeechRecognitionUsageDescription": "Transformer la voix en texte pour la recherche.",
+                          "NSFaceIDUsageDescription": "Protéger le mot de passe du tableau de bord administrateur.",
+                      },
+                  },
+              }],
+              "news": [],
+          }
+          out = os.path.join(os.environ["RUNNER_TEMP"], "altstore.json")
+          with open(out, "w", encoding="utf-8") as f:
+              json.dump(source, f, ensure_ascii=False, indent=2)
+          print(open(out, encoding="utf-8").read()[:400])
+          PY
+          gh release upload ios "$RUNNER_TEMP/altstore.json" --clobber

@@ -1,7 +1,7 @@
 "use client";
 
 import { EyeOff } from "lucide-react";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type FormEvent } from "react";
 import { createPortal } from "react-dom";
 import { franchiseOf, isMuted, mute, unmute, useMuted } from "@/lib/muted";
 
@@ -14,15 +14,31 @@ export function NotInterestedButton({ title, className = "" }: { title: string; 
   const [open, setOpen] = useState(false);
   const [term, setTerm] = useState(() => franchiseOf(title));
   const [done, setDone] = useState("");
-  // Pas la place à droite du bouton : le panneau s'ouvre vers la gauche (il reste dans l'écran).
-  const [right, setRight] = useState(false);
+  // Panneau flottant au-dessus de la page (jamais coupé par une carte), placé sous le bouton, dans l'écran.
+  const anchor = useRef<DOMRect | null>(null);
+  const panel = useRef<HTMLFormElement>(null);
   const box = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
-    const close = (e: PointerEvent) => !box.current?.contains(e.target as Node) && setOpen(false);
+    const close = (e: PointerEvent) => !box.current?.contains(e.target as Node) && !panel.current?.contains(e.target as Node) && setOpen(false);
+    const away = () => setOpen(false);
     document.addEventListener("pointerdown", close);
-    return () => document.removeEventListener("pointerdown", close);
+    window.addEventListener("scroll", away, { passive: true });
+    window.addEventListener("resize", away);
+    return () => {
+      document.removeEventListener("pointerdown", close);
+      window.removeEventListener("scroll", away);
+      window.removeEventListener("resize", away);
+    };
+  }, [open]);
+  useLayoutEffect(() => {
+    const el = panel.current;
+    const b = anchor.current;
+    if (!open || !el || !b) return;
+    const width = el.offsetWidth;
+    el.style.setProperty("top", `${b.bottom + 8}px`);
+    el.style.setProperty("left", `${Math.max(16, Math.min(b.left, window.innerWidth - width - 16))}px`);
   }, [open]);
   useEffect(() => {
     if (!done) return;
@@ -44,8 +60,7 @@ export function NotInterestedButton({ title, className = "" }: { title: string; 
         type="button"
         onClick={(e) => {
           if (already) return unmute(already);
-          const panel = Math.min(256, window.innerWidth - 32); // largeur du panneau (16rem)
-          setRight(e.currentTarget.getBoundingClientRect().left + panel > window.innerWidth - 16);
+          anchor.current = e.currentTarget.getBoundingClientRect();
           setOpen((o) => !o);
         }}
         aria-expanded={open}
@@ -53,8 +68,9 @@ export function NotInterestedButton({ title, className = "" }: { title: string; 
       >
         <EyeOff className="size-3.5" aria-hidden /> {already ? `${already} masqué · réafficher` : "Pas intéressé"}
       </button>
-      {open && (
-        <form onSubmit={submit} className={`reading-panel z-30 rounded-2xl p-3 shadow-xl ring-1 ring-border ${right ? "reading-panel-right" : ""}`}>
+      {open &&
+        createPortal(
+        <form ref={panel} onSubmit={submit} className="float-panel rounded-2xl p-3 shadow-xl ring-1 ring-border">
           <label htmlFor="mute-term" className="text-xs font-semibold uppercase tracking-wide text-muted">
             Ne plus rien voir sur
           </label>
@@ -69,8 +85,9 @@ export function NotInterestedButton({ title, className = "" }: { title: string; 
           <button type="submit" disabled={term.trim().length < 2} className="mt-3 w-full rounded-full bg-accent px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
             Masquer
           </button>
-        </form>
-      )}
+        </form>,
+          document.body,
+        )}
       {done &&
         createPortal(
           <div role="status" className="follow-toast">

@@ -4,21 +4,29 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+const clean = (path: string) => (path.replace(/\/+$/, "") || "/");
 
 /**
  * Transitions entre les pages façon iOS (API View Transitions du navigateur) :
- * la nouvelle page arrive par la droite par-dessus l'ancienne, qui recule un peu et s'assombrit ;
- * au retour, l'inverse. En-tête, île et barre d'onglets restent en place.
+ * la nouvelle page arrive par la droite par-dessus l'ancienne, qui recule un peu et s'assombrit.
+ * Retour arrière : immédiat (glissement léger de PageTransition). En-tête, île et barre d'onglets restent en place.
  * Navigateur sans cette API ou animations réduites : navigation normale.
  */
 export function AppleTransitions() {
   const router = useRouter();
   const pathname = usePathname();
-  const waiters = useRef<(() => void)[]>([]);
+  const waiters = useRef<{ target: string; done: () => void }[]>([]);
+  // Page réellement affichée (chemin sans le dossier du site ni « / » final).
+  const shown = useRef(clean(pathname));
 
-  // Nouvelle page affichée : la transition peut se terminer.
+  // Nouvelle page affichée : les transitions qui l'attendaient peuvent se terminer.
   useEffect(() => {
-    waiters.current.splice(0).forEach((done) => done());
+    shown.current = clean(pathname);
+    waiters.current = waiters.current.filter((w) => {
+      if (w.target !== shown.current) return true;
+      w.done();
+      return false;
+    });
   }, [pathname]);
 
   useEffect(() => {
@@ -27,18 +35,18 @@ export function AppleTransitions() {
     const root = document.documentElement;
     root.setAttribute("data-vt", "1");
 
-    const wait = () =>
+    // Attend que la page visée soit affichée (tout de suite si c'est déjà le cas), 0,9 s au plus.
+    const wait = (target: string) =>
       new Promise<void>((resolve) => {
-        waiters.current.push(resolve);
-        window.setTimeout(resolve, 1500); // jamais bloqué si la page ne change pas
+        if (shown.current === target) return resolve();
+        waiters.current.push({ target, done: resolve });
+        window.setTimeout(resolve, 900); // jamais bloqué si la page ne change pas
       });
-    const run = (back: boolean, navigate: () => void) => {
-      root.classList.toggle("vt-back", back);
-      const t = doc.startViewTransition!(async () => {
+    const run = (target: string, navigate: () => void) => {
+      doc.startViewTransition!(async () => {
         navigate();
-        await wait();
+        await wait(target);
       });
-      t.finished.finally(() => root.classList.remove("vt-back"));
     };
 
     // Liens internes : interceptés avant le composant Link pour animer le changement de page.
@@ -54,18 +62,13 @@ export function AppleTransitions() {
       if (url.pathname === location.pathname && url.search === location.search) return;
       e.preventDefault();
       const path = url.pathname.slice(BASE.length) || "/";
-      run(false, () => router.push(path + url.search + url.hash));
+      run(clean(path), () => router.push(path + url.search + url.hash));
     };
-    // Retour : dans l'app iPhone, le balayage natif anime déjà le retour.
-    const iosApp = /GamingBaseApp\/iOS/.test(navigator.userAgent);
-    const onPop = () => {
-      if (!iosApp) run(true, () => {});
-    };
+    // Retour arrière (bouton, souris, geste) : pas de transition. Le routeur affiche déjà la page précédente
+    // quand l'événement arrive, l'animation figeait l'écran pour rien ; le léger glissement de PageTransition suffit.
     document.addEventListener("click", onClick, true);
-    window.addEventListener("popstate", onPop, true);
     return () => {
       document.removeEventListener("click", onClick, true);
-      window.removeEventListener("popstate", onPop, true);
       root.removeAttribute("data-vt");
     };
   }, [router]);

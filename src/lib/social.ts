@@ -56,7 +56,9 @@ export async function rpc<T>(fn: string, args: Record<string, unknown>): Promise
       const file = SQL_FILES[fn] ?? "schema.sql";
       throw new Error(`Service pas encore installé : exécute supabase/${file} dans Supabase (SQL Editor).`);
     }
-    throw new Error("Service momentanément indisponible, réessayez plus tard.");
+    // Tableau de bord : le message exact de la base (colonne manquante, fichier SQL à relancer…) aide à corriger.
+    const detail = /^(admin_|get_sources|get_admin_releases)/.test(fn) && typeof body?.message === "string" ? ` (détail : ${body.message.slice(0, 200)})` : "";
+    throw new Error(`Service momentanément indisponible, réessayez plus tard.${detail}`);
   }
   return res.json() as Promise<T>;
 }
