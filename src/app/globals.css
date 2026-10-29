@@ -248,6 +248,21 @@ html[data-splash="off"] .splash { display: none; }
   from { opacity: 0; transform: translateY(14px) scale(.96); filter: blur(4px); letter-spacing: .3em; }
   to { opacity: 1; transform: none; filter: none; letter-spacing: .06em; }
 }
+/* Site ouvert depuis l'écran d'accueil : iOS vient d'afficher la manette au centre (public/splash/),
+   l'animation part donc de cette image (logo déjà visible, en taille réelle) au lieu d'apparaître. */
+@media (display-mode: standalone) {
+  .splash-logo { opacity: 1; animation: none; }
+  .splash-logo-icon { animation: logo-pop-still 1.9s ease-out forwards; }
+}
+@keyframes logo-pop-still {
+  0%, 54% { transform: scale(1); }
+  60%     { transform: scale(1.1); }
+  64%     { transform: scale(.97); }
+  68%     { transform: scale(1.12); }
+  76%     { transform: scale(.96); }
+  86%     { transform: scale(1.03); }
+  100%    { transform: scale(1); }
+}
 /* La manette « avale » les symboles : petits rebonds à leur arrivée. */
 @keyframes logo-pop {
   0%      { opacity: 0; transform: scale(.5); }

@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { startupImages } from "@/lib/startup-images";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { Footer } from "@/components/layout/Footer";
 import { MobileTabBar } from "@/components/layout/MobileTabBar";
@@ -38,7 +39,7 @@ export const metadata: Metadata = {
     ],
     apple: `${BASE_PATH}/apple-touch-icon.png?v=4`,
   },
-  appleWebApp: { capable: true, title: "GamingBase", statusBarStyle: "default" },
+  appleWebApp: { capable: true, title: "GamingBase", statusBarStyle: "default", startupImage: startupImages(BASE_PATH) },
   authors: [{ name: "Makaveli63" }],
   creator: "Makaveli63",
   referrer: "strict-origin-when-cross-origin",
