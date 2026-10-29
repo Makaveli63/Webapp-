@@ -18,7 +18,7 @@ export function PinButton({ id, title, className = "" }: { id: string; title: st
       aria-pressed={pinned}
       aria-label={pinned ? `Désépingler ${title}` : `Épingler ${title}`}
       title={pinned ? "Désépingler" : "Épingler en tête"}
-      className={`inline-flex size-9 items-center justify-center rounded-full backdrop-blur transition-colors ${pinned ? "bg-accent text-white" : "bg-black/60 text-white hover:bg-black/75"} ${className}`}
+      className={`inline-flex size-9 items-center justify-center rounded-full backdrop-blur transition-colors ${pinned ? "bg-rose-600 text-white" : "bg-black/60 text-white hover:bg-black/75"} ${className}`}
     >
       <Pin className={`size-4 ${pinned ? "" : "rotate-45"}`} fill={pinned ? "currentColor" : "none"} aria-hidden />
     </button>

@@ -36,6 +36,7 @@ const SECTIONS = [
       { href: "/mentions-legales", label: "Mentions légales" },
       { href: "/mentions-legales#sources", label: "Sources et résumés" },
       { href: "/mentions-legales#confidentialite", label: "Confidentialité" },
+      { href: "/suggestions", label: "Suggestions" },
     ],
   },
 ];
