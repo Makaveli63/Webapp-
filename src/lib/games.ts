@@ -149,9 +149,21 @@ export async function rankedGames(): Promise<RankedGame[]> {
 export async function trendingGames(limit = 8): Promise<(GameEntry & { mentions: number })[]> {
   const since = Date.now() - 7 * 86_400_000;
   const recent = (await getGamingArticles()).filter((a) => Date.parse(a.publishedAt) >= since);
-  return (await getGames())
-    .filter((g) => g.key.length >= 4)
-    .map((g) => ({ ...g, mentions: recent.filter((a) => aboutGame(`${a.title} ${a.tags.join(" ")}`, g)).length }))
+
+  const games = (await getGames()).filter((g) => g.key.length >= 4);
+  const mentionsCount = new Map<GameEntry, number>();
+
+  for (const article of recent) {
+    const text = `${article.title} ${article.tags.join(" ")}`;
+    for (const game of games) {
+      if (aboutGame(text, game)) {
+        mentionsCount.set(game, (mentionsCount.get(game) || 0) + 1);
+      }
+    }
+  }
+
+  return games
+    .map((g) => ({ ...g, mentions: mentionsCount.get(g) || 0 }))
     .filter((g) => g.mentions > 0)
     .sort((a, b) => b.mentions - a.mentions)
     .slice(0, limit);
