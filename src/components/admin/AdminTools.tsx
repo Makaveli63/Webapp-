@@ -7,6 +7,7 @@ import { PlayerAvatar } from "@/components/player/PlayerAvatar";
 import { RoleBadge } from "@/components/player/RoleBadge";
 import { levelOf, PLAYER_ROLES, roleOf, titleOf } from "@/lib/player";
 import { ADMIN_ERRORS, rpc, timeAgo, voterId } from "@/lib/social";
+import { STATUS_STYLES, SUGGESTION_KINDS, SUGGESTION_STATUSES, type Suggestion } from "@/lib/suggestions";
 import { PLATFORMS } from "@/types";
 
 const nf = new Intl.NumberFormat("fr-FR");
@@ -348,44 +349,89 @@ export function AdminReleases({ password }: { password: string }) {
   );
 }
 
-/** Suggestions envoyées depuis la page Suggestions (les plus récentes d'abord). */
+/** Suggestions envoyées depuis la page Suggestions : filtres par statut et par type, tri, changement de statut. */
 export function AdminSuggestions({ password }: { password: string }) {
-  const [list, setList] = useState<{ id: string; pseudo: string | null; body: string; created_at: string }[] | null>(null);
+  const [list, setList] = useState<Suggestion[] | null>(null);
   const [error, setError] = useState("");
+  const [status, setStatus] = useState<string>("");
+  const [kind, setKind] = useState<string>("");
+  const [oldest, setOldest] = useState(false);
   const load = useCallback(() => {
-    rpc<typeof list | { error: string }>("admin_list_suggestions", { p_password: password })
+    rpc<Suggestion[] | { error: string }>("admin_list_suggestions", { p_password: password })
       .then((r) => (Array.isArray(r) ? setList(r) : setError(message((r as { error?: string })?.error))))
       .catch((e) => setError((e as Error).message));
   }, [password]);
   useEffect(load, [load]);
 
-  const remove = async (id: string) => {
-    const res = await rpc<string>("admin_delete_suggestion", { p_password: password, p_id: id }).catch((e) => (e as Error).message);
+  const act = async (fn: string, args: Record<string, unknown>) => {
+    const res = await rpc<string>(fn, { p_password: password, ...args }).catch((e) => (e as Error).message);
     if (res !== "ok") return setError(message(res));
     load();
   };
+  const remove = (id: string) => confirm("Supprimer cette suggestion ?") && act("admin_delete_suggestion", { p_id: id });
+
+  const all = list ?? [];
+  const count = (st: string) => all.filter((s) => s.status === st).length;
+  const shown = all.filter((s) => (!status || s.status === status) && (!kind || s.kind === kind));
+  if (oldest) shown.reverse();
+  const chip = (active: boolean) =>
+    `shrink-0 rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset ${active ? "bg-accent text-white ring-transparent" : "text-muted ring-border hover:text-fg"}`;
 
   return (
-    <Panel icon={<Lightbulb className="size-4 text-accent" aria-hidden />} title={`Suggestions${list?.length ? ` (${nf.format(list.length)})` : ""}`} hint="Messages envoyés depuis la page Suggestions.">
+    <Panel icon={<Lightbulb className="size-4 text-accent" aria-hidden />} title={`Suggestions${all.length ? ` (${nf.format(all.length)})` : ""}`} hint="Messages envoyés depuis la page Suggestions. Chaque auteur voit le statut de ses demandes.">
       {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       {list === null && !error && <p className="text-sm text-muted">Chargement…</p>}
       {list && (
-        <ul className="divide-y divide-border">
-          {list.map((s) => (
-            <li key={s.id} className="flex items-start gap-3 py-2.5 text-sm">
-              <span className="min-w-0 flex-1">
-                <span className="block whitespace-pre-line break-words text-fg">{s.body}</span>
-                <span className="mt-0.5 block text-xs text-muted">
-                  {s.pseudo ?? "Anonyme"} · {timeAgo(s.created_at)}
-                </span>
-              </span>
-              <button type="button" onClick={() => remove(s.id)} aria-label="Supprimer cette suggestion" className="shrink-0 rounded-full p-2 text-muted hover:bg-red-500/10 hover:text-red-600">
-                <Trash2 className="size-4" aria-hidden />
+        <>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <button type="button" aria-pressed={!status} onClick={() => setStatus("")} className={chip(!status)}>
+              Toutes
+            </button>
+            {SUGGESTION_STATUSES.map((st) => (
+              <button key={st} type="button" aria-pressed={status === st} onClick={() => setStatus(status === st ? "" : st)} className={chip(status === st)}>
+                {st} <span className="tabular-nums opacity-70">{count(st)}</span>
               </button>
-            </li>
-          ))}
-          {list.length === 0 && <li className="py-2 text-sm text-muted">Aucune suggestion pour l&apos;instant.</li>}
-        </ul>
+            ))}
+          </div>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <select value={kind} onChange={(e) => setKind(e.target.value)} aria-label="Filtrer par type" className="rounded-full border border-border bg-bg py-1 pl-3 pr-7 text-base text-fg md:text-xs">
+              <option value="">Tous les types</option>
+              {SUGGESTION_KINDS.map((k) => (
+                <option key={k}>{k}</option>
+              ))}
+            </select>
+            <select value={oldest ? "old" : "new"} onChange={(e) => setOldest(e.target.value === "old")} aria-label="Trier" className="rounded-full border border-border bg-bg py-1 pl-3 pr-7 text-base text-fg md:text-xs">
+              <option value="new">Plus récentes d&apos;abord</option>
+              <option value="old">Plus anciennes d&apos;abord</option>
+            </select>
+          </div>
+          <ul className="mt-2 divide-y divide-border">
+            {shown.map((s) => (
+              <li key={s.id} className="py-2.5 text-sm">
+                <span className="block whitespace-pre-line break-words text-fg">{s.body}</span>
+                <span className="mt-1.5 flex flex-wrap items-center gap-2">
+                  <span className="min-w-0 flex-1 text-xs text-muted">
+                    <span className="font-semibold text-heading">{s.kind}</span> · {s.pseudo ?? "Anonyme"} · {timeAgo(s.created_at)}
+                  </span>
+                  <select
+                    value={s.status}
+                    onChange={(e) => act("admin_set_suggestion_status", { p_id: s.id, p_status: e.target.value })}
+                    aria-label="Statut"
+                    className={`rounded-full border-0 py-1 pl-3 pr-7 text-base font-semibold ring-1 ring-inset md:text-xs ${STATUS_STYLES[s.status] ?? ""}`}
+                  >
+                    {SUGGESTION_STATUSES.map((st) => (
+                      <option key={st}>{st}</option>
+                    ))}
+                  </select>
+                  <button type="button" onClick={() => remove(s.id)} aria-label="Supprimer cette suggestion" className="rounded-full p-2 text-muted hover:bg-red-500/10 hover:text-red-600">
+                    <Trash2 className="size-4" aria-hidden />
+                  </button>
+                </span>
+              </li>
+            ))}
+            {shown.length === 0 && <li className="py-2 text-sm text-muted">{all.length ? "Aucune suggestion avec ces filtres." : "Aucune suggestion pour l\u2019instant."}</li>}
+          </ul>
+        </>
       )}
     </Panel>
   );

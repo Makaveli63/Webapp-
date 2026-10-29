@@ -34,7 +34,7 @@ const SQL_FILES: Record<string, string> = {
   check_pseudo: "profiles.sql", save_player: "profiles.sql", merge_player: "profiles.sql",
   admin_register_device: "admin.sql", admin_list_devices: "admin.sql", admin_forget_device: "admin.sql", admin_device_status: "admin.sql",
   admin_community: "admin.sql", admin_set_role: "admin.sql", admin_add_source: "admin.sql", admin_delete_source: "admin.sql", get_sources: "admin.sql",
-  add_suggestion: "admin.sql", admin_list_suggestions: "admin.sql", admin_delete_suggestion: "admin.sql",
+  add_suggestion: "admin.sql", my_suggestions: "admin.sql", admin_set_suggestion_status: "admin.sql", admin_list_suggestions: "admin.sql", admin_delete_suggestion: "admin.sql",
   admin_add_release: "admin.sql", admin_delete_release: "admin.sql", get_admin_releases: "admin.sql", get_player: "profiles.sql", get_players: "profiles.sql",
   rate_game: "community.sql", get_game_rating: "community.sql", predict_game: "community.sql", get_predictions: "community.sql",
   get_my_activity: "community.sql", get_author_badges: "community.sql", admin_publish_article: "community.sql",

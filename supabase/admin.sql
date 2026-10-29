@@ -207,17 +207,29 @@ create table if not exists public.suggestions (
   ip_hash text not null,
   created_at timestamptz not null default now()
 );
+-- Type (idée, bug, fonctionnalité), statut suivi par l'admin, et appareil de l'auteur (pour qu'il voie ses demandes).
+alter table public.suggestions add column if not exists kind text not null default 'Idée';
+alter table public.suggestions add column if not exists status text not null default 'En attente';
+alter table public.suggestions add column if not exists voter text;
+alter table public.suggestions add column if not exists updated_at timestamptz not null default now();
+alter table public.suggestions drop constraint if exists suggestions_kind_check;
+alter table public.suggestions add constraint suggestions_kind_check check (kind in ('Idée', 'Bug', 'Fonctionnalité'));
+alter table public.suggestions drop constraint if exists suggestions_status_check;
+alter table public.suggestions add constraint suggestions_status_check check (status in ('En attente', 'Validé', 'En cours', 'Refusé'));
+create index if not exists suggestions_voter_idx on public.suggestions (voter);
 alter table public.suggestions enable row level security;
 revoke all on public.suggestions from anon, authenticated;
 
 -- Envoi anonyme : 3 par heure et 10 par jour au plus depuis une même connexion.
-create or replace function public.add_suggestion(p_pseudo text, p_body text)
+drop function if exists public.add_suggestion(text, text);
+create or replace function public.add_suggestion(p_pseudo text, p_body text, p_kind text, p_voter text)
 returns text
 language plpgsql volatile security definer set search_path = public, extensions as $$
 declare
   v_ip text := public.gb_ip_hash();
   v_pseudo text := nullif(trim(regexp_replace(coalesce(p_pseudo, ''), '\s+', ' ', 'g')), '');
   v_body text := trim(regexp_replace(coalesce(p_body, ''), '[ \t]+', ' ', 'g'));
+  v_kind text := case when p_kind in ('Idée', 'Bug', 'Fonctionnalité') then p_kind else 'Idée' end;
 begin
   if char_length(v_body) not between 5 and 1000 or char_length(coalesce(v_pseudo, 'ok')) not between 2 and 30 then return 'SUGGESTION_INVALIDE'; end if;
   if public.gb_is_offensive(v_body) or (v_pseudo is not null and public.gb_is_offensive(v_pseudo)) then return 'PROPOS_INTERDITS'; end if;
@@ -225,12 +237,23 @@ begin
      or (select count(*) from public.suggestions where ip_hash = v_ip and created_at > now() - interval '1 day') >= 10 then
     return 'TROP_DE_MESSAGES';
   end if;
-  insert into public.suggestions (pseudo, body, ip_hash) values (v_pseudo, v_body, v_ip);
+  insert into public.suggestions (pseudo, body, kind, voter, ip_hash)
+  values (v_pseudo, v_body, v_kind, case when char_length(coalesce(p_voter, '')) between 8 and 64 then p_voter end, v_ip);
   if to_regprocedure('public.gb_notify(text,text,text,text)') is not null then
-    perform public.gb_notify('Nouvelle suggestion', coalesce(v_pseudo || ' : ', '') || v_body, null, 'bulb');
+    perform public.gb_notify('Nouvelle suggestion (' || v_kind || ')', coalesce(v_pseudo || ' : ', '') || v_body, null, 'bulb');
   end if;
   return 'ok';
 end $$;
+
+-- Demandes envoyées depuis cet appareil, avec leur statut.
+create or replace function public.my_suggestions(p_voter text)
+returns json
+language sql stable security definer set search_path = public, extensions as $$
+  select coalesce(json_agg(json_build_object('id', id, 'kind', kind, 'status', status, 'body', body, 'created_at', created_at, 'updated_at', updated_at)
+                           order by created_at desc), '[]'::json)
+  from (select * from public.suggestions where voter = p_voter and char_length(coalesce(p_voter, '')) between 8 and 64
+        order by created_at desc limit 30) s
+$$;
 
 create or replace function public.admin_list_suggestions(p_password text)
 returns json
@@ -239,8 +262,21 @@ declare
   v_check text := public.gb_admin_check(p_password);
 begin
   if v_check <> 'ok' then return json_build_object('error', v_check); end if;
-  return coalesce((select json_agg(json_build_object('id', id, 'pseudo', pseudo, 'body', body, 'created_at', created_at) order by created_at desc)
-                   from (select * from public.suggestions order by created_at desc limit 200) s), '[]'::json);
+  return coalesce((select json_agg(json_build_object('id', id, 'pseudo', pseudo, 'body', body, 'kind', kind, 'status', status,
+                                                     'created_at', created_at, 'updated_at', updated_at) order by created_at desc)
+                   from (select * from public.suggestions order by created_at desc limit 300) s), '[]'::json);
+end $$;
+
+create or replace function public.admin_set_suggestion_status(p_password text, p_id uuid, p_status text)
+returns text
+language plpgsql volatile security definer set search_path = public, extensions as $$
+declare
+  v_check text := public.gb_admin_check(p_password);
+begin
+  if v_check <> 'ok' then return v_check; end if;
+  if p_status not in ('En attente', 'Validé', 'En cours', 'Refusé') then return 'REQUETE_INVALIDE'; end if;
+  update public.suggestions set status = p_status, updated_at = now() where id = p_id;
+  return 'ok';
 end $$;
 
 create or replace function public.admin_delete_suggestion(p_password text, p_id uuid)
@@ -266,6 +302,8 @@ grant execute on function public.get_sources() to anon;
 grant execute on function public.admin_add_release(text, text, date, text[], text, text) to anon;
 grant execute on function public.admin_delete_release(text, uuid) to anon;
 grant execute on function public.get_admin_releases() to anon;
-grant execute on function public.add_suggestion(text, text) to anon;
+grant execute on function public.add_suggestion(text, text, text, text) to anon;
+grant execute on function public.my_suggestions(text) to anon;
+grant execute on function public.admin_set_suggestion_status(text, uuid, text) to anon;
 grant execute on function public.admin_list_suggestions(text) to anon;
 grant execute on function public.admin_delete_suggestion(text, uuid) to anon;
