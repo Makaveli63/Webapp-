@@ -384,7 +384,7 @@ export function discoverFeed(html, pageUrl) {
 
 /**
  * Texte du flux. Si l'adresse est celle du site plutôt que du flux (ajout depuis le tableau de bord),
- * on suit le flux annoncé par la page, sinon on essaie /feed/ puis /rss.
+ * on suit le flux annoncé par la page, sinon on essaie les adresses habituelles (/feed/, /rss, /rss.xml…).
  */
 async function readFeed(url) {
   const res = await getFeed(url);
@@ -392,7 +392,7 @@ async function readFeed(url) {
   const text = await readLimited(res);
   if (!/^\s*(<!doctype html|<html)/i.test(text)) return text;
   const origin = new URL(url).origin;
-  const candidates = [discoverFeed(text, url), `${origin}/feed/`, `${origin}/rss`].filter((u, i, all) => u && u !== url && all.indexOf(u) === i);
+  const candidates = [discoverFeed(text, url), `${origin}/feed/`, `${origin}/rss`, `${origin}/rss.xml`, `${origin}/feed.xml`, `${origin}/fr/rss`].filter((u, i, all) => u && u !== url && all.indexOf(u) === i);
   for (const candidate of candidates) {
     const next = await getFeed(candidate).catch(() => null);
     if (!next?.ok) continue;
