@@ -70,12 +70,13 @@ export async function GET() {
   ["PS5", "PlayStation", "Xbox", "Switch 2", "Nintendo", "PC", "Steam", "test", "sortie", "gratuit", "anime"].forEach((w) => addWords(w, 10));
 
   // Jeux qui ont une fiche sur le site : lien vers la fiche plutôt que vers la boutique.
-  const pages = new Set((await getGames()).map((g) => g.slug));
+  const allGames = await getGames();
+  const pages = new Set(allGames.map((g) => g.slug));
   for (const g of games) {
     const slug = gameSlug(g.title);
     if (pages.has(slug) && !g.note?.startsWith("Gratuit")) g.url = `/jeux/${slug}`;
   }
-  for (const g of await getGames()) {
+  for (const g of allGames) {
     if (!seen.has(norm(g.title))) {
       seen.add(norm(g.title));
       games.push({ id: `jeu-${g.slug}`, title: g.title, platforms: g.platforms, image: g.image, date: g.date, rating: g.rating, url: `/jeux/${g.slug}` });
