@@ -44,7 +44,7 @@ export interface PlayerState {
   pseudo: string;
   avatar: number;
   xp: number;
-  /** Badge attribué par l'admin (« Soutien »), lu sur le serveur */
+  /** Badge attribué par l'admin (« Soutien », « VIP »…, voir PLAYER_ROLES), lu sur le serveur */
   role?: string | null;
   /** Jour (AAAA-MM-JJ, heure de Paris) → nombre de gains par action ce jour-là (seul le jour courant est gardé) */
   today: { day: string; counts: Partial<Record<XpAction, number>> };
@@ -86,6 +86,8 @@ export function levelOf(xp: number) {
  * côté serveur (profiles.sql), personne d'autre ne peut le porter.
  */
 const ROLES: Record<string, string> = { makaveli63: "Fondateur" };
+/** Badges que l'admin peut attribuer (même liste que la contrainte players_role_check de supabase/profiles.sql). */
+export const PLAYER_ROLES = ["Soutien", "VIP", "Modérateur", "Rédacteur", "Testeur", "Streamer", "Partenaire", "Légende"] as const;
 export const roleOf = (pseudo: string | undefined | null): string | undefined => (pseudo ? ROLES[pseudo.trim().toLowerCase()] : undefined);
 
 export const titleOf = (level: number) => [...TITLES].reverse().find((t) => level >= t.from)!.name;
@@ -256,7 +258,7 @@ export async function playersLevels(pseudos: string[]): Promise<Record<string, {
 
 /**
  * Profil enregistré sur le serveur pour cet appareil : retrouvé après un nettoyage du stockage du site,
- * et badge attribué par l'admin (« Soutien ») mis à jour à chaque ouverture.
+ * et badge attribué par l'admin (« Soutien », « VIP »…) mis à jour à chaque ouverture.
  */
 export async function restorePlayer(): Promise<void> {
   if (!socialEnabled) return;

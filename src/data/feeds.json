@@ -57,5 +57,17 @@
     "name": "Journal du Japon",
     "url": "https://www.journaldujapon.com/feed/",
     "category": "Anime"
+  },
+  {
+    "name": "JeuxVideoMagazine",
+    "url": "https://www.jeuxvideomagazine.com/"
+  },
+  {
+    "name": "IndieMag",
+    "url": "https://www.indiemag.fr/"
+  },
+  {
+    "name": "SensCritique",
+    "url": "https://www.senscritique.com/"
   }
 ]

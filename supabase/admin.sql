@@ -88,7 +88,7 @@ begin
   return json_build_object('players', v_players, 'dislikes', v_dislikes);
 end $$;
 
--- Badge « Soutien » sur un pseudo (null pour le retirer). Le badge « Fondateur » est réservé au site.
+-- Badge sur un pseudo (« Soutien », « VIP »… ; null pour le retirer). Le badge « Fondateur » est réservé au site.
 create or replace function public.admin_set_role(p_password text, p_pseudo text, p_role text)
 returns text
 language plpgsql volatile security definer set search_path = public, extensions as $$
@@ -96,7 +96,7 @@ declare
   v_check text := public.gb_admin_check(p_password);
 begin
   if v_check <> 'ok' then return v_check; end if;
-  if p_role is not null and p_role <> 'Soutien' then return 'REQUETE_INVALIDE'; end if;
+  if p_role is not null and p_role not in ('Soutien', 'VIP', 'Modérateur', 'Rédacteur', 'Testeur', 'Streamer', 'Partenaire', 'Légende') then return 'REQUETE_INVALIDE'; end if;
   execute 'update public.players set role = $1 where pseudo_key = lower($2)' using p_role, trim(coalesce(p_pseudo, ''));
   return 'ok';
 end $$;
@@ -105,10 +105,13 @@ end $$;
 create table if not exists public.admin_sources (
   id uuid primary key default gen_random_uuid(),
   name text not null check (char_length(name) between 2 and 60),
-  url text not null unique check (url ~ '^https://[^\s]{4,500}$'),
+  url text not null unique,
   category text check (category is null or category = 'Anime'),
   created_at timestamptz not null default now()
 );
+-- Adresse https sans espace, 500 caractères au plus (Postgres refuse les répétitions {n,m} au-delà de 255).
+alter table public.admin_sources drop constraint if exists admin_sources_url_check;
+alter table public.admin_sources add constraint admin_sources_url_check check (url ~ '^https://[^[:space:]]{4,}$' and char_length(url) <= 500);
 alter table public.admin_sources enable row level security;
 revoke all on public.admin_sources from anon, authenticated;
 

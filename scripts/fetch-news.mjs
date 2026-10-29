@@ -367,13 +367,49 @@ async function getFeed(url) {
   }
 }
 
-async function fetchFeed(feed) {
-  const res = await getFeed(feed.url);
+/** Adresse du flux annoncée par une page d'accueil (<link rel="alternate" type="application/rss+xml" href="…">). */
+export function discoverFeed(html, pageUrl) {
+  for (const tag of html.match(/<link\b[^>]*>/gi) ?? []) {
+    if (!/rel=["']?alternate/i.test(tag) || !/type=["']?application\/(rss|atom)\+xml/i.test(tag)) continue;
+    const href = tag.match(/href=["']([^"']+)["']/i)?.[1];
+    try {
+      const url = href && safeUrl(new URL(href.replace(/&amp;/g, "&"), pageUrl).href);
+      if (url) return url;
+    } catch {
+      // adresse illisible : lien suivant
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Texte du flux. Si l'adresse est celle du site plutôt que du flux (ajout depuis le tableau de bord),
+ * on suit le flux annoncé par la page, sinon on essaie /feed/ puis /rss.
+ */
+async function readFeed(url) {
+  const res = await getFeed(url);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const text = await readLimited(res);
+  if (!/^\s*(<!doctype html|<html)/i.test(text)) return text;
+  const origin = new URL(url).origin;
+  const candidates = [discoverFeed(text, url), `${origin}/feed/`, `${origin}/rss`].filter((u, i, all) => u && u !== url && all.indexOf(u) === i);
+  for (const candidate of candidates) {
+    const next = await getFeed(candidate).catch(() => null);
+    if (!next?.ok) continue;
+    const body = await readLimited(next);
+    if (!/^\s*(<!doctype html|<html)/i.test(body)) {
+      console.log(`[rss] ${url} → flux trouvé : ${candidate}`);
+      return body;
+    }
+  }
+  throw new Error("page web sans flux RSS");
+}
+
+async function fetchFeed(feed) {
   const parser = new Parser({
     customFields: { item: [["media:content", "mediaContent", { keepArray: true }], ["media:thumbnail", "mediaThumbnail"]] },
   });
-  const parsed = await parser.parseString(await readLimited(res));
+  const parsed = await parser.parseString(await readFeed(feed.url));
   const minDate = Date.now() - MAX_AGE_DAYS * 86_400_000;
 
   return parsed.items

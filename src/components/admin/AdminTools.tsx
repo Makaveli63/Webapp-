@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { PlayerAvatar } from "@/components/player/PlayerAvatar";
 import { RoleBadge } from "@/components/player/RoleBadge";
-import { levelOf, roleOf, titleOf } from "@/lib/player";
+import { levelOf, PLAYER_ROLES, roleOf, titleOf } from "@/lib/player";
 import { ADMIN_ERRORS, rpc, timeAgo, voterId } from "@/lib/social";
 import { PLATFORMS } from "@/types";
 
@@ -102,9 +102,9 @@ export function AdminCommunity({ password, titles }: { password: string; titles:
   }, [password]);
   useEffect(load, [load]);
 
-  // Badge « Soutien » : ajouté ou retiré d'un toucher (visible à côté du pseudo dans les commentaires et le profil).
-  const toggleSupport = async (pseudo: string, on: boolean) => {
-    const res = await rpc<string>("admin_set_role", { p_password: password, p_pseudo: pseudo, p_role: on ? "Soutien" : null }).catch((e) => (e as Error).message);
+  // Badge (« Soutien », « VIP »…) choisi dans la liste ; visible à côté du pseudo dans les commentaires et le profil.
+  const setRole = async (pseudo: string, role: string) => {
+    const res = await rpc<string>("admin_set_role", { p_password: password, p_pseudo: pseudo, p_role: role || null }).catch((e) => (e as Error).message);
     if (res !== "ok") return setError(message(res));
     load();
   };
@@ -132,14 +132,19 @@ export function AdminCommunity({ password, titles }: { password: string; titles:
                       </span>
                     </span>
                     {!roleOf(p.pseudo) && (
-                      <button
-                        type="button"
-                        aria-pressed={p.role === "Soutien"}
-                        onClick={() => toggleSupport(p.pseudo, p.role !== "Soutien")}
-                        className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset ${p.role === "Soutien" ? "role-badge-support ring-transparent" : "text-muted ring-border hover:text-fg"}`}
+                      <select
+                        value={p.role ?? ""}
+                        onChange={(e) => setRole(p.pseudo, e.target.value)}
+                        aria-label={`Badge de ${p.pseudo}`}
+                        className="shrink-0 rounded-full border border-border bg-bg py-1 pl-3 pr-7 text-base font-semibold text-fg focus:border-accent focus:outline-none md:text-xs"
                       >
-                        {p.role === "Soutien" ? "Soutien ✓" : "+ Soutien"}
-                      </button>
+                        <option value="">Aucun badge</option>
+                        {PLAYER_ROLES.map((r) => (
+                          <option key={r} value={r}>
+                            {r}
+                          </option>
+                        ))}
+                      </select>
                     )}
                   </li>
                 );
@@ -212,7 +217,7 @@ export function AdminSources({ password }: { password: string }) {
     <Panel
       icon={<Rss className="size-4 text-accent" aria-hidden />}
       title="Mes sources d'actus"
-      hint="Ajoute le flux RSS d'un site (souvent son adresse suivie de /feed/ ou /rss). Seuls un résumé, un court extrait et le lien sont affichés, comme pour les autres sources."
+      hint="Ajoute le flux RSS d&apos;un site, ou simplement l&apos;adresse du site : son flux est alors trouvé tout seul. Seuls un résumé, un court extrait et le lien sont affichés, comme pour les autres sources."
     >
       <form onSubmit={add} className="grid gap-2 sm:grid-cols-[1fr_2fr_auto]">
         <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nom (ex. Rockstar Mag)" maxLength={60} required aria-label="Nom de la source" className={field} />

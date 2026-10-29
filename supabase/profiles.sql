@@ -11,8 +11,10 @@ create table if not exists public.players (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
--- Badge attribué par l'admin (« Soutien »), affiché à côté du pseudo.
-alter table public.players add column if not exists role text check (role is null or role in ('Soutien'));
+-- Badge attribué par l'admin (« Soutien », « VIP »…), affiché à côté du pseudo.
+alter table public.players add column if not exists role text;
+alter table public.players drop constraint if exists players_role_check;
+alter table public.players add constraint players_role_check check (role is null or role in ('Soutien', 'VIP', 'Modérateur', 'Rédacteur', 'Testeur', 'Streamer', 'Partenaire', 'Légende'));
 alter table public.players enable row level security;
 revoke all on public.players from anon, authenticated;
 
