@@ -54,34 +54,47 @@ export function pushSupport(): PushSupport {
   return ios ? "ios-home-screen" : "unsupported";
 }
 
-let ready: Promise<OneSignalApi> | null = null;
-/** Charge et initialise le SDK une seule fois. */
+let sdk: Promise<OneSignalApi> | null = null;
+let initialized: Promise<void> | null = null;
+/** Charge le SDK et l'initialise une seule fois par page (un second init est refusé par OneSignal). */
 export function loadOneSignal(): Promise<OneSignalApi> {
-  if (ready) return ready;
-  ready = new Promise<OneSignalApi>((resolve, reject) => {
+  sdk ??= new Promise<OneSignalApi>((resolve, reject) => {
     const w = window as PushWindow;
     w.OneSignalDeferred = w.OneSignalDeferred || [];
-    w.OneSignalDeferred.push(async (OneSignal) => {
-      try {
-        await OneSignal.init({
-          appId: ONESIGNAL_APP_ID,
-          // Service worker dans son dossier (public/push/onesignal/), comme réglé dans OneSignal.
-          serviceWorkerPath: `${BASE}/push/onesignal/OneSignalSDKWorker.js`.replace(/^\//, ""),
-          serviceWorkerParam: { scope: `${BASE}/push/onesignal/` },
-        });
-        resolve(OneSignal);
-      } catch (err) {
-        reject(err);
-      }
-    });
+    w.OneSignalDeferred.push((OneSignal) => resolve(OneSignal));
     const s = document.createElement("script");
     s.src = SDK;
     s.defer = true;
-    s.onerror = () => reject(new Error("Service de notifications injoignable."));
+    s.onerror = () => {
+      sdk = null;
+      s.remove();
+      reject(new Error("Service de notifications injoignable (bloqueur de pubs ?)."));
+    };
     document.head.appendChild(s);
   });
-  ready.catch(() => (ready = null));
-  return ready;
+  return sdk.then(async (OneSignal) => {
+    initialized ??= OneSignal.init({
+      appId: ONESIGNAL_APP_ID,
+      // Service worker dans son dossier (public/push/onesignal/), comme réglé dans OneSignal.
+      serviceWorkerPath: `${BASE}/push/onesignal/OneSignalSDKWorker.js`.replace(/^\//, ""),
+      serviceWorkerParam: { scope: `${BASE}/push/onesignal/` },
+    }).catch((err: Error) => {
+      if (/already initialized/i.test(err?.message ?? "")) return;
+      initialized = null;
+      throw err;
+    });
+    await initialized;
+    return OneSignal;
+  });
+}
+
+/** Étape en cours dans le message d'erreur (« Timeout » seul ne dit pas où ça bloque). */
+async function step<T>(label: string, run: () => Promise<T>): Promise<T> {
+  try {
+    return await run();
+  } catch (err) {
+    throw new Error(`${label} : ${(err as Error)?.message || String(err)}`);
+  }
 }
 
 export function readPushPrefs(): PushPrefs {
@@ -108,10 +121,12 @@ function remember(key: string, value: string) {
 
 /** Demande l'autorisation (au toucher de l'interrupteur), puis abonne cet appareil. */
 export async function enablePush(prefs: PushPrefs): Promise<"ok" | "denied"> {
-  const OneSignal = await loadOneSignal();
-  if (!OneSignal.Notifications.permission) await OneSignal.Notifications.requestPermission();
-  if (!OneSignal.Notifications.permission) return "denied";
-  await OneSignal.User.PushSubscription.optIn();
+  // La demande d'autorisation part tout de suite, dans le geste de l'utilisateur : Safari (et Chrome
+  // parfois) ignore une demande faite après un chargement de script.
+  const asked = Notification.permission === "default" ? Notification.requestPermission() : Promise.resolve(Notification.permission);
+  if ((await asked) !== "granted") return "denied";
+  const OneSignal = await step("Démarrage", loadOneSignal);
+  await step("Abonnement", () => OneSignal.User.PushSubscription.optIn());
   OneSignal.User.addTag("gb", pushTag(prefs));
   remember(PUSH_KEY, "1");
   return "ok";

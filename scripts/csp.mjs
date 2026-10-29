@@ -31,7 +31,7 @@ function policy(scriptHashes, styleHashes) {
   return [
     "default-src 'none'",
     // + SDK des notifications web (OneSignal), chargé seulement quand on les active dans les Réglages.
-    `script-src 'self' https://cdn.onesignal.com ${scriptHashes.join(" ")}`.trim(),
+    `script-src 'self' https://cdn.onesignal.com https://onesignal.com https://api.onesignal.com ${scriptHashes.join(" ")}`.trim(),
     `style-src 'self' https://cdn.onesignal.com https://onesignal.com ${styleHashes.join(" ")}`.trim(),
     // Images des médias et des boutiques (flux RSS, Epic, Steam, RAWG…), chargées en HTTPS sans référent.
     "img-src 'self' data: https:",
