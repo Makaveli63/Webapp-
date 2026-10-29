@@ -106,6 +106,9 @@ export function AdminCommunity({ password, titles }: { password: string; titles:
   // Badge (« Soutien », « VIP »…) choisi dans la liste ; visible à côté du pseudo dans les commentaires et le profil.
   const setRole = async (pseudo: string, role: string) => {
     const res = await rpc<string>("admin_set_role", { p_password: password, p_pseudo: pseudo, p_role: role || null }).catch((e) => (e as Error).message);
+    // Ancienne version de la base (seul « Soutien » accepté) : les fichiers SQL n'ont pas été relancés.
+    if (res === "REQUETE_INVALIDE" || /players_role_check/.test(String(res)))
+      return setError("Ce badge n'est pas encore connu de la base : relance profiles.sql puis admin.sql dans Supabase (SQL Editor).");
     if (res !== "ok") return setError(message(res));
     load();
   };

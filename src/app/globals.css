@@ -658,7 +658,7 @@ html[data-ptr] body { overscroll-behavior-y: none; }
   :root[data-style="capsule"] .tabbar[data-collapsed] > ul {
     transform: translateX(calc(var(--tb-i, 0) * -1 * var(--tb-slot) - (var(--tb-slot) - var(--tb-bubble)) / 2));
   }
-  :root[data-style="capsule"] .tabbar[data-collapsed] li:not([data-current]) { opacity: 0; pointer-events: none; }
+  :root[data-style="capsule"] .tabbar[data-collapsed] li:not([data-bubble]) { opacity: 0; pointer-events: none; }
   :root[data-style="capsule"] .tabbar[data-collapsed] .tab-label { opacity: 0; }
   :root[data-style="capsule"] .tabbar[data-collapsed] .tab-icon { transform: translateY(7px) scale(1.15); }
   :root[data-style="capsule"] .tabbar[data-collapsed] .tab-lens { opacity: 0 !important; }

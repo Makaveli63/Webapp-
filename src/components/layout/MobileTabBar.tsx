@@ -115,6 +115,10 @@ export function MobileTabBar() {
   const slot = width / ITEMS.length;
   const indexAt = (x: number) => Math.max(0, Math.min(ITEMS.length - 1, Math.floor(x / Math.max(slot, 1))));
   const target = pending ?? activeIndex;
+  // Page hors onglets (Réglages, fiche, article…) : la bulle rétractée garde le dernier onglet visité, comme sur iOS.
+  const lastTab = useRef(0);
+  if (target >= 0) lastTab.current = target;
+  const bubbleTab = target >= 0 ? target : lastTab.current;
   const hover = dragX !== null ? indexAt(dragX) : target;
 
   // Position de la bulle (CSSOM : pas de style en ligne avec la CSP) : sous le doigt, sinon sur l'onglet actif.
@@ -133,8 +137,8 @@ export function MobileTabBar() {
 
   // Onglet gardé dans la bulle rétractée (CSSOM, compatible avec la CSP).
   useLayoutEffect(() => {
-    nav.current?.style.setProperty("--tb-i", String(Math.max(0, target)));
-  }, [target]);
+    nav.current?.style.setProperty("--tb-i", String(bubbleTab));
+  }, [bubbleTab]);
 
   const relX = (e: PointerEvent) => e.clientX - (list.current?.getBoundingClientRect().left ?? 0);
 
@@ -207,7 +211,7 @@ export function MobileTabBar() {
         {ITEMS.map(({ href, label, icon: Icon }, i) => {
           const current = active === href;
           return (
-            <li key={href} data-current={i === target ? "" : undefined} className="relative z-10">
+            <li key={href} data-current={i === target ? "" : undefined} data-bubble={i === bubbleTab ? "" : undefined} className="relative z-10">
               <Link
                 href={href}
                 aria-current={current ? "page" : undefined}
