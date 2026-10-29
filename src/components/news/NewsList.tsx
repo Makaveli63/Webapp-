@@ -1,11 +1,13 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
 import { CATEGORIES, PLATFORMS, type Article, type Category, type Platform } from "@/types";
 import { NewsCard } from "./NewsCard";
 
-const PAGE_SIZE = 5;
+// Pages de 4 articles (grille 2 × 2 sur grand écran) plutôt qu'une liste sans fin.
+const PAGE_SIZE = 4;
 const MAX_TAGS = 16;
 
 interface Props {
@@ -32,7 +34,8 @@ function FilterableNewsList({ articles, showCategories, initialPlatform }: Props
   const [category, setCategory] = useState<Category | "Toutes">("Toutes");
   const [platform, setPlatform] = useState<Platform | "Toutes">(initialPlatform ?? "Toutes");
   const [tag, setTag] = useState<string | null>(null);
-  const [shown, setShown] = useState(PAGE_SIZE);
+  const [page, setPage] = useState(1);
+  const top = useRef<HTMLDivElement>(null);
 
   // Les tags les plus fréquents uniquement : les flux RSS en produisent beaucoup.
   const tags = useMemo(() => {
@@ -52,6 +55,15 @@ function FilterableNewsList({ articles, showCategories, initialPlatform }: Props
       (!tag || a.tags.includes(tag)),
   );
 
+  const pages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const current = Math.min(page, pages);
+  // Nouvelle page : retour en haut de la liste (sans animation si l'utilisateur la réduit).
+  const go = (n: number) => {
+    setPage(n);
+    const smooth = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    requestAnimationFrame(() => top.current?.scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "start" }));
+  };
+
   const chip = (active: boolean) =>
     `shrink-0 whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm ring-1 ring-inset transition-colors ${
       active ? "bg-accent text-white ring-accent" : "glass-pill text-muted ring-border hover:text-fg"
@@ -67,7 +79,7 @@ function FilterableNewsList({ articles, showCategories, initialPlatform }: Props
               type="button"
               onClick={() => {
                 setCategory(c);
-                setShown(PAGE_SIZE);
+                setPage(1);
               }}
               className={chip(category === c)}
               aria-pressed={category === c}
@@ -84,7 +96,7 @@ function FilterableNewsList({ articles, showCategories, initialPlatform }: Props
             type="button"
             onClick={() => {
               setPlatform(p);
-              setShown(PAGE_SIZE);
+              setPage(1);
             }}
             className={chip(platform === p)}
             aria-pressed={platform === p}
@@ -101,7 +113,7 @@ function FilterableNewsList({ articles, showCategories, initialPlatform }: Props
               type="button"
               onClick={() => {
                 setTag(tag === t ? null : t);
-                setShown(PAGE_SIZE);
+                setPage(1);
               }}
               aria-pressed={tag === t}
               className={`shrink-0 whitespace-nowrap rounded-md px-2.5 py-1 text-xs ring-1 ring-inset ${
@@ -116,26 +128,65 @@ function FilterableNewsList({ articles, showCategories, initialPlatform }: Props
 
       {filtered.length ? (
         <>
-          <div className="mt-5 grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
-            {filtered.slice(0, shown).map((a) => (
+          <div ref={top} className="mt-5 grid scroll-mt-24 gap-3 sm:grid-cols-2 sm:gap-4">
+            {filtered.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE).map((a) => (
               <NewsCard key={a.slug} article={a} />
             ))}
           </div>
-          {shown < filtered.length && (
-            <div className="mt-8 text-center">
-              <button
-                type="button"
-                onClick={() => setShown((n) => n + PAGE_SIZE)}
-                className="w-full rounded-lg glass px-4 py-3 text-sm font-medium hover:border-accent/60 sm:w-auto sm:py-2"
-              >
-                Afficher plus ({filtered.length - shown} restants)
-              </button>
-            </div>
-          )}
+          {pages > 1 && <Pagination page={current} pages={pages} onChange={go} />}
         </>
       ) : (
         <p className="mt-10 text-center text-muted">Aucun article ne correspond à ces filtres.</p>
       )}
     </div>
+  );
+}
+
+/** Numéros de page affichés : 1 … 4 5 6 … 20 (la page courante et ses voisines, plus les extrémités). */
+function pageItems(page: number, pages: number): (number | "…")[] {
+  const keep = new Set([1, pages, page - 1, page, page + 1].filter((n) => n >= 1 && n <= pages));
+  const sorted = [...keep].sort((a, b) => a - b);
+  return sorted.flatMap((n, i) => (i && n - sorted[i - 1] > 1 ? (["…", n] as const) : [n]));
+}
+
+function Pagination({ page, pages, onChange }: { page: number; pages: number; onChange: (n: number) => void }) {
+  const arrow = "inline-flex size-11 items-center justify-center rounded-full glass-pill ring-1 ring-inset ring-border text-heading disabled:opacity-35 hover:ring-accent";
+  return (
+    <nav aria-label="Pages d'articles" className="mt-8 flex flex-col items-center gap-2">
+      <div className="flex items-center gap-1.5">
+        <button type="button" onClick={() => onChange(page - 1)} disabled={page <= 1} aria-label="Page précédente" className={arrow}>
+          <ChevronLeft className="size-5" aria-hidden />
+        </button>
+        <ol className="flex items-center gap-1">
+          {pageItems(page, pages).map((n, i) =>
+            n === "…" ? (
+              <li key={`gap-${i}`} aria-hidden className="w-6 text-center text-sm text-muted">
+                …
+              </li>
+            ) : (
+              <li key={n}>
+                <button
+                  type="button"
+                  onClick={() => onChange(n)}
+                  aria-current={n === page ? "page" : undefined}
+                  aria-label={`Page ${n}`}
+                  className={`min-w-10 rounded-full px-2 py-2 text-sm font-semibold tabular-nums transition-colors ${
+                    n === page ? "bg-accent text-white" : "text-muted hover:bg-surface-2 hover:text-fg"
+                  }`}
+                >
+                  {n}
+                </button>
+              </li>
+            ),
+          )}
+        </ol>
+        <button type="button" onClick={() => onChange(page + 1)} disabled={page >= pages} aria-label="Page suivante" className={arrow}>
+          <ChevronRight className="size-5" aria-hidden />
+        </button>
+      </div>
+      <p className="text-xs text-muted tabular-nums">
+        Page {page} sur {pages}
+      </p>
+    </nav>
   );
 }
