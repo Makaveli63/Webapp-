@@ -10,6 +10,7 @@ import { TrailerButton } from "@/components/ui/TrailerButton";
 import { gameFollowId } from "@/lib/aliases";
 import { themeFor } from "@/lib/themes";
 import type { SearchGame } from "@/types";
+import { useState } from "react";
 
 const fullDate = (ymd: string) =>
   new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(
@@ -17,6 +18,22 @@ const fullDate = (ymd: string) =>
   );
 
 function GameCardBody({ game }: { game: SearchGame }) {
+  const [showSynopsis, setShowSynopsis] = useState(false);
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Only toggle synopsis if it's not a link click or button click inside the card
+    const target = e.target as HTMLElement;
+    if (target.closest('a') || target.closest('button')) {
+      return;
+    }
+
+    // Check if it's a valid RAWG game to fetch synopsis for
+    if (game.id.startsWith("rawg-")) {
+      e.preventDefault();
+      setShowSynopsis(!showSynopsis);
+    }
+  };
+
   const body = (
     <>
       <div className="relative aspect-[16/9] w-full">
@@ -44,6 +61,12 @@ function GameCardBody({ game }: { game: SearchGame }) {
         <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-heading">{game.title}</h3>
         {(game.date || game.note) && <p className="mt-1 line-clamp-2 text-xs text-muted">{[game.date && fullDate(game.date), game.note].filter(Boolean).join(" · ")}</p>}
         {game.platforms.length > 0 && <p className="mt-0.5 truncate text-xs font-medium text-fg">{game.platforms.join(" · ")}</p>}
+        {showSynopsis && (
+          <div className="mt-2 text-xs text-muted leading-relaxed">
+            {/* If we have a stored note or excerpt, use it as synopsis, or fallback */}
+            {game.note ? game.note : "Aucun synopsis disponible."}
+          </div>
+        )}
         {game.anime ? (
           <span className="mt-2 flex flex-wrap items-center gap-1.5">
             <EpisodeTracker anime={{ id: game.id, title: game.title, image: game.image, ...game.anime }} />
@@ -58,14 +81,14 @@ function GameCardBody({ game }: { game: SearchGame }) {
       </div>
     </>
   );
-  const className = "block overflow-hidden rounded-xl glass transition-colors hover:border-accent/60";
-  if (!game.url) return <div className={className}>{body}</div>;
+  const className = "block overflow-hidden rounded-xl glass transition-colors hover:border-accent/60 cursor-pointer";
+  if (!game.url) return <div className={className} onClick={handleCardClick}>{body}</div>;
   return game.url.startsWith("/") ? (
-    <Link href={game.url} className={className}>
+    <Link href={game.url} className={className} onClick={handleCardClick}>
       {body}
     </Link>
   ) : (
-    <a href={game.url} target="_blank" rel="noopener noreferrer" className={className}>
+    <a href={game.url} target="_blank" rel="noopener noreferrer" className={className} onClick={handleCardClick}>
       {body}
     </a>
   );

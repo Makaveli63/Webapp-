@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { CATEGORIES, PLATFORMS, type Article, type Category, type Platform } from "@/types";
 import { NewsCard } from "./NewsCard";
 
-const PAGE_SIZE = 24;
+const PAGE_SIZE = 5;
 const MAX_TAGS = 16;
 
 interface Props {

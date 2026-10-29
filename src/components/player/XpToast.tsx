@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { award, onPlayer, readPlayer, restorePlayer, titleOf, type XpEvent } from "@/lib/player";
+import confetti from "canvas-confetti";
 
 /**
  * Île « +20 XP » / « Niveau 8 atteint », dans le style de l'île du suivi des jeux.
@@ -18,6 +19,24 @@ export function XpToast() {
       if (!e || !e.gain || !readPlayer().pseudo || (e.quiet && !e.leveledUp && !e.badge)) return;
       window.clearTimeout(timer);
       setToast({ ...e, key: Date.now() });
+
+      // Trigger effects
+      if (typeof window !== 'undefined') {
+        if (e.leveledUp || e.badge) {
+          if ('vibrate' in navigator) navigator.vibrate([200, 100, 200]);
+          confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.2 },
+            colors: ['#b9a4ff', '#8b5cf6', '#d99a1e', '#f5d27a'],
+            zIndex: 100,
+            disableForReducedMotion: true
+          });
+        } else {
+          if ('vibrate' in navigator) navigator.vibrate(50);
+        }
+      }
+
       timer = window.setTimeout(() => setToast(null), e.leveledUp || e.badge ? 3400 : 2200);
     });
     restorePlayer().finally(() => award("visit"));
