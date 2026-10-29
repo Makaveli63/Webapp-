@@ -85,12 +85,16 @@ export async function getGames(): Promise<GameEntry[]> {
   for (const g of cal.games) add({ title: g.title, image: g.image, date: g.date, platforms: g.platforms, rating: g.rating, video: g.video, externalUrl: g.url });
 
   // Jeux testés par la presse (titre tiré du test).
+  const knownKeys = new Set<string>();
+  for (const g of bySlug.values()) {
+    knownKeys.add(g.key);
+  }
   for (const a of await getArticles()) {
     if (a.category !== "Test") continue;
     const k = testedGame(a.title);
     if (k.length < 3) continue;
-    const known = [...bySlug.values()].find((g) => g.key === k);
-    if (known) continue;
+    if (knownKeys.has(k)) continue;
+    knownKeys.add(k);
     add({ title: k.replace(/\b\w/g, (c) => c.toUpperCase()), image: a.image, platforms: a.platforms.filter((p) => p !== "Multi") });
   }
   cache = [...bySlug.values()];
