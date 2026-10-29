@@ -49,14 +49,14 @@ export default async function HomePage() {
           source: { name: a.source.name },
         }))}
       />
-      <NewsSection id="latest-title" title="Dernières actualités" href="/actualites" articles={latest.filter((a) => a.category !== "Anime").slice(0, 6)} />
+      <NewsSection id="latest-title" title="Dernières actualités" href="/actualites" articles={latest.filter((a) => a.category !== "Anime").slice(0, 30)} limit={6} />
       <WeekReleasesTeaser />
       <FreeGamesTeaser />
       <AnimeTeaser />
       <PromosTeaser />
       <VideosTeaser />
-      <NewsSection id="tests-title" title="Derniers tests" href="/tests" articles={tests.slice(0, 3)} />
-      <NewsSection id="consoles-title" title="Consoles & matériel" href="/consoles" articles={consoles.slice(0, 3)} />
+      <NewsSection id="tests-title" title="Derniers tests" href="/tests" articles={tests.slice(0, 15)} limit={3} />
+      <NewsSection id="consoles-title" title="Consoles & matériel" href="/consoles" articles={consoles.slice(0, 15)} limit={3} />
     </div>
   );
 }

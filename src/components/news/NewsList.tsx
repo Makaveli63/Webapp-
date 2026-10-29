@@ -1,8 +1,10 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
+import { CONSOLE_CHOICES, onMyConsoles, useMyConsoles, writeConsoles } from "@/lib/consoles";
+import { isMuted, useMuted } from "@/lib/muted";
 import { CATEGORIES, PLATFORMS, type Article, type Category, type Platform } from "@/types";
 import { NewsCard } from "./NewsCard";
 
@@ -32,7 +34,10 @@ export function NewsList({ articles, showCategories = false }: Props) {
 
 function FilterableNewsList({ articles, showCategories, initialPlatform }: Props & { initialPlatform?: Platform }) {
   const [category, setCategory] = useState<Category | "Toutes">("Toutes");
+  // Plateforme venue d'un lien (?plateforme=PS5) : filtre ponctuel, en plus de « Mes consoles ».
   const [platform, setPlatform] = useState<Platform | "Toutes">(initialPlatform ?? "Toutes");
+  const mine = useMyConsoles();
+  const muted = useMuted();
   const [tag, setTag] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const top = useRef<HTMLDivElement>(null);
@@ -52,6 +57,8 @@ function FilterableNewsList({ articles, showCategories, initialPlatform }: Props
     (a) =>
       (category === "Toutes" || a.category === category) &&
       (platform === "Toutes" || a.platforms.includes(platform)) &&
+      onMyConsoles(a, mine) &&
+      !isMuted(a.title, muted) &&
       (!tag || a.tags.includes(tag)),
   );
 
@@ -89,22 +96,35 @@ function FilterableNewsList({ articles, showCategories, initialPlatform }: Props
           ))}
         </div>
       )}
-      <div className="scroll-row -mx-4 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0" role="group" aria-label="Filtrer par plateforme">
-        {(["Toutes", ...PLATFORMS] as const).map((p) => (
-          <button
-            key={p}
-            type="button"
-            onClick={() => {
-              setPlatform(p);
-              setPage(1);
-            }}
-            className={chip(platform === p)}
-            aria-pressed={platform === p}
-          >
-            {p === "Toutes" ? "Toutes les plateformes" : p}
+      <div className="scroll-row -mx-4 flex items-center gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0" role="group" aria-label="Mes consoles">
+        <span className="shrink-0 text-xs font-semibold uppercase tracking-wide text-muted">Mes consoles</span>
+        <button type="button" onClick={() => { writeConsoles([]); setPage(1); }} className={chip(!mine.length)} aria-pressed={!mine.length}>
+          Toutes
+        </button>
+        {CONSOLE_CHOICES.map((c) => {
+          const on = mine.includes(c);
+          return (
+            <button
+              key={c}
+              type="button"
+              onClick={() => {
+                writeConsoles(on ? mine.filter((x) => x !== c) : [...mine, c]);
+                setPage(1);
+              }}
+              className={chip(on)}
+              aria-pressed={on}
+            >
+              {c}
+            </button>
+          );
+        })}
+        {platform !== "Toutes" && (
+          <button type="button" onClick={() => { setPlatform("Toutes"); setPage(1); }} className="inline-flex shrink-0 items-center gap-1 rounded-full bg-accent-2/15 px-3 py-1.5 text-sm font-semibold text-accent-2 ring-1 ring-inset ring-accent-2/40">
+            Seulement {platform} <X className="size-3.5" aria-label="Retirer ce filtre" />
           </button>
-        ))}
+        )}
       </div>
+      {mine.length > 0 && <p className="mt-1.5 text-xs text-muted">Gardé sur cet appareil, aussi pour l&apos;accueil. Les actus multiplateformes restent affichées.</p>}
       {tags.length > 0 && (
         <div className="mt-2 scroll-row -mx-4 flex gap-1.5 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0" role="group" aria-label="Filtrer par tag">
           {tags.map((t) => (

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { AppNotificationsToggle } from "@/components/app/AppNotificationsToggle";
 import { LiveActivityToggle } from "@/components/app/LiveActivityToggle";
 import { OpenLinksSetting } from "@/components/app/OpenLinksSetting";
+import { ConsolesSetting } from "@/components/settings/ConsolesSetting";
 import { SpoilerToggle } from "@/components/settings/SpoilerToggle";
 import { MutedList } from "@/components/settings/MutedList";
 import { VoiceSettings } from "@/components/settings/VoiceSettings";
@@ -24,6 +25,7 @@ export default function SettingsPage() {
       <WebPushToggle />
       <LiveActivityToggle />
       <OpenLinksSetting />
+      <ConsolesSetting />
       <SpoilerToggle />
       <MutedList />
       <VoiceSettings />
