@@ -6,7 +6,8 @@
     "dev": "next dev",
     "news": "node scripts/fetch-news.mjs && node scripts/fetch-admin-articles.mjs && node scripts/fetch-free-games.mjs && node scripts/fetch-calendar.mjs && node scripts/fetch-deals.mjs && node scripts/fetch-anime.mjs",
     "build": "next build && node scripts/csp.mjs",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "vitest run"
   },
   "dependencies": {
     "canvas-confetti": "^1.9.4",
@@ -21,14 +22,20 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/react": "^16.2.0",
     "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^4.3.4",
     "eslint": "^9",
     "eslint-config-next": "15.5.28",
+    "jsdom": "^26.0.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vite": "^6.2.0",
+    "vitest": "^5.0.5"
   },
   "overrides": {
     "next": {
