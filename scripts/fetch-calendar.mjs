@@ -16,7 +16,7 @@ const SEARCH_DB_KEEP_DAYS = 45;
 const RAWG_KEY = process.env.RAWG_API_KEY?.trim();
 const RAWG_BASE = process.env.RAWG_BASE?.trim() || "https://api.rawg.io"; // remplaçable pour les tests
 const MAX_BYTES = 3 * 1024 * 1024;
-const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36";
+const UA = "GamingBase/1.0 (calendrier des sorties)";
 
 const clean = (t, max) => {
   const s = String(t ?? "").replace(/\s+/g, " ").trim();

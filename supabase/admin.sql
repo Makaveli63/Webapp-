@@ -196,6 +196,61 @@ language sql stable security definer set search_path = public, extensions as $$
   from public.admin_releases where release_date >= current_date - 1
 $$;
 
+-- ---------------------------------------------------------------- Suggestions des visiteurs (page Suggestions)
+create table if not exists public.suggestions (
+  id uuid primary key default gen_random_uuid(),
+  pseudo text check (pseudo is null or char_length(pseudo) between 2 and 30),
+  body text not null check (char_length(body) between 5 and 1000),
+  ip_hash text not null,
+  created_at timestamptz not null default now()
+);
+alter table public.suggestions enable row level security;
+revoke all on public.suggestions from anon, authenticated;
+
+-- Envoi anonyme : 3 par heure et 10 par jour au plus depuis une même connexion.
+create or replace function public.add_suggestion(p_pseudo text, p_body text)
+returns text
+language plpgsql volatile security definer set search_path = public, extensions as $$
+declare
+  v_ip text := public.gb_ip_hash();
+  v_pseudo text := nullif(trim(regexp_replace(coalesce(p_pseudo, ''), '\s+', ' ', 'g')), '');
+  v_body text := trim(regexp_replace(coalesce(p_body, ''), '[ \t]+', ' ', 'g'));
+begin
+  if char_length(v_body) not between 5 and 1000 or char_length(coalesce(v_pseudo, 'ok')) not between 2 and 30 then return 'SUGGESTION_INVALIDE'; end if;
+  if public.gb_is_offensive(v_body) or (v_pseudo is not null and public.gb_is_offensive(v_pseudo)) then return 'PROPOS_INTERDITS'; end if;
+  if (select count(*) from public.suggestions where ip_hash = v_ip and created_at > now() - interval '1 hour') >= 3
+     or (select count(*) from public.suggestions where ip_hash = v_ip and created_at > now() - interval '1 day') >= 10 then
+    return 'TROP_DE_MESSAGES';
+  end if;
+  insert into public.suggestions (pseudo, body, ip_hash) values (v_pseudo, v_body, v_ip);
+  if to_regprocedure('public.gb_notify(text,text,text,text)') is not null then
+    perform public.gb_notify('Nouvelle suggestion', coalesce(v_pseudo || ' : ', '') || v_body, null, 'bulb');
+  end if;
+  return 'ok';
+end $$;
+
+create or replace function public.admin_list_suggestions(p_password text)
+returns json
+language plpgsql volatile security definer set search_path = public, extensions as $$
+declare
+  v_check text := public.gb_admin_check(p_password);
+begin
+  if v_check <> 'ok' then return json_build_object('error', v_check); end if;
+  return coalesce((select json_agg(json_build_object('id', id, 'pseudo', pseudo, 'body', body, 'created_at', created_at) order by created_at desc)
+                   from (select * from public.suggestions order by created_at desc limit 200) s), '[]'::json);
+end $$;
+
+create or replace function public.admin_delete_suggestion(p_password text, p_id uuid)
+returns text
+language plpgsql volatile security definer set search_path = public, extensions as $$
+declare
+  v_check text := public.gb_admin_check(p_password);
+begin
+  if v_check <> 'ok' then return v_check; end if;
+  delete from public.suggestions where id = p_id;
+  return 'ok';
+end $$;
+
 grant execute on function public.admin_register_device(text, text, text) to anon;
 grant execute on function public.admin_list_devices(text) to anon;
 grant execute on function public.admin_forget_device(text, text) to anon;
@@ -208,3 +263,6 @@ grant execute on function public.get_sources() to anon;
 grant execute on function public.admin_add_release(text, text, date, text[], text, text) to anon;
 grant execute on function public.admin_delete_release(text, uuid) to anon;
 grant execute on function public.get_admin_releases() to anon;
+grant execute on function public.add_suggestion(text, text) to anon;
+grant execute on function public.admin_list_suggestions(text) to anon;
+grant execute on function public.admin_delete_suggestion(text, uuid) to anon;

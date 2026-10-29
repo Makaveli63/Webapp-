@@ -149,7 +149,7 @@ async function main() {
   try {
     const res = await fetch(API, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json", "User-Agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)" },
+      headers: { "Content-Type": "application/json", Accept: "application/json", "User-Agent": "GamingBase/1.0 (anime)" },
       body: JSON.stringify({ query: QUERY, variables: { popular: ((frCache._page ?? 0) % POPULAR_PAGES) + 1 } }),
       signal: AbortSignal.timeout(20_000),
     });

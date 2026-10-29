@@ -1,21 +1,19 @@
+import type { Metadata } from "next";
+import { SuggestionForm } from "@/components/suggestions/SuggestionForm";
+
+export const metadata: Metadata = {
+  title: "Suggestions",
+  description: "Une idée pour améliorer GamingBase ? Envoie-la directement à l'équipe.",
+};
+
 export default function SuggestionsPage() {
   return (
-    <div className="mx-auto max-w-2xl px-4 py-12">
-      <h1 className="text-3xl font-bold text-heading">Suggestions</h1>
-      <p className="mt-4 text-muted">Avez-vous des suggestions pour améliorer le site ? N&apos;hésitez pas à nous en faire part !</p>
-      <form className="mt-8 flex flex-col gap-4">
-        <textarea
-          className="w-full rounded-lg border border-border bg-surface p-4 text-fg focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
-          rows={6}
-          placeholder="Vos suggestions..."
-        />
-        <button
-          type="button"
-          className="rounded-lg bg-accent px-6 py-3 font-semibold text-white transition-colors hover:bg-accent/90"
-        >
-          Envoyer
-        </button>
-      </form>
+    <div className="mx-auto max-w-2xl space-y-6">
+      <header>
+        <h1 className="text-2xl font-extrabold text-heading sm:text-3xl">Suggestions</h1>
+        <p className="mt-2 text-muted">Une idée pour améliorer le site, une source à ajouter ou un bug ? Dis-le nous, chaque message est lu.</p>
+      </header>
+      <SuggestionForm />
     </div>
   );
 }

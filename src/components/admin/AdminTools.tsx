@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarPlus, Laptop, Rss, ThumbsDown, Trash2, Users } from "lucide-react";
+import { CalendarPlus, Laptop, Lightbulb, Rss, ThumbsDown, Trash2, Users } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { PlayerAvatar } from "@/components/player/PlayerAvatar";
@@ -337,6 +337,49 @@ export function AdminReleases({ password }: { password: string }) {
               </button>
             </li>
           ))}
+        </ul>
+      )}
+    </Panel>
+  );
+}
+
+/** Suggestions envoyées depuis la page Suggestions (les plus récentes d'abord). */
+export function AdminSuggestions({ password }: { password: string }) {
+  const [list, setList] = useState<{ id: string; pseudo: string | null; body: string; created_at: string }[] | null>(null);
+  const [error, setError] = useState("");
+  const load = useCallback(() => {
+    rpc<typeof list | { error: string }>("admin_list_suggestions", { p_password: password })
+      .then((r) => (Array.isArray(r) ? setList(r) : setError(message((r as { error?: string })?.error))))
+      .catch((e) => setError((e as Error).message));
+  }, [password]);
+  useEffect(load, [load]);
+
+  const remove = async (id: string) => {
+    const res = await rpc<string>("admin_delete_suggestion", { p_password: password, p_id: id }).catch((e) => (e as Error).message);
+    if (res !== "ok") return setError(message(res));
+    load();
+  };
+
+  return (
+    <Panel icon={<Lightbulb className="size-4 text-accent" aria-hidden />} title={`Suggestions${list?.length ? ` (${nf.format(list.length)})` : ""}`} hint="Messages envoyés depuis la page Suggestions.">
+      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {list === null && !error && <p className="text-sm text-muted">Chargement…</p>}
+      {list && (
+        <ul className="divide-y divide-border">
+          {list.map((s) => (
+            <li key={s.id} className="flex items-start gap-3 py-2.5 text-sm">
+              <span className="min-w-0 flex-1">
+                <span className="block whitespace-pre-line break-words text-fg">{s.body}</span>
+                <span className="mt-0.5 block text-xs text-muted">
+                  {s.pseudo ?? "Anonyme"} · {timeAgo(s.created_at)}
+                </span>
+              </span>
+              <button type="button" onClick={() => remove(s.id)} aria-label="Supprimer cette suggestion" className="shrink-0 rounded-full p-2 text-muted hover:bg-red-500/10 hover:text-red-600">
+                <Trash2 className="size-4" aria-hidden />
+              </button>
+            </li>
+          ))}
+          {list.length === 0 && <li className="py-2 text-sm text-muted">Aucune suggestion pour l&apos;instant.</li>}
         </ul>
       )}
     </Panel>
