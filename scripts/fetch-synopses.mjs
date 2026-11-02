@@ -15,8 +15,9 @@ const PROVIDERS = {
   mistral: { url: "https://api.mistral.ai/v1/chat/completions", model: "mistral-small-latest" },
   gemini: { url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", model: "gemini-flash-lite-latest" },
 };
-const providerName = process.env.AI_PROVIDER?.trim().toLowerCase() || (AI_KEY?.startsWith("AIza") ? "gemini" : "mistral");
-const provider = PROVIDERS[providerName] ?? PROVIDERS.mistral;
+let providerName = process.env.AI_PROVIDER?.trim().toLowerCase() || (AI_KEY?.startsWith("AIza") ? "gemini" : "mistral");
+let provider = PROVIDERS[providerName] ?? PROVIDERS.mistral;
+let switched = false;
 
 const PROMPT = `Tu es rédacteur pour un site francophone de jeu vidéo.
 À partir de la description officielle fournie (souvent en anglais), écris le synopsis du jeu en français :
@@ -62,7 +63,7 @@ async function frenchSynopsis(title, description) {
     method: "POST",
     headers: { Authorization: `Bearer ${AI_KEY}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: process.env.AI_MODEL?.trim() || provider.model,
+      model: (!switched && process.env.AI_MODEL?.trim()) || provider.model,
       temperature: 0.3,
       messages: [
         { role: "system", content: PROMPT },
@@ -71,6 +72,14 @@ async function frenchSynopsis(title, description) {
     }),
     signal: AbortSignal.timeout(60_000),
   });
+  // Clé refusée par ce fournisseur : essai avec l'autre (comme pour les résumés des actus).
+  if ((res.status === 401 || res.status === 403) && !switched && !process.env.AI_API_URL) {
+    switched = true;
+    providerName = providerName === "gemini" ? "mistral" : "gemini";
+    provider = PROVIDERS[providerName];
+    console.log(`[synopsis] clé refusée, essai avec ${providerName}.`);
+    return frenchSynopsis(title, description);
+  }
   if (!res.ok) throw new Error(`IA HTTP ${res.status}`);
   const content = String((await res.json()).choices?.[0]?.message?.content ?? "");
   const json = JSON.parse(content.slice(content.indexOf("{"), content.lastIndexOf("}") + 1));

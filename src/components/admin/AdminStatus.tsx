@@ -13,7 +13,7 @@ const LATE_MS = 2 * 3_600_000;
 
 interface Status {
   builtAt: string;
-  update: { at?: string; feeds?: { name: string; count?: number; error?: string }[]; today?: number; ai?: number; aiEnabled?: boolean };
+  update: { at?: string; feeds?: { name: string; count?: number; error?: string; note?: string; pausedUntil?: string }[]; today?: number; ai?: number; aiEnabled?: boolean };
   content: {
     articles: number;
     byCategory: Record<string, number>;
@@ -63,7 +63,8 @@ export function AdminStatus() {
   const { update, content } = status;
   const late = Date.now() - Date.parse(status.builtAt) > LATE_MS;
   const feeds = [...(update.feeds ?? [])].sort((a, b) => Number(!!b.error) - Number(!!a.error) || a.name.localeCompare(b.name));
-  const broken = feeds.filter((f) => f.error || !f.count).length;
+  const broken = feeds.filter((f) => (f.error && !f.pausedUntil) || (!f.error && !f.count)).length;
+  const paused = feeds.filter((f) => f.pausedUntil).length;
   const cat = (name: string) => content.byCategory[name] ?? 0;
   const tiles: [string, number][] = [
     ["Articles en ligne", content.articles],
@@ -110,7 +111,7 @@ export function AdminStatus() {
           <h3 className="mt-4 flex items-center gap-1.5 text-sm font-semibold text-heading">
             <Rss className="size-4 text-accent" aria-hidden /> Sources d&apos;actus
             <span className="font-normal text-muted">
-              · {feeds.length - broken}/{feeds.length} OK{update.at ? ` · lues ${timeAgo(update.at)}` : ""}
+              · {feeds.length - broken - paused}/{feeds.length} OK{paused ? ` · ${paused} en pause` : ""}{update.at ? ` · lues ${timeAgo(update.at)}` : ""}
             </span>
           </h3>
           <ul className="mt-2 grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
@@ -118,9 +119,17 @@ export function AdminStatus() {
               <li key={f.name} className="flex items-baseline justify-between gap-3">
                 <span className="min-w-0 text-fg">
                   {f.name}
-                  {f.error && <span className="block text-xs text-muted">{feedError(f.error)}</span>}
+                  {f.error && (
+                    <span className="block text-xs text-muted">
+                      {feedError(f.error)}
+                      {f.pausedUntil ? " : en pause, réessai une fois par jour (à retirer s'il refuse toujours)" : ""}
+                    </span>
+                  )}
+                  {!f.error && !f.count && f.note && <span className="block text-xs text-muted">{f.note}</span>}
                 </span>
-                {f.error ? (
+                {f.pausedUntil ? (
+                  <span className="shrink-0 text-xs font-medium text-amber-700 dark:text-amber-400">en pause</span>
+                ) : f.error ? (
                   <span className="shrink-0 text-xs font-medium text-red-600 dark:text-red-400" title={f.error}>
                     échec
                   </span>

@@ -23,6 +23,7 @@ const ARCHIVE_MAX = 1200;
 const SUMMARIES_FILE = path.join(CACHE_DIR, "summaries.json");
 // Titres relus par l'IA (fautes de frappe des sources) : { titre d'origine: titre corrigé }.
 const PROOFREAD_FILE = path.join(CACHE_DIR, "proofread.json");
+const FEED_HEALTH_FILE = path.join(CACHE_DIR, "feed-health.json");
 // Notes des tests lues sur la page de l'article : { slug: "8/10" | null }.
 // v2 : détection améliorée, on reconsulte les tests restés sans note avec la v1.
 const SCORES_FILE = path.join(CACHE_DIR, "scores-v2.json");
@@ -141,10 +142,11 @@ function slugify(s) {
 }
 
 /** N'accepte que les liens http(s) : un flux piégé ne doit pas pouvoir injecter de lien javascript:. */
-function safeUrl(raw) {
+function safeUrl(raw, base) {
   if (!raw) return undefined;
   try {
-    const url = new URL(raw.trim());
+    // Liens relatifs (« /article/123 ») : complétés avec l'adresse du flux.
+    const url = new URL(String(raw).trim(), base);
     return url.protocol === "https:" || url.protocol === "http:" ? url.href : undefined;
   } catch {
     return undefined;
@@ -470,7 +472,10 @@ async function readFeed(url) {
   const text = await readLimited(res);
   if (!/^\s*(<!doctype html|<html)/i.test(text)) return text;
   const origin = new URL(url).origin;
-  const candidates = [discoverFeed(text, url), `${origin}/feed/`, `${origin}/rss`, `${origin}/rss.xml`, `${origin}/feed.xml`, `${origin}/fr/rss`].filter((u, i, all) => u && u !== url && all.indexOf(u) === i);
+  const candidates = [
+    discoverFeed(text, url),
+    ...["/feed/", "/rss", "/rss.xml", "/feed.xml", "/index.xml", "/atom.xml", "/rss/", "/feed/rss/", "/fr/rss", "/actualites/rss", "/news/rss", "/backend.php"].map((p) => `${origin}${p}`),
+  ].filter((u, i, all) => u && u !== url && all.indexOf(u) === i);
   for (const candidate of candidates) {
     const next = await getFeed(candidate).catch(() => null);
     if (!next?.ok) continue;
@@ -490,8 +495,8 @@ async function fetchFeed(feed) {
   const parsed = await parser.parseString(await readFeed(feed.url));
   const minDate = Date.now() - MAX_AGE_DAYS * 86_400_000;
 
-  return parsed.items
-    .map((item) => ({ item, link: safeUrl(item.link) }))
+  const list = parsed.items
+    .map((item) => ({ item, link: safeUrl(item.link ?? item.guid, parsed.link || feed.url) }))
     .filter(({ item, link }) => item.title && link)
     .slice(0, MAX_ITEMS_PER_FEED)
     .map(({ item, link }) => {
@@ -525,6 +530,14 @@ async function fetchFeed(feed) {
       };
     })
     .filter((a) => Date.parse(a.publishedAt) >= minDate);
+  // Aucun article retenu : la raison est notée dans l'état de la mise à jour (tableau de bord).
+  if (!list.length) {
+    const total = parsed.items.length;
+    const usable = parsed.items.filter((i) => i.title && safeUrl(i.link ?? i.guid, parsed.link || feed.url)).length;
+    list.note = !total ? "flux vide" : !usable ? `${total} élément(s) sans titre ni lien` : `${total} élément(s), tous de plus de ${MAX_AGE_DAYS} jours`;
+    console.log(`[rss] ${feed.name} : aucun article retenu (${list.note}).`);
+  }
+  return list;
 }
 
 const SYSTEM_PROMPT = `Tu es rédacteur pour un site francophone d'actualité jeu vidéo et anime.
@@ -721,9 +734,30 @@ async function main() {
   const extra = (await adminFeeds()).filter((f) => !known.has(f.url));
   if (extra.length) console.log(`[rss] sources ajoutées dans le tableau de bord : ${extra.map((f) => f.name).join(", ")}`);
   const feeds = [...base, ...extra];
-  const results = await Promise.allSettled(feeds.map(fetchFeed));
+  // Sites qui refusent les robots (403) trois fois de suite : mis en pause 24 h, puis réessayés une fois par jour.
+  // On respecte leur refus sans les interroger toutes les heures.
+  const health = readJson(FEED_HEALTH_FILE, {});
+  const now = Date.now();
+  const results = await Promise.allSettled(
+    feeds.map((f) => {
+      const h = health[f.url];
+      if (h?.pausedUntil && Date.parse(h.pausedUntil) > now) return Promise.reject(Object.assign(new Error("HTTP 403"), { paused: h.pausedUntil }));
+      return fetchFeed(f);
+    }),
+  );
+  results.forEach((r, i) => {
+    const url = feeds[i].url;
+    if (r.status === "fulfilled") return void delete health[url];
+    if (r.reason?.paused) return;
+    if (/HTTP (401|403)/.test(r.reason?.message ?? "")) {
+      const blocked = (health[url]?.blocked ?? 0) + 1;
+      health[url] = { blocked, ...(blocked >= 3 ? { pausedUntil: new Date(now + 86_400_000).toISOString() } : {}) };
+    } else delete health[url];
+  });
+  for (const url of Object.keys(health)) if (!feeds.some((f) => f.url === url)) delete health[url];
+  writeJson(FEED_HEALTH_FILE, health);
   results.forEach((r, i) =>
-    console.log(`[rss] ${feeds[i].name}: ${r.status === "fulfilled" ? `${r.value.length} articles` : `échec (${r.reason?.message})`}`),
+    console.log(`[rss] ${feeds[i].name}: ${r.status === "fulfilled" ? `${r.value.length} articles` : r.reason?.paused ? "en pause (bloque les robots), réessai demain" : `échec (${r.reason?.message})`}`),
   );
   const seen = new Set();
   // Même article dans deux flux (ex. Bleeding Cool Comics et TCG) : gardé une fois.
@@ -923,7 +957,8 @@ async function main() {
     at: new Date().toISOString(),
     feeds: feeds.map((f, i) => {
       const r = results[i];
-      return r.status === "fulfilled" ? { name: f.name, count: r.value.length } : { name: f.name, error: String(r.reason?.message ?? "échec").slice(0, 120) };
+      if (r.status === "fulfilled") return { name: f.name, count: r.value.length, ...(r.value.note ? { note: r.value.note } : {}) };
+      return { name: f.name, error: String(r.reason?.message ?? "échec").slice(0, 120), ...(r.reason?.paused ? { pausedUntil: r.reason.paused } : {}) };
     }),
     today: final.length,
     ai: final.filter((a) => a.aiSummary).length,

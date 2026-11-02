@@ -61,6 +61,12 @@ jobs:
           path: .cache/news/synopses.json
           key: news-synopses-${{ github.run_id }}
           restore-keys: news-synopses-
+      # Sources qui bloquent les robots (mises en pause 24 h), cache à part également.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .cache/news/feed-health.json
+          key: news-feed-health-${{ github.run_id }}
+          restore-keys: news-feed-health-
       - name: Récupérer les actus et rédiger les résumés
         run: npm run news
         env:
