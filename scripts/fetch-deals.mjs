@@ -140,10 +140,12 @@ async function xboxBrowseDeals() {
   return top(
     list
       .map((p) => {
-        const offers = (p?.specificPrices?.purchaseable ?? []).filter((o) => o?.listPrice < o?.msrp && !o?.eligibilityInfo);
+        const offers = (p?.specificPrices?.purchaseable ?? []).filter((o) => o?.listPrice < o?.msrp && o?.currency === "EUR" && (!o?.eligibilityInfo || o.eligibilityInfo.eligibility === "None"));
         const o = offers.sort((a, b) => a.listPrice - b.listPrice)[0];
         if (!o || !p?.title || !p?.productId) return null;
-        const end = Date.parse(o.endDate);
+        // Fin de l'offre en UTC, au format « MM/JJ/AAAA hh:mm:ss ».
+        const d = String(o.endDateUtc ?? "").match(/^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}:\d{2}:\d{2})$/);
+        const end = d ? Date.parse(`${d[3]}-${d[1]}-${d[2]}T${d[4]}Z`) : NaN;
         return {
           id: `xbox-${p.productId}`,
           title: clean(p.title, 120),
