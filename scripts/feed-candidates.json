@@ -1,0 +1,342 @@
+[
+ {
+  "topic": "comics-fr",
+  "name": "Urban Comics",
+  "url": "https://www.urban-comics.com/feed/"
+ },
+ {
+  "topic": "comics-fr",
+  "name": "ActuaBD",
+  "url": "https://www.actuabd.com/spip.php?page=backend"
+ },
+ {
+  "topic": "comics-fr",
+  "name": "BDGest",
+  "url": "https://www.bdgest.com/rss"
+ },
+ {
+  "topic": "comics-fr",
+  "name": "MDCU Comics",
+  "url": "https://www.mdcu-comics.fr/"
+ },
+ {
+  "topic": "comics-fr",
+  "name": "9eme Art",
+  "url": "https://www.9emeart.fr/"
+ },
+ {
+  "topic": "comics-fr",
+  "name": "Comics Grinder",
+  "url": "https://www.comicsgrinder.com/feed/"
+ },
+ {
+  "topic": "comics-fr",
+  "name": "Bubble BD",
+  "url": "https://www.bubblebd.com/blog"
+ },
+ {
+  "topic": "comics-fr",
+  "name": "Planete BD",
+  "url": "https://www.planetebd.com/"
+ },
+ {
+  "topic": "comics-fr",
+  "name": "BD Zoom",
+  "url": "https://bdzoom.com/feed/"
+ },
+ {
+  "topic": "comics-fr",
+  "name": "Panini Comics FR",
+  "url": "https://www.panini.fr/"
+ },
+ {
+  "topic": "comics-fr",
+  "name": "Comics Universe",
+  "url": "https://www.comicsuniverse.fr/feed/"
+ },
+ {
+  "topic": "comics-fr",
+  "name": "Superpouvoir",
+  "url": "https://www.superpouvoir.com/feed/"
+ },
+ {
+  "topic": "comics-fr",
+  "name": "DCPlanet",
+  "url": "https://www.dcplanet.fr/"
+ },
+ {
+  "topic": "comics-fr",
+  "name": "Marvel-World",
+  "url": "https://www.marvel-world.com/"
+ },
+ {
+  "topic": "comics-en",
+  "name": "The Beat",
+  "url": "https://www.comicsbeat.com/feed/"
+ },
+ {
+  "topic": "comics-en",
+  "name": "AIPT Comics",
+  "url": "https://aiptcomics.com/feed/"
+ },
+ {
+  "topic": "comics-en",
+  "name": "CBR Comics",
+  "url": "https://www.cbr.com/feed/category/comics/"
+ },
+ {
+  "topic": "comics-en",
+  "name": "ComicBook.com Comics",
+  "url": "https://comicbook.com/category/comics/feed/"
+ },
+ {
+  "topic": "comics-en",
+  "name": "Newsarama",
+  "url": "https://www.gamesradar.com/feeds/tag/comics/"
+ },
+ {
+  "topic": "comics-en",
+  "name": "Comics Bulletin",
+  "url": "https://comicsbulletin.com/feed/"
+ },
+ {
+  "topic": "comics-en",
+  "name": "Multiversity",
+  "url": "https://www.multiversitycomics.com/feed/"
+ },
+ {
+  "topic": "comics-en",
+  "name": "Major Spoilers",
+  "url": "https://majorspoilers.com/feed/"
+ },
+ {
+  "topic": "comics-en",
+  "name": "Women Write About Comics",
+  "url": "https://womenwriteaboutcomics.com/feed/"
+ },
+ {
+  "topic": "comics-en",
+  "name": "Graphic Policy",
+  "url": "https://graphicpolicy.com/feed/"
+ },
+ {
+  "topic": "comics-en",
+  "name": "ICv2 Comics",
+  "url": "https://icv2.com/rss/comics"
+ },
+ {
+  "topic": "comics-en",
+  "name": "DC Official",
+  "url": "https://www.dc.com/blog"
+ },
+ {
+  "topic": "comics-en",
+  "name": "Marvel Official",
+  "url": "https://www.marvel.com/comics"
+ },
+ {
+  "topic": "tcg-fr",
+  "name": "Pokémon Trash",
+  "url": "https://www.pokemontrash.com/feed/"
+ },
+ {
+  "topic": "tcg-fr",
+  "name": "Pokébip",
+  "url": "https://www.pokebip.com/"
+ },
+ {
+  "topic": "tcg-fr",
+  "name": "Pokekalos",
+  "url": "https://www.pokekalos.fr/"
+ },
+ {
+  "topic": "tcg-fr",
+  "name": "Magic Corporation",
+  "url": "https://www.magiccorporation.com/"
+ },
+ {
+  "topic": "tcg-fr",
+  "name": "Lotus Noir",
+  "url": "https://www.lotusnoir.info/"
+ },
+ {
+  "topic": "tcg-fr",
+  "name": "Cardmarket Insight FR",
+  "url": "https://www.cardmarket.com/fr/Magic/Insight"
+ },
+ {
+  "topic": "tcg-fr",
+  "name": "Yu-Gi-Oh France",
+  "url": "https://www.yugioh-france.com/"
+ },
+ {
+  "topic": "tcg-fr",
+  "name": "Lorcana FR",
+  "url": "https://lorcana-fr.com/"
+ },
+ {
+  "topic": "tcg-fr",
+  "name": "Pokécardex",
+  "url": "https://www.pokecardex.com/"
+ },
+ {
+  "topic": "tcg-fr",
+  "name": "Pokemon Gamer FR",
+  "url": "https://www.pokemon-gamer.fr/feed/"
+ },
+ {
+  "topic": "tcg-en",
+  "name": "Magic Wizards",
+  "url": "https://magic.wizards.com/en/rss/rss.xml"
+ },
+ {
+  "topic": "tcg-en",
+  "name": "MTGGoldfish",
+  "url": "https://www.mtggoldfish.com/feed"
+ },
+ {
+  "topic": "tcg-en",
+  "name": "Star City Games",
+  "url": "https://articles.starcitygames.com/feed/"
+ },
+ {
+  "topic": "tcg-en",
+  "name": "YGOrganization",
+  "url": "https://ygorganization.com/feed/"
+ },
+ {
+  "topic": "tcg-en",
+  "name": "PokeGuardian",
+  "url": "https://www.pokeguardian.com/feed"
+ },
+ {
+  "topic": "tcg-en",
+  "name": "Dicebreaker",
+  "url": "https://www.dicebreaker.com/feed"
+ },
+ {
+  "topic": "tcg-en",
+  "name": "Dexerto Pokémon",
+  "url": "https://www.dexerto.com/pokemon/feed/"
+ },
+ {
+  "topic": "tcg-en",
+  "name": "Dexerto TCG",
+  "url": "https://www.dexerto.com/tcg/feed/"
+ },
+ {
+  "topic": "tcg-en",
+  "name": "TCGplayer Infinite",
+  "url": "https://infinite.tcgplayer.com/rss"
+ },
+ {
+  "topic": "tcg-en",
+  "name": "Polygon Tabletop",
+  "url": "https://www.polygon.com/rss/tabletop-games/index.xml"
+ },
+ {
+  "topic": "tcg-en",
+  "name": "Lorcana Player",
+  "url": "https://lorcanaplayer.com/feed/"
+ },
+ {
+  "topic": "tcg-en",
+  "name": "One Piece TCG News",
+  "url": "https://onepiecetopdecks.com/feed/"
+ },
+ {
+  "topic": "tcg-en",
+  "name": "Pokemon.com News",
+  "url": "https://www.pokemon.com/us/pokemon-news/rss"
+ },
+ {
+  "topic": "tcg-en",
+  "name": "Wargamer",
+  "url": "https://www.wargamer.com/mainrss.xml"
+ },
+ {
+  "topic": "tcg-en",
+  "name": "ICv2 Games",
+  "url": "https://icv2.com/rss/games"
+ },
+ {
+  "topic": "tcg-en",
+  "name": "TheGamer TCG",
+  "url": "https://www.thegamer.com/feed/category/tcg/"
+ },
+ {
+  "topic": "tcg-en",
+  "name": "Bulbanews",
+  "url": "https://bulbanews.bulbagarden.net/feed/"
+ },
+ {
+  "topic": "jv-fr",
+  "name": "Journal du Geek JV",
+  "url": "https://www.journaldugeek.com/jeux-video/feed/"
+ },
+ {
+  "topic": "jv-fr",
+  "name": "JVFrance",
+  "url": "https://www.jvfrance.com/feed/"
+ },
+ {
+  "topic": "jv-fr",
+  "name": "Journal du Gamer",
+  "url": "https://www.journaldugamer.com/feed/"
+ },
+ {
+  "topic": "jv-fr",
+  "name": "Gamekyo",
+  "url": "https://www.gamekyo.com/rss.xml"
+ },
+ {
+  "topic": "jv-fr",
+  "name": "Xboxygen",
+  "url": "https://www.xboxygen.com/spip.php?page=backend"
+ },
+ {
+  "topic": "jv-fr",
+  "name": "PSthc",
+  "url": "https://www.psthc.fr/rss.xml"
+ },
+ {
+  "topic": "jv-fr",
+  "name": "Puissance Nintendo",
+  "url": "https://www.puissance-nintendo.com/rss"
+ },
+ {
+  "topic": "jv-fr",
+  "name": "Nintendo Difference",
+  "url": "https://www.nintendo-difference.com/feed/"
+ },
+ {
+  "topic": "jv-fr",
+  "name": "Jeuxonline",
+  "url": "https://www.jeuxonline.info/rss/actualites/rss.xml"
+ },
+ {
+  "topic": "jv-fr",
+  "name": "Numerama JV",
+  "url": "https://www.numerama.com/tech/jeux-video/feed/"
+ },
+ {
+  "topic": "jv-fr",
+  "name": "Next Player",
+  "url": "https://www.nextplayer.fr/feed/"
+ },
+ {
+  "topic": "jv-fr",
+  "name": "ActuGaming",
+  "url": "https://www.actugaming.net/feed/"
+ },
+ {
+  "topic": "jv-fr",
+  "name": "Gamergen alt",
+  "url": "https://gamergen.com/rss"
+ },
+ {
+  "topic": "jv-fr",
+  "name": "JeuxActu alt",
+  "url": "https://www.jeuxactu.com/rss/ja.rss"
+ }
+]

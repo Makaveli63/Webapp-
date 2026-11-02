@@ -1,0 +1,29 @@
+name: Tester des sources
+
+# Teste les sources candidates (scripts/feed-candidates.json) depuis les serveurs de GitHub,
+# comme le fait la mise à jour du site. Lancé à la main ou quand la liste change.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/feed-candidates.json"
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Tester les sources
+        run: node scripts/check-feeds.mjs | tee -a "$GITHUB_STEP_SUMMARY"
