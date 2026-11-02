@@ -547,7 +547,16 @@ async function fetchFeed(feed) {
   if (!list.length) {
     const total = parsed.items.length;
     const usable = parsed.items.filter((i) => i.title && safeUrl(i.link ?? i.guid, parsed.link || feed.url)).length;
-    list.note = !total ? "flux vide" : !usable ? `${total} élément(s) sans titre ni lien` : `${total} élément(s), tous de plus de ${MAX_AGE_DAYS} jours`;
+    const recent = parsed.items.filter((i) => Date.parse(validDate(i.isoDate)) >= minDate).length;
+    list.note = !total
+      ? "flux vide"
+      : !usable
+        ? `${total} élément(s) sans titre ni lien`
+        : !recent
+          ? `${total} élément(s), tous de plus de ${MAX_AGE_DAYS} jours`
+          : feed.category === "Comics"
+            ? `${recent} article(s) récent(s), tous sur des séries ou des films (écartés)`
+            : `${recent} article(s) récent(s), aucun sur le sujet de la rubrique`;
     console.log(`[rss] ${feed.name} : aucun article retenu (${list.note}).`);
   }
   return list;
