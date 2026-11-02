@@ -76,6 +76,23 @@ const dedupe = (list) => {
   const seen = new Set();
   return list.filter((d) => d.title && d.discount > 0 && !seen.has(d.title.toLowerCase()) && seen.add(d.title.toLowerCase()));
 };
+/** Objet JSON qui commence à `from` dans un texte (accolades équilibrées, chaînes comprises). */
+function jsonAt(text, from) {
+  const start = text.indexOf("{", from);
+  if (start < 0) return null;
+  let depth = 0;
+  let str = false;
+  for (let i = start; i < text.length; i++) {
+    const c = text[i];
+    if (str) {
+      if (c === "\\") i++;
+      else if (c === '"') str = false;
+    } else if (c === '"') str = true;
+    else if (c === "{") depth++;
+    else if (c === "}" && --depth === 0) return JSON.parse(text.slice(start, i + 1));
+  }
+  return null;
+}
 const top = (list) => dedupe(list).sort((a, b) => b.discount - a.discount).slice(0, MAX);
 
 /** eShop Nintendo : moteur de recherche public de nintendo.com (jeux Switch en promo, prix France). */
@@ -113,10 +130,10 @@ async function nintendoDeals() {
 /** Xbox : page publique « Jeux en promotion » de xbox.com (les données des jeux sont dans la page). */
 async function xboxBrowseDeals() {
   const html = await getText("https://www.xbox.com/fr-FR/games/browse/DynamicChannel.GameDeals");
-  const m = html.match(/window\.__PRELOADED_STATE__\s*=\s*(\{[\s\S]*?\})\s*;?\s*<\/script>/);
-  if (DEBUG) console.log("[promos:debug] xbox page", html.length, !!m);
-  if (!m) return [];
-  const state = JSON.parse(m[1]);
+  const at = html.indexOf("__PRELOADED_STATE__");
+  if (DEBUG) console.log("[promos:debug] xbox page", html.length, at);
+  if (at < 0) return [];
+  const state = jsonAt(html, at);
   const summaries = state?.core2?.products?.productSummaries ?? {};
   const list = Object.values(summaries);
   if (DEBUG) console.log("[promos:debug] xbox produit", JSON.stringify(list[0] ?? {}).slice(0, 1200));
@@ -236,13 +253,38 @@ async function playstationDeals() {
     }
   };
   scan(page);
+  // Grille d'une catégorie : requête publique de la boutique (celle de son site).
+  for (const hash of ["4ce7d410a4db2c8b635a48c1dcec375906ff63b19dadd87e073f8fd0c0481d35", "257713466fc3264850aa473409a29088e3a4115e6e69e9fb3e061c8dd5b9f5c6"]) {
+    if (found.size) break;
+    for (let offset = 0; offset < 96; offset += 48) {
+      const variables = { id: cats[0], pageArgs: { size: 48, offset }, sortBy: null, filterBy: [], facetOptions: [] };
+      const q = new URLSearchParams({
+        operationName: "categoryGridRetrieve",
+        variables: JSON.stringify(variables),
+        extensions: JSON.stringify({ persistedQuery: { version: 1, sha256Hash: hash } }),
+      });
+      try {
+        const data = await getJson(`https://web.np.playstation.com/api/graphql/v1/op?${q}`, { "x-psn-store-locale-override": "fr-FR", "content-type": "application/json" });
+        const before = found.size;
+        walk(data);
+        if (DEBUG) console.log(`[promos:debug] ps graphql ${hash.slice(0, 6)} +${offset} : ${found.size - before} jeux`, found.size === before ? JSON.stringify(data).slice(0, 400) : "");
+        if (found.size === before) break;
+      } catch (err) {
+        if (DEBUG) console.log(`[promos:debug] ps graphql ${hash.slice(0, 6)} : ${err.message}`);
+        break;
+      }
+    }
+  }
   for (const id of cats.slice(0, 3)) {
     if (found.size >= 60) break;
     try {
       const html = await getText(`${base}/category/${id}/1`);
       const before = found.size;
       scan(html);
-      if (DEBUG) console.log(`[promos:debug] ps category ${id} : ${html.length} car., ${found.size - before} jeux`);
+      if (DEBUG) {
+        const i = html.indexOf("discountedPrice");
+        console.log(`[promos:debug] ps category ${id} : ${html.length} car., ${found.size - before} jeux, prix à ${i}`, i > 0 ? html.slice(Math.max(0, i - 600), i + 200) : "");
+      }
     } catch (err) {
       if (DEBUG) console.log(`[promos:debug] ps category ${id} : ${err.message}`);
     }
