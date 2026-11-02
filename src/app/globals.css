@@ -1220,3 +1220,13 @@ html.viewer-open, html.viewer-open body { overflow: hidden; }
   .xp-gain-pop, .xp-toast-glow .follow-toast-body { animation: none; }
   .xp-sparks { display: none; }
 }
+/* Rubriques à part : une couleur chacune (icônes de l'accueil et des Réglages). */
+.topic-ink-anime { color: #ec4899; }
+.topic-ink-comics { color: #2563eb; }
+.topic-ink-tcg { color: #7c3aed; }
+:root[data-theme="dark"] .topic-ink-comics { color: #60a5fa; }
+:root[data-theme="dark"] .topic-ink-tcg { color: #a78bfa; }
+.topic-icon { color: #fff; }
+.topic-icon-anime { background: linear-gradient(140deg, #f472b6, #db2777); }
+.topic-icon-comics { background: linear-gradient(140deg, #3b82f6, #e11d48); }
+.topic-icon-tcg { background: linear-gradient(140deg, #8b5cf6, #f59e0b); }

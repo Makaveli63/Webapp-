@@ -40,6 +40,14 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https" android:host="makaveli63.github.io" android:pathPrefix="/Webapp-" />
             </intent-filter>
+            <!-- Lien « gamingbase://open?path=/Webapp-/… » (bandeau « Ouvrir dans l'appli » du site, raccourcis) :
+                 ouvre toujours l'appli, même quand Android n'a pas encore vérifié le domaine. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="gamingbase" android:host="open" />
+            </intent-filter>
         </activity>
 
         <service

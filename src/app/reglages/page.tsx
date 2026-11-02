@@ -5,6 +5,7 @@ import { LiveActivityToggle } from "@/components/app/LiveActivityToggle";
 import { OpenLinksSetting } from "@/components/app/OpenLinksSetting";
 import { ConsolesSetting } from "@/components/settings/ConsolesSetting";
 import { FeedbackSetting } from "@/components/settings/FeedbackSetting";
+import { TopicsSetting } from "@/components/settings/TopicsSetting";
 import { SpoilerToggle } from "@/components/settings/SpoilerToggle";
 import { MutedList } from "@/components/settings/MutedList";
 import { VoiceSettings } from "@/components/settings/VoiceSettings";
@@ -29,6 +30,7 @@ export default function SettingsPage() {
       <LiveActivityToggle />
       <OpenLinksSetting />
       <ConsolesSetting />
+      <TopicsSetting />
       <SpoilerToggle />
       <MutedList />
       <FeedbackSetting />

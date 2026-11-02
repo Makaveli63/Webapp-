@@ -11,6 +11,7 @@ import { useFollows } from "@/lib/follows";
 import { canon } from "@/lib/fuzzy";
 import { readPrefs } from "@/lib/notif-prefs";
 import { themeFor } from "@/lib/themes";
+import { useHiddenTopics } from "@/lib/topics";
 import { useTracker } from "@/lib/tracker";
 import { isGameCategory, type Article } from "@/types";
 
@@ -56,6 +57,7 @@ export function ForYou({ articles }: { articles: ForYouArticle[] }) {
   }, []);
 
   const muted = useMuted();
+  const hiddenTopics = useHiddenTopics();
   const row = useRef<HTMLUListElement>(null);
   const picks = useMemo(() => {
     if (!follows || !tracker || !extra) return null;
@@ -67,6 +69,7 @@ export function ForYou({ articles }: { articles: ForYouArticle[] }) {
     const out: { article: ForYouArticle; reason: string; score: number }[] = [];
     for (const a of articles) {
       if (isMuted(`${a.title} ${a.tags.join(" ")}`, muted)) continue; // licence « Pas intéressé »
+      if (hiddenTopics.includes(a.category as (typeof hiddenTopics)[number])) continue; // rubrique masquée
       const hay = ` ${canon(`${a.title} ${a.tags.join(" ")}`)} `;
       let best: { reason: string; score: number } | null = null;
       for (const s of signals) {
@@ -80,7 +83,7 @@ export function ForYou({ articles }: { articles: ForYouArticle[] }) {
     }
     // Les plus pertinentes d'abord, puis les plus récentes (la liste arrive déjà triée par date).
     return out.sort((x, y) => y.score - x.score).slice(0, 10);
-  }, [follows, tracker, extra, articles, muted]);
+  }, [follows, tracker, extra, articles, muted, hiddenTopics]);
 
   if (!picks) return null;
   const hasSignals = !!(follows?.length || Object.keys(tracker?.anime ?? {}).length || Object.keys(tracker?.games ?? {}).length || extra?.games.length);

@@ -1,6 +1,7 @@
 "use client";
 
 import { CONSOLES_EVENT, CONSOLES_KEY } from "@/lib/consoles";
+import { TOPICS_EVENT, TOPICS_KEY } from "@/lib/topics";
 import { FOLLOWS_EVENT, FOLLOWS_KEY } from "@/lib/follows";
 import { MUTED_EVENT, MUTED_KEY } from "@/lib/muted";
 import { mergePlayers, reloadPlayer, type PlayerState } from "@/lib/player";
@@ -36,6 +37,8 @@ interface Payload {
   masques?: string[];
   /** « Mes consoles » (filtre des actus) */
   consoles?: string[] | null;
+  /** « Mes rubriques » masquées (Anime, Comics, Cartes) */
+  rubriques?: string[] | null;
 }
 
 // Clés des réglages d'affichage synchronisés (public/theme.js les lit au chargement de chaque page).
@@ -108,6 +111,7 @@ function local(): Payload {
     joueur: readJson<PlayerState | null>("gb-joueur", null),
     masques: readJson<string[]>(MUTED_KEY, []),
     consoles: readJson<string[] | null>(CONSOLES_KEY, null),
+    rubriques: readJson<string[] | null>(TOPICS_KEY, null),
     voter: rawVoter(),
   };
 }
@@ -145,6 +149,7 @@ function merge(mine: Payload, theirs: Partial<Payload> | null): Payload {
     masques: [...new Set([...(mine.masques ?? []), ...(theirs.masques ?? [])])].filter((t) => typeof t === "string").slice(0, 60),
     // Réglage : celui de cet appareil s'il en a un, sinon celui de l'autre.
     consoles: mine.consoles ?? theirs.consoles ?? null,
+    rubriques: mine.rubriques ?? theirs.rubriques ?? null,
     // Le premier appareil relié donne son identifiant aux autres.
     voter: theirs.voter ?? mine.voter ?? null,
   };
@@ -162,6 +167,7 @@ function apply(p: Payload) {
     if (Array.isArray(p.suivis)) localStorage.setItem(FOLLOWS_KEY, JSON.stringify(p.suivis.filter((f) => f && typeof f.id === "string").slice(0, 60)));
     if (p.joueur) localStorage.setItem("gb-joueur", JSON.stringify(p.joueur));
     if (Array.isArray(p.consoles)) localStorage.setItem(CONSOLES_KEY, JSON.stringify(p.consoles.filter((c) => typeof c === "string").slice(0, 6)));
+    if (Array.isArray(p.rubriques)) localStorage.setItem(TOPICS_KEY, JSON.stringify(p.rubriques.filter((c) => typeof c === "string").slice(0, 3)));
     if (Array.isArray(p.masques)) localStorage.setItem(MUTED_KEY, JSON.stringify(p.masques.filter((t) => typeof t === "string").slice(0, 60)));
     const before = rawVoter();
     if (p.voter && /^[\w-]{8,64}$/.test(p.voter) && p.voter !== before) {
@@ -175,7 +181,7 @@ function apply(p: Payload) {
   } catch {
     /* stockage indisponible */
   }
-  for (const e of ["gb-favoris-change", "gb-epingles-change", "gb-collection-change", "gb-notif-prefs-change", TRACKER_EVENT, "gb-theme-change", FOLLOWS_EVENT, MUTED_EVENT, CONSOLES_EVENT]) {
+  for (const e of ["gb-favoris-change", "gb-epingles-change", "gb-collection-change", "gb-notif-prefs-change", TRACKER_EVENT, "gb-theme-change", FOLLOWS_EVENT, MUTED_EVENT, CONSOLES_EVENT, TOPICS_EVENT]) {
     window.dispatchEvent(new Event(e));
   }
   reloadPlayer();
@@ -186,7 +192,7 @@ function apply(p: Payload) {
 // l'autre appareil n'a rien changé : on envoie l'état local tel quel (suppressions comprises).
 // Sinon, et seulement si on a aussi des changements, on fusionne les deux.
 const META_KEY = "gb-sync-meta";
-const CHANGE_EVENTS = ["gb-favoris-change", "gb-epingles-change", "gb-collection-change", "gb-notif-prefs-change", TRACKER_EVENT, "gb-theme-change", FOLLOWS_EVENT, "gb-joueur", MUTED_EVENT, CONSOLES_EVENT];
+const CHANGE_EVENTS = ["gb-favoris-change", "gb-epingles-change", "gb-collection-change", "gb-notif-prefs-change", TRACKER_EVENT, "gb-theme-change", FOLLOWS_EVENT, "gb-joueur", MUTED_EVENT, CONSOLES_EVENT, TOPICS_EVENT];
 let applying = false;
 
 interface Meta {

@@ -79,6 +79,12 @@ jobs:
             echo "Nouvelle clé de signature créée et conservée chiffrée."
           fi
           echo "KEYSTORE_FILE=$KEY" >> "$GITHUB_ENV"
+          # Liens du site ouverts directement dans l'appli (Android App Links) : Android vérifie le fichier
+          # https://makaveli63.github.io/.well-known/assetlinks.json, qui doit porter l'empreinte (publique) de cette clé.
+          FP=$("$JAVA_HOME_17_X64/bin/keytool" -list -v -keystore "$KEY" -storepass:env KEYSTORE_PASSWORD -alias gamingbase | sed -n 's/^.*SHA256: *//p' | head -1)
+          printf '[{"relation":["delegate_permission/common.handle_all_urls"],"target":{"namespace":"android_app","package_name":"io.github.makaveli63.gamingbase","sha256_cert_fingerprints":["%s"]}}]\n' "$FP" > "$RUNNER_TEMP/assetlinks.json"
+          echo "Empreinte SHA-256 de la clé (publique) : $FP"
+          { echo "### Liens dans l'appli (assetlinks.json)"; echo '```json'; cat "$RUNNER_TEMP/assetlinks.json"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Compiler l'APK
         env:
@@ -106,3 +112,5 @@ jobs:
             gh release create android --target "$GITHUB_SHA" --title "GamingBase pour Android" --notes "$NOTES" --latest
           fi
           gh release upload android "$RUNNER_TEMP/GamingBase.apk" --clobber
+          # Fichier à placer à la racine du domaine (dépôt makaveli63.github.io) pour que les liens s'ouvrent dans l'appli.
+          if [ -f "$RUNNER_TEMP/assetlinks.json" ]; then gh release upload android "$RUNNER_TEMP/assetlinks.json" --clobber; fi

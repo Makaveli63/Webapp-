@@ -19,8 +19,8 @@ export const CATEGORIES: Record<Category, { label: string; href: string }> = {
   Test: { label: "Tests", href: "/tests" },
   Console: { label: "Consoles", href: "/consoles" },
   Anime: { label: "Anime", href: "/anime" },
-  Comics: { label: "DC / Comics", href: "/comics" },
-  TCG: { label: "TCG", href: "/tcg" },
+  Comics: { label: "Comics", href: "/comics" },
+  TCG: { label: "Cartes", href: "/tcg" },
 };
 
 /** Rubriques à part (anime, comics, jeux de cartes) : jamais mélangées à l'actu jeu vidéo. */

@@ -5,6 +5,7 @@ import { ForYou } from "@/components/home/ForYou";
 import { ListenNews } from "@/components/home/ListenNews";
 import { PromosTeaser } from "@/components/home/PromosTeaser";
 import { QuickLinks } from "@/components/home/QuickLinks";
+import { TopicGate } from "@/components/home/TopicGate";
 import { VideosTeaser } from "@/components/home/VideosTeaser";
 import { NewsSection } from "@/components/news/NewsSection";
 import { UpcomingReleases } from "@/components/releases/UpcomingReleases";
@@ -60,13 +61,23 @@ export default async function HomePage() {
       <NewsSection id="latest-title" title="Dernières actualités" href="/actualites" articles={latest.filter((a) => isGameCategory(a.category)).slice(0, 30)} limit={6} />
       <WeekReleasesTeaser />
       <FreeGamesTeaser />
-      <AnimeTeaser />
+      <TopicGate topic="Anime">
+        <AnimeTeaser />
+      </TopicGate>
       <PromosTeaser />
       <VideosTeaser />
       <NewsSection id="tests-title" title="Derniers tests" href="/tests" articles={tests.slice(0, 15)} limit={3} />
       <NewsSection id="consoles-title" title="Consoles & matériel" href="/consoles" articles={consoles.slice(0, 15)} limit={3} />
-      {comics.length > 0 && <NewsSection id="comics-title" title="DC / Comics" href="/comics" articles={comics.slice(0, 15)} limit={3} />}
-      {tcg.length > 0 && <NewsSection id="tcg-title" title="TCG · cartes à collectionner" href="/tcg" articles={tcg.slice(0, 15)} limit={3} />}
+      {comics.length > 0 && (
+        <TopicGate topic="Comics">
+          <NewsSection id="comics-title" title="Comics" href="/comics" articles={comics.slice(0, 15)} limit={3} />
+        </TopicGate>
+      )}
+      {tcg.length > 0 && (
+        <TopicGate topic="TCG">
+          <NewsSection id="tcg-title" title="Cartes à collectionner" href="/tcg" articles={tcg.slice(0, 15)} limit={3} />
+        </TopicGate>
+      )}
     </div>
   );
 }

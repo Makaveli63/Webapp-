@@ -155,13 +155,31 @@ public class MainActivity extends Activity {
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
-        Uri data = intent.getData();
-        if (data != null && isSite(data)) web.loadUrl(data.toString());
+        String url = siteUrl(intent);
+        if (url != null) web.loadUrl(url);
     }
 
     private static String startUrl(Intent intent) {
+        String url = siteUrl(intent);
+        return url != null ? url : HOME;
+    }
+
+    /**
+     * Page du site demandée par un lien : https://makaveli63.github.io/Webapp-/… (App Links),
+     * ou gamingbase://open?path=/Webapp-/… (bandeau du site), réduit aux pages du site.
+     */
+    private static String siteUrl(Intent intent) {
         Uri data = intent != null ? intent.getData() : null;
-        return data != null && isSite(data) ? data.toString() : HOME;
+        if (data == null) return null;
+        if (isSite(data)) return data.toString();
+        if ("gamingbase".equals(data.getScheme()) && "open".equals(data.getHost())) {
+            String path = data.getQueryParameter("path");
+            if (path != null && path.startsWith(PATH) && !path.contains("..") && !path.contains("//") && !path.contains("\\")) {
+                Uri target = Uri.parse("https://" + HOST + path);
+                if (isSite(target)) return target.toString();
+            }
+        }
+        return null;
     }
 
     private static boolean isSite(Uri url) {

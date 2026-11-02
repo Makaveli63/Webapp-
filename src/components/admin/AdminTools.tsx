@@ -409,8 +409,8 @@ export function AdminSources({ password }: { password: string }) {
           <select value={topic} onChange={(e) => setTopic(e.target.value)} aria-label="Rubrique de la source" className="rounded-full border border-border bg-bg py-1 pl-3 pr-7 text-base text-fg md:text-xs">
             <option value="">Jeu vidéo</option>
             <option value="Anime">Anime</option>
-            <option value="Comics">DC / Comics</option>
-            <option value="TCG">TCG (cartes)</option>
+            <option value="Comics">Comics</option>
+            <option value="TCG">Cartes (TCG)</option>
           </select>
         </label>
       </form>
@@ -422,7 +422,7 @@ export function AdminSources({ password }: { password: string }) {
             <li key={s.id} className="flex items-center gap-3 py-2 text-sm">
               <span className="min-w-0 flex-1">
                 <span className="font-semibold text-heading">{s.name}</span>
-                {s.category && <span className="ml-2 text-xs text-pink-600 dark:text-pink-400">{s.category === "Comics" ? "DC / Comics" : s.category}</span>}
+                {s.category && <span className="ml-2 text-xs text-pink-600 dark:text-pink-400">{s.category === "TCG" ? "Cartes" : s.category}</span>}
                 <span className="block truncate text-xs text-muted">{s.url}</span>
               </span>
               <button type="button" onClick={() => remove(s.id, s.name)} aria-label={`Retirer ${s.name}`} className="shrink-0 rounded-full p-2 text-muted hover:bg-red-500/10 hover:text-red-600">
