@@ -128,7 +128,7 @@ async function nintendoDeals() {
 }
 
 /** Xbox : page publique « Jeux en promotion » de xbox.com (les données des jeux sont dans la page). */
-async function xboxBrowseDeals() {
+async function xboxDeals() {
   const html = await getText("https://www.xbox.com/fr-FR/games/browse/DynamicChannel.GameDeals");
   const at = html.indexOf("__PRELOADED_STATE__");
   if (DEBUG) console.log("[promos:debug] xbox page", html.length, at);
@@ -160,56 +160,6 @@ async function xboxBrowseDeals() {
       })
       .filter(Boolean),
   );
-}
-
-/** Xbox : liste publique « Promotions » du Microsoft Store, puis fiches (titre, image, prix) par lots de 20. */
-async function xboxDeals() {
-  try {
-    const fromPage = await xboxBrowseDeals();
-    if (fromPage.length) return fromPage;
-  } catch (err) {
-    if (DEBUG) console.log(`[promos:debug] xbox page : ${err.message}`);
-  }
-  const list = await getJson(
-    "https://reco-public.rec.mp.microsoft.com/channels/Reco/V8.0/Lists/Computed/Deal?Market=FR&Language=fr&ItemTypes=Game&deviceFamily=Windows.Xbox&count=100&skipitems=0",
-  );
-  const ids = (list?.Items ?? []).map((i) => i?.Id).filter((id) => typeof id === "string" && /^[A-Z0-9]{12}$/.test(id));
-  if (DEBUG) console.log("[promos:debug] xbox ids", ids.length, JSON.stringify(list).slice(0, 400));
-  const out = [];
-  for (let i = 0; i < ids.length && out.length < 60; i += 20) {
-    const data = await getJson(
-      `https://displaycatalog.mp.microsoft.com/v7.0/products?bigIds=${ids.slice(i, i + 20).join(",")}&market=FR&languages=fr-fr,fr,neutral`,
-    );
-    for (const p of data?.Products ?? []) {
-      const title = clean(p?.LocalizedProperties?.[0]?.ProductTitle, 120);
-      const images = p?.LocalizedProperties?.[0]?.Images ?? [];
-      const pick = (purpose) => https(images.find((im) => im?.ImagePurpose === purpose)?.Uri);
-      // Prix public (sans abonnement requis) le plus bas parmi les offres d'achat.
-      let best = null;
-      for (const sku of p?.DisplaySkuAvailabilities ?? []) {
-        for (const a of sku?.Availabilities ?? []) {
-          const price = a?.OrderManagementData?.Price;
-          if (!a?.Actions?.includes("Purchase") || a?.RemediationRequired || !price) continue;
-          if (price.CurrencyCode !== "EUR" || !(price.ListPrice < price.MSRP)) continue;
-          if (!best || price.ListPrice < best.price.ListPrice) best = { price, end: a?.Conditions?.EndDate };
-        }
-      }
-      if (!title || !best) continue;
-      const end = Date.parse(best.end);
-      out.push({
-        id: `xbox-${p.ProductId}`,
-        title,
-        store: "Xbox",
-        discount: Math.min(99, pct(best.price.ListPrice, best.price.MSRP)),
-        price: eur(best.price.ListPrice),
-        oldPrice: eur(best.price.MSRP),
-        image: pick("SuperHeroArt") ?? pick("TitledHeroArt") ?? pick("BoxArt") ?? pick("Poster"),
-        url: `https://www.xbox.com/fr-FR/games/store/${slug(title)}/${p.ProductId}`,
-        until: Number.isFinite(end) && end < Date.now() + 365 * 86_400_000 ? new Date(end).toISOString() : undefined,
-      });
-    }
-  }
-  return top(out);
 }
 
 /** PlayStation Store : la page publique des offres contient les données des jeux (prix, image, fin de l'offre). */
