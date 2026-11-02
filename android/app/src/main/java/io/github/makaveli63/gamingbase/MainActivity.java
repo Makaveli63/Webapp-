@@ -9,6 +9,8 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebChromeClient;
@@ -300,8 +302,25 @@ public class MainActivity extends Activity {
         return reader;
     }
 
-    void haptic(int effect) {
-        if (web != null) web.performHapticFeedback(effect);
+    /**
+     * Vibration au toucher : moteur de vibration du téléphone (bien plus net que le retour « clavier »,
+     * que certains téléphones rendent à peine perceptible ou coupent).
+     */
+    @SuppressWarnings("deprecation")
+    void haptic(String kind) {
+        Vibrator v = Build.VERSION.SDK_INT >= 23 ? getSystemService(Vibrator.class) : null;
+        if (v == null || !v.hasVibrator()) {
+            if (web != null) web.performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY);
+            return;
+        }
+        boolean strong = "success".equals(kind) || "on".equals(kind);
+        if (Build.VERSION.SDK_INT >= 29) {
+            v.vibrate(VibrationEffect.createPredefined(strong ? VibrationEffect.EFFECT_HEAVY_CLICK : VibrationEffect.EFFECT_CLICK));
+        } else if (Build.VERSION.SDK_INT >= 26) {
+            v.vibrate(VibrationEffect.createOneShot(strong ? 35 : 22, VibrationEffect.DEFAULT_AMPLITUDE));
+        } else {
+            v.vibrate(strong ? 35 : 22);
+        }
     }
 
     /** Message au site depuis n'importe quel fil (la synthèse vocale répond sur un fil à part). */

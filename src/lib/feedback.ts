@@ -71,7 +71,7 @@ function haptic(kind: FeedbackKind) {
     /* ancienne version de l'appli */
   }
   if (typeof navigator.vibrate === "function") {
-    navigator.vibrate(kind === "success" ? [12, 60, 18] : kind === "on" ? 12 : 7);
+    navigator.vibrate(kind === "success" ? [25, 60, 35] : kind === "on" ? 30 : 20);
     return;
   }
   if (/iPhone|iPad/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1)) iosHaptic();

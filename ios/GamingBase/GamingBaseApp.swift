@@ -333,9 +333,10 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         if let kind = body["haptic"] as? String {
             switch kind {
             case "success": UINotificationFeedbackGenerator().notificationOccurred(.success)
-            case "on": UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-            case "off": UIImpactFeedbackGenerator(style: .soft).impactOccurred()
-            default: UIImpactFeedbackGenerator(style: .light).impactOccurred(intensity: 0.7)
+            // Retour franc, bien perceptible (le léger « light » se sentait à peine).
+            case "on": UIImpactFeedbackGenerator(style: .heavy).impactOccurred(intensity: 1)
+            case "off": UIImpactFeedbackGenerator(style: .medium).impactOccurred(intensity: 1)
+            default: UIImpactFeedbackGenerator(style: .medium).impactOccurred(intensity: 1)
             }
             return
         }
