@@ -1230,3 +1230,10 @@ html.viewer-open, html.viewer-open body { overflow: hidden; }
 .topic-icon-anime { background: linear-gradient(140deg, #f472b6, #db2777); }
 .topic-icon-comics { background: linear-gradient(140deg, #3b82f6, #e11d48); }
 .topic-icon-tcg { background: linear-gradient(140deg, #8b5cf6, #f59e0b); }
+/* Jeu du jour : flous de chaque étape (6 essais) et indice qui apparaît. */
+.daily-blur-8 { filter: blur(8px); }
+.daily-blur-5 { filter: blur(5px); }
+.daily-blur-2 { filter: blur(2px); }
+.daily-hint { animation: daily-hint-in .35s cubic-bezier(.2, .9, .3, 1) both; }
+@keyframes daily-hint-in { from { opacity: 0; transform: translateY(4px); } }
+@media (prefers-reduced-motion: reduce) { .daily-hint { animation: none; } }

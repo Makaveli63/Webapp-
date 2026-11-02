@@ -1,6 +1,6 @@
 "use client";
 
-import { Flame, Share2, Trophy } from "lucide-react";
+import { Flame, Lightbulb, Share2, Trophy } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { aliasesOf } from "@/lib/aliases";
@@ -17,7 +17,31 @@ interface Saved {
   day: string;
   guesses: string[];
   won: boolean;
+  /** Indices demandés en plus (bouton « Un indice de plus ») */
+  jokers?: number;
 }
+
+/** Indices offerts dès le début ; un de plus à chaque erreur, ou à la demande. */
+const FREE_HINTS = 2;
+
+/** « Hollow Knight » → « H o _ _ o _   K _ _ g _ t » : environ un tiers des lettres, toujours les mêmes pour le jour. */
+function revealLetters(title: string, seed: string): string {
+  let n = 0;
+  return [...title]
+    .map((ch, i) => {
+      if (!/[\p{L}\p{N}]/u.test(ch)) return ch === " " ? "  " : ch;
+      const first = i === 0 || title[i - 1] === " ";
+      const show = first || ((n++ * 7 + seed.length * 3 + i) % 3 === 0);
+      return show ? ch.toUpperCase() : "_";
+    })
+    .join(" ")
+    .replace(/ {3,}/g, "   ");
+}
+
+const pattern = (title: string) => {
+  const words = title.split(/\s+/).filter(Boolean);
+  return `${words.length} mot${words.length > 1 ? "s" : ""} : ${words.map((w) => w.replace(/[^\p{L}\p{N}]/gu, "").length).join(" + ")} lettres`;
+};
 interface Stats {
   played: number;
   wins: number;
@@ -73,7 +97,8 @@ export function DailyGame({ candidates }: { candidates: DailyCandidate[] }) {
 
   const tries = game.guesses.length;
   const over = game.won || tries >= MAX_TRIES;
-  const blur = over ? 0 : [26, 18, 12, 7, 3][tries];
+  // Image un peu moins floue qu'avant à chaque étape (6 essais).
+  const blur = over ? 0 : [18, 12, 8, 5, 3, 2][tries];
   const right = (g: string) => {
     const c = canon(g);
     return keys.has(c) || [...keys].some((k) => k.length >= 8 && distance(c, k, 2) <= 2);
@@ -107,17 +132,30 @@ export function DailyGame({ candidates }: { candidates: DailyCandidate[] }) {
     guess(input);
   };
 
-  const hints = [
-    { label: "Année", value: answer.year },
+  const allHints = [
+    { label: "Année de sortie", value: answer.year },
     { label: "Genre", value: answer.genres.join(", ") || "?" },
     { label: "Plateformes", value: answer.platforms.join(" · ") || "?" },
-    { label: "Première lettre", value: answer.title.charAt(0).toUpperCase() },
-  ].slice(0, over ? 4 : tries);
+    ...(answer.rating ? [{ label: "Note de la presse", value: `${answer.rating}/100` }] : []),
+    ...(answer.playtime ? [{ label: "Durée de vie moyenne", value: `${answer.playtime} h` }] : []),
+    { label: "Le titre", value: pattern(answer.title) },
+    { label: "Initiales", value: answer.title.split(/\s+/).filter(Boolean).map((w) => `${w.charAt(0).toUpperCase()}…`).join(" ") },
+    { label: "Lettres", value: revealLetters(answer.title, game.day), mono: true },
+  ];
+  const jokers = game.jokers ?? 0;
+  const unlocked = over ? allHints.length : Math.min(allHints.length, FREE_HINTS + tries + jokers);
+  const hints = allHints.slice(0, unlocked);
+  const moreHint = () => {
+    if (over || unlocked >= allHints.length) return;
+    const next = { ...game, jokers: jokers + 1 };
+    setGame(next);
+    write(KEY, next);
+  };
   const suggestions = input.trim().length >= 2 ? suggestTitles(input, titles, 5) : [];
   const grid = game.guesses.map((g) => (right(g) ? "🟩" : "🟥")).join("") + (game.won ? "" : "⬛".repeat(MAX_TRIES - tries));
 
   const share = async () => {
-    const text = `GamingBase · Jeu du jour n° ${number}\n${grid} ${game.won ? `${tries}/${MAX_TRIES}` : "X/5"}\n🔥 Série : ${stats.streak}`;
+    const text = `GamingBase · Jeu du jour n° ${number}\n${grid} ${game.won ? `${tries}/${MAX_TRIES}` : `X/${MAX_TRIES}`}${jokers ? ` · 💡×${jokers}` : ""}\n🔥 Série : ${stats.streak}`;
     try {
       if (navigator.share) return await navigator.share({ text });
       await navigator.clipboard.writeText(text);
@@ -203,17 +241,21 @@ export function DailyGame({ candidates }: { candidates: DailyCandidate[] }) {
       <aside className="grid content-start gap-4">
         <section className="glass rounded-2xl p-4">
           <h2 className="font-bold text-heading">Indices</h2>
-          {hints.length ? (
-            <dl className="mt-2 grid gap-1 text-sm">
-              {hints.map((h) => (
-                <div key={h.label} className="flex justify-between gap-3">
-                  <dt className="text-muted">{h.label}</dt>
-                  <dd className="text-right font-semibold text-heading">{h.value}</dd>
-                </div>
-              ))}
-            </dl>
-          ) : (
-            <p className="mt-2 text-sm text-muted">Un indice se débloque à chaque essai raté.</p>
+          <dl className="mt-2 grid gap-1.5 text-sm">
+            {hints.map((h) => (
+              <div key={h.label} className="daily-hint flex justify-between gap-3">
+                <dt className="shrink-0 text-muted">{h.label}</dt>
+                <dd className={`text-right font-semibold text-heading ${"mono" in h && h.mono ? "whitespace-pre-wrap font-mono tracking-wider" : ""}`}>{h.value}</dd>
+              </div>
+            ))}
+          </dl>
+          {!over && unlocked < allHints.length && (
+            <>
+              <p className="mt-2 text-xs text-muted">Un indice de plus à chaque essai raté ({allHints.length - unlocked} restant{allHints.length - unlocked > 1 ? "s" : ""}).</p>
+              <button type="button" onClick={moreHint} className="mt-2 inline-flex items-center gap-1.5 rounded-full glass-pill px-3.5 py-1.5 text-sm font-semibold text-heading ring-1 ring-inset ring-border hover:ring-accent">
+                <Lightbulb className="size-4 text-amber-500" aria-hidden /> Un indice de plus
+              </button>
+            </>
           )}
         </section>
         <section className="glass rounded-2xl p-4">

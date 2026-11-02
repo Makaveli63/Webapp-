@@ -6,10 +6,14 @@ export interface DailyCandidate {
   genres: string[];
   platforms: string[];
   slug: string;
+  /** Note de la presse (Metacritic, via RAWG) */
+  rating?: number;
+  /** Durée de vie moyenne, en heures */
+  playtime?: number;
 }
 
 export const DAILY_KEY = "gb-daily";
-export const DAILY_MAX_TRIES = 5;
+export const DAILY_MAX_TRIES = 6;
 const START = Date.UTC(2026, 9, 28); // n° 1
 
 /** Jour à Paris (AAAA-MM-JJ) : le jeu change à minuit pour tout le monde. */

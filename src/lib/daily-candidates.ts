@@ -10,7 +10,16 @@ export async function getDailyCandidates(): Promise<DailyCandidate[]> {
   return (known.length >= 30 ? known : released)
     .sort((a, b) => a.title.localeCompare(b.title))
     .slice(0, 600)
-    .map((g) => ({ title: g.title, image: g.image!, year: g.date!.slice(0, 4), genres: g.genres.slice(0, 2), platforms: g.platforms.slice(0, 3), slug: g.slug }));
+    .map((g) => ({
+      title: g.title,
+      image: g.image!,
+      year: g.date!.slice(0, 4),
+      genres: g.genres.slice(0, 3),
+      platforms: g.platforms.slice(0, 4),
+      slug: g.slug,
+      ...(g.rating ? { rating: g.rating } : {}),
+      ...(g.playtime ? { playtime: g.playtime } : {}),
+    }));
 }
 
 /**
