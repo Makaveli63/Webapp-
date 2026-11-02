@@ -6,6 +6,7 @@ import { OpenLinksSetting } from "@/components/app/OpenLinksSetting";
 import { ConsolesSetting } from "@/components/settings/ConsolesSetting";
 import { FeedbackSetting } from "@/components/settings/FeedbackSetting";
 import { TopicsSetting } from "@/components/settings/TopicsSetting";
+import { DockSetting } from "@/components/settings/DockSetting";
 import { SpoilerToggle } from "@/components/settings/SpoilerToggle";
 import { MutedList } from "@/components/settings/MutedList";
 import { VoiceSettings } from "@/components/settings/VoiceSettings";
@@ -31,6 +32,7 @@ export default function SettingsPage() {
       <OpenLinksSetting />
       <ConsolesSetting />
       <TopicsSetting />
+      <DockSetting />
       <SpoilerToggle />
       <MutedList />
       <FeedbackSetting />

@@ -18,7 +18,7 @@ export function TopicsSetting() {
     <section className="glass space-y-4 rounded-xl p-4">
       <div>
         <h2 className="font-semibold text-heading">Mes rubriques</h2>
-        <p className="text-sm text-muted">Masquées, elles disparaissent de l&apos;accueil et de « Pour toi ». Leurs pages restent accessibles.</p>
+        <p className="text-sm text-muted">Masquées, elles disparaissent de l&apos;accueil, de la barre du bas et de « Pour toi ». Leurs pages restent accessibles.</p>
       </div>
       {(Object.keys(TOPIC_META) as TopicId[]).map((id) => {
         const { label, hint, Icon } = TOPIC_META[id];

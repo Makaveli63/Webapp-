@@ -28,14 +28,28 @@ const TOPIC_TABS = [
   ["/tcg", "TCG"],
 ] as const;
 
+/** Onglets possibles de la barre du bas (Réglages → « Ma barre du bas »). Accueil est toujours le premier. */
+export const DOCK_CHOICES = ["/actualites", "/tests", "/sorties", "/anime", "/comics", "/tcg", "/jeux-gratuits", "/promos", "/videos", "/classement", "/consoles"] as const;
+/** 5 onglets au plus : la limite de la barre de l'iPhone. */
+export const DOCK_MAX = 5;
+
+const topicOf = (href: string) => TOPIC_TABS.find(([h]) => h === href)?.[1];
+
 /**
- * Onglets de la barre du bas (5, la limite de l'iPhone) : Accueil, Sorties et les rubriques affichées
- * (Anime, Comics, Cartes). Une rubrique masquée laisse sa place à Tests, puis à Gratuits.
+ * Onglets de la barre du bas. Choisis par le visiteur (« Ma barre du bas ») ; sinon Accueil, Sorties et les
+ * rubriques affichées (Anime, Comics, Cartes), une rubrique masquée laissant sa place à Tests puis à Gratuits.
+ * Une rubrique masquée dans « Mes rubriques » n'a jamais d'onglet.
  */
-export function dockLinks(hiddenTopics: readonly string[]) {
-  const hrefs: string[] = ["/", "/sorties", ...TOPIC_TABS.filter(([, id]) => !hiddenTopics.includes(id)).map(([h]) => h)];
-  if (hrefs.length < 5) hrefs.splice(1, 0, "/tests");
-  if (hrefs.length < 5) hrefs.push("/jeux-gratuits");
+export function dockLinks(hiddenTopics: readonly string[], custom?: readonly string[] | null) {
+  const shown = (h: string) => !hiddenTopics.includes(topicOf(h) ?? "");
+  let hrefs: string[];
+  if (custom?.length) {
+    hrefs = ["/", ...custom.filter((h, i) => (DOCK_CHOICES as readonly string[]).includes(h) && custom.indexOf(h) === i && shown(h))].slice(0, DOCK_MAX);
+  } else {
+    hrefs = ["/", "/sorties", ...TOPIC_TABS.filter(([, id]) => !hiddenTopics.includes(id)).map(([h]) => h)];
+    if (hrefs.length < DOCK_MAX) hrefs.splice(1, 0, "/tests");
+    if (hrefs.length < DOCK_MAX) hrefs.push("/jeux-gratuits");
+  }
   return hrefs.map((h) => NAV_LINKS.find((l) => l.href === h)!);
 }
 

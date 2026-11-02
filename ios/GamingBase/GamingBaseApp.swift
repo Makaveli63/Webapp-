@@ -75,11 +75,12 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         ("Comics", "book", "/comics"),
         ("Cartes", "suit.spade", "/tcg"),
     ]
-    /// Seuls ces onglets peuvent être demandés par le site (icône système et page connues).
+    /// Seuls ces onglets peuvent être demandés par le site (Réglages → « Ma barre du bas » ; icône système et page connues).
     private static let allowedTabs: [String: (title: String, icon: String)] = [
         "/": ("Accueil", "house"), "/tests": ("Tests", "star"), "/sorties": ("Sorties", "calendar"),
         "/anime": ("Anime", "flower"), "/comics": ("Comics", "book"), "/tcg": ("Cartes", "suit.spade"),
-        "/jeux-gratuits": ("Gratuits", "gift"),
+        "/jeux-gratuits": ("Gratuits", "gift"), "/actualites": ("Actus", "newspaper"), "/promos": ("Promos", "tag"),
+        "/videos": ("Vidéos", "play.rectangle"), "/classement": ("Classement", "trophy"), "/consoles": ("Consoles", "gamecontroller"),
     ]
     private var lastRoute = "/"
 

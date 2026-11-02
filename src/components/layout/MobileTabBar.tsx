@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent } from "react";
 import { activeHref, dockLinks } from "./nav-links";
+import { useDock } from "@/lib/dock";
 import { useHiddenTopics } from "@/lib/topics";
 import { hapticOnly } from "@/lib/feedback";
 
@@ -41,11 +42,12 @@ export function MobileTabBar() {
   const router = useRouter();
   const pathname = usePathname();
   const path = activeHref(pathname);
-  // Onglets : Accueil, Sorties et les rubriques affichées dans Réglages → « Mes rubriques ».
+  // Onglets : ceux choisis dans Réglages → « Ma barre du bas », sinon Accueil, Sorties et les rubriques affichées.
   const hiddenTopics = useHiddenTopics();
-  const ITEMS = useMemo(() => dockLinks(hiddenTopics), [hiddenTopics]);
-  // Les actus n'ont plus d'onglet : elles font partie de l'accueil.
-  const active = path === "/actualites" ? "/" : path;
+  const custom = useDock();
+  const ITEMS = useMemo(() => dockLinks(hiddenTopics, custom), [hiddenTopics, custom]);
+  // Sans onglet Actus, les actus font partie de l'accueil.
+  const active = path === "/actualites" && !ITEMS.some((i) => i.href === "/actualites") ? "/" : path;
   const activeIndex = ITEMS.findIndex((i) => i.href === active);
 
   const list = useRef<HTMLUListElement>(null);
