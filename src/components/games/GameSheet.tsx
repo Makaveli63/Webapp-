@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Clock, ExternalLink, Star } from "lucide-react";
+import { ArrowLeft, Clock, PenLine, Star } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -14,6 +14,7 @@ import { RemoteImage } from "@/components/ui/RemoteImage";
 import { TrailerButton } from "@/components/ui/TrailerButton";
 import { gameFollowId } from "@/lib/aliases";
 import { loadSearchIndex } from "@/lib/search-index";
+import { loadSynopsis, requestSynopsis } from "@/lib/synopsis";
 import { titleKey } from "@/lib/text";
 import { themeFor } from "@/lib/themes";
 import type { Article, SearchGame } from "@/types";
@@ -30,6 +31,8 @@ export function GameSheet() {
   const id = useSearchParams().get("id") ?? "";
   const [data, setData] = useState<{ game: SearchGame | null; articles: Article[] } | null>(null);
   const [error, setError] = useState(false);
+  // undefined : en chargement ; null : pas encore rédigé.
+  const [synopsis, setSynopsis] = useState<string | null | undefined>(undefined);
 
   useEffect(() => {
     setData(null);
@@ -37,6 +40,16 @@ export function GameSheet() {
       .then((index) => setData({ game: index.games.find((g) => g.id === id) ?? null, articles: index.articles }))
       .catch(() => setError(true));
   }, [id]);
+
+  useEffect(() => {
+    const game = data?.game;
+    if (!game) return;
+    setSynopsis(undefined);
+    loadSynopsis(game.title).then((text) => {
+      setSynopsis(text);
+      if (!text) requestSynopsis(game.title, game.source);
+    });
+  }, [data]);
 
   const news = useMemo(() => {
     if (!data?.game) return [];
@@ -59,7 +72,6 @@ export function GameSheet() {
     );
 
   const upcoming = !!game.date && Date.parse(`${game.date}T23:59:59Z`) > Date.now();
-  const source = game.source?.startsWith("https://") ? game.source : undefined;
   const path = `/jeux/fiche?id=${encodeURIComponent(game.id)}`;
   return (
     <div className="mx-auto max-w-4xl space-y-8">
@@ -101,6 +113,27 @@ export function GameSheet() {
           <NotInterestedButton title={game.title} />
           <CollectionButtons game={{ id: game.id, title: game.title, image: game.image }} />
         </div>
+        <section aria-labelledby="sheet-synopsis" className="border-t border-border p-5">
+          <h2 id="sheet-synopsis" className="text-sm font-bold text-heading">
+            Synopsis
+          </h2>
+          {synopsis === undefined ? (
+            <div className="mt-2 space-y-2" aria-hidden>
+              <div className="h-3 w-full animate-pulse rounded bg-surface-2" />
+              <div className="h-3 w-4/5 animate-pulse rounded bg-surface-2" />
+            </div>
+          ) : synopsis ? (
+            <>
+              <p className="mt-1.5 leading-relaxed text-fg">{synopsis}</p>
+              <p className="mt-2 text-xs text-muted">Rédigé en français par intelligence artificielle à partir de la description officielle du jeu.</p>
+            </>
+          ) : (
+            <p className="mt-1.5 flex items-start gap-2 text-sm text-muted">
+              <PenLine className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden />
+              Le synopsis en français de ce jeu est en cours de rédaction : il apparaîtra ici d&apos;ici une heure environ.
+            </p>
+          )}
+        </section>
         {!upcoming && (
           <div className="border-t border-border p-5">
             <p className="mb-2 text-sm font-bold text-heading">📋 Mon suivi</p>
@@ -122,14 +155,6 @@ export function GameSheet() {
         )}
       </section>
 
-      {source && (
-        <p className="text-xs text-muted">
-          Informations :{" "}
-          <a href={source} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-0.5 underline underline-offset-2">
-            RAWG <ExternalLink className="size-3" aria-hidden />
-          </a>
-        </p>
-      )}
     </div>
   );
 }

@@ -10,7 +10,26 @@ const CALENDAR = path.resolve(".cache/news/calendar.json");
 const RAWG_KEY = process.env.RAWG_API_KEY?.trim();
 const RAWG_BASE = process.env.RAWG_BASE?.trim() || "https://api.rawg.io";
 const AI_KEY = process.env.AI_API_KEY?.trim();
-const MAX_PER_RUN = 12;
+const MAX_PER_RUN = 20; // ~20 appels RAWG par heure : sous le quota gratuit
+const SUPABASE_URL = (process.env.SUPABASE_URL ?? "").trim().replace(/\/+$/, "").replace(/\/rest\/v1$/, "");
+const SUPABASE_KEY = (process.env.SUPABASE_ANON_KEY ?? "").trim();
+
+/** Jeux dont la fiche a été ouverte sans synopsis (supabase/community.sql) : rédigés en premier. */
+async function requested() {
+  if (!SUPABASE_URL || !SUPABASE_KEY) return [];
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_synopsis_requests`, {
+      method: "POST",
+      headers: { apikey: SUPABASE_KEY, ...(SUPABASE_KEY.startsWith("eyJ") ? { Authorization: `Bearer ${SUPABASE_KEY}` } : {}), "Content-Type": "application/json" },
+      body: "{}",
+      signal: AbortSignal.timeout(10_000),
+    });
+    const rows = res.ok ? await res.json() : [];
+    return Array.isArray(rows) ? rows.filter((r) => typeof r?.title === "string") : [];
+  } catch {
+    return [];
+  }
+}
 const PROVIDERS = {
   mistral: { url: "https://api.mistral.ai/v1/chat/completions", model: "mistral-small-latest" },
   gemini: { url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", model: "gemini-flash-lite-latest" },
@@ -92,13 +111,24 @@ async function main() {
   const done = readJson(FILE, {});
   const calendar = readJson(CALENDAR, {});
   const releases = readJson(path.resolve("src/data/releases.json"), []);
-  // Grosses sorties d'abord, puis les plus attendus et les jeux populaires de la recherche.
-  const candidates = [
-    ...releases.map((r) => ({ title: r.title })),
+  // Jeux demandés depuis leur fiche, puis grosses sorties, plus attendus, et toute la base de la recherche.
+  // Une demande n'est prise que pour un jeu connu de la base (son adresse RAWG vient de la base, pas de la demande).
+  const known = [
     ...(calendar.anticipated ?? []).map((g) => ({ title: g.title, url: g.source })),
     ...(calendar.games ?? []).map((g) => ({ title: g.title, url: g.url })),
     ...(calendar.database ?? []).map((g) => ({ title: g.title, url: g.url })),
-  ].filter((c, i, all) => c.title && all.findIndex((d) => key(d.title) === key(c.title)) === i);
+    ...(calendar.searchGames ?? []).map((g) => ({ title: g.title, url: g.url })),
+  ];
+  const byKey = new Map(known.map((g) => [key(g.title), g]));
+  const asked = (await requested()).map((r) => byKey.get(key(r.title))).filter(Boolean);
+  if (asked.length) console.log(`[synopsis] ${asked.length} jeu(x) demandé(s) depuis leur fiche.`);
+  const candidates = [
+    ...asked,
+    ...releases.map((r) => ({ title: r.title })),
+    ...(calendar.anticipated ?? []).map((g) => ({ title: g.title, url: g.source })),
+    ...(calendar.games ?? []).map((g) => ({ title: g.title, url: g.url })),
+    ...known,
+  ].filter(((seen) => (c) => c?.title && !seen.has(key(c.title)) && seen.add(key(c.title)))(new Set()));
   // Jeu sans description sur RAWG (souvent un jeu à venir) : nouvel essai deux semaines plus tard.
   const retry = Date.now() - 14 * 86_400_000;
   const todo = candidates.filter((c) => !done[c.title] || (done[c.title].none && Date.parse(done[c.title].at) < retry)).slice(0, MAX_PER_RUN);

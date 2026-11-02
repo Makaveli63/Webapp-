@@ -279,3 +279,40 @@ revoke execute on function public.gb_writer(text) from anon, authenticated, publ
 grant execute on function public.writer_publish_article(text, text, text, text[], text, text, text) to anon;
 grant execute on function public.writer_my_articles(text) to anon;
 grant execute on function public.writer_delete_article(text, uuid) to anon;
+
+-- ---------------------------------------------------------------- Synopsis demandés depuis une fiche de jeu
+-- Fiche d'un jeu encore sans synopsis : le site le demande ; scripts/fetch-synopses.mjs le rédige en priorité
+-- à la mise à jour suivante (moins d'une heure). 30 demandes par heure au plus depuis une même connexion.
+create table if not exists public.synopsis_requests (
+  title text primary key check (char_length(title) between 2 and 150),
+  source text check (source is null or source ~ '^https://rawg\.io/games/[a-z0-9-]{1,100}$'),
+  ip_hash text,
+  requested_at timestamptz not null default now()
+);
+alter table public.synopsis_requests enable row level security;
+revoke all on public.synopsis_requests from anon, authenticated;
+
+create or replace function public.request_synopsis(p_title text, p_source text)
+returns void
+language plpgsql volatile security definer set search_path = public, extensions as $$
+declare
+  v_ip text := public.gb_ip_hash();
+begin
+  if char_length(trim(coalesce(p_title, ''))) not between 2 and 150 then return; end if;
+  if (select count(*) from public.synopsis_requests where ip_hash = v_ip and requested_at > now() - interval '1 hour') >= 30 then return; end if;
+  insert into public.synopsis_requests (title, source, ip_hash)
+  values (trim(p_title), case when p_source ~ '^https://rawg\.io/games/[a-z0-9-]{1,100}$' then p_source end, v_ip)
+  on conflict (title) do update set requested_at = now(), ip_hash = excluded.ip_hash;
+  delete from public.synopsis_requests where requested_at < now() - interval '14 days';
+end $$;
+
+-- Lecture par la mise à jour du site : les demandes de la dernière semaine, les plus récentes d'abord.
+create or replace function public.get_synopsis_requests()
+returns json
+language sql stable security definer set search_path = public, extensions as $$
+  select coalesce(json_agg(json_build_object('title', title, 'source', source) order by requested_at desc), '[]'::json)
+  from (select title, source, requested_at from public.synopsis_requests where requested_at > now() - interval '7 days' order by requested_at desc limit 40) r
+$$;
+
+grant execute on function public.request_synopsis(text, text) to anon;
+grant execute on function public.get_synopsis_requests() to anon;

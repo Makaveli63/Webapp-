@@ -40,7 +40,7 @@ const SQL_FILES: Record<string, string> = {
   admin_add_release: "admin.sql", admin_delete_release: "admin.sql", get_admin_releases: "admin.sql", get_player: "profiles.sql", get_players: "profiles.sql",
   rate_game: "community.sql", get_game_rating: "community.sql", predict_game: "community.sql", get_predictions: "community.sql",
   get_my_activity: "community.sql", get_author_badges: "community.sql", admin_publish_article: "community.sql",
-  admin_delete_article: "community.sql", get_published_articles: "community.sql",
+  admin_delete_article: "community.sql", get_published_articles: "community.sql", request_synopsis: "community.sql",
 };
 
 export async function rpc<T>(fn: string, args: Record<string, unknown>): Promise<T> {

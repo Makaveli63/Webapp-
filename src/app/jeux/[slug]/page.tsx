@@ -1,4 +1,4 @@
-import { CalendarPlus, Clock, ExternalLink, Star } from "lucide-react";
+import { CalendarPlus, Clock, Star } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -110,13 +110,7 @@ export default async function GamePage({ params }: Props) {
           <section aria-labelledby="synopsis-title" className="border-t border-border p-5">
             <h2 id="synopsis-title" className="text-sm font-bold text-heading">Synopsis</h2>
             <p className="mt-1.5 leading-relaxed text-fg">{synopsis.text}</p>
-            <p className="mt-2 text-xs text-muted">
-              Rédigé en français par intelligence artificielle à partir de la{" "}
-              <a href={synopsis.source} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
-                description officielle (RAWG)
-              </a>
-              .
-            </p>
+            <p className="mt-2 text-xs text-muted">Rédigé en français par intelligence artificielle à partir de la description officielle du jeu.</p>
           </section>
         )}
         {!upcoming && (
@@ -183,11 +177,6 @@ export default async function GamePage({ params }: Props) {
         </section>
       )}
 
-      {game.externalUrl && (
-        <a href={game.externalUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm text-muted underline underline-offset-2 hover:text-fg">
-          Fiche détaillée (RAWG) <ExternalLink className="size-3.5" aria-hidden />
-        </a>
-      )}
     </div>
   );
 }
