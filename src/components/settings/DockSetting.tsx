@@ -1,6 +1,7 @@
 "use client";
 
-import { ChevronDown, ChevronUp, Lock, Plus, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Lock, Plus, RefreshCw, X } from "lucide-react";
+import { useEffect, useState } from "react";
 import { DOCK_CHOICES, DOCK_MAX, dockLinks, NAV_LINKS } from "@/components/layout/nav-links";
 import { useDock, writeDock } from "@/lib/dock";
 import { useHiddenTopics, type TopicId } from "@/lib/topics";
@@ -18,6 +19,12 @@ export function DockSetting() {
   // Onglets actuels hors Accueil (la barre par défaut tant que rien n'est choisi).
   const current = dockLinks(hidden, custom).map((l) => l.href).filter((h) => h !== "/");
   const full = current.length >= DOCK_MAX - 1;
+  // Ancienne appli iPhone : sa barre native est figée, elle ne suit pas encore ce réglage.
+  const [oldApp, setOldApp] = useState(false);
+  useEffect(() => {
+    const root = document.documentElement;
+    setOldApp(root.hasAttribute("data-native-tabs") && !root.hasAttribute("data-native-dock"));
+  }, []);
 
   const save = (list: string[]) => writeDock(list);
   const move = (i: number, d: -1 | 1) => {
@@ -33,6 +40,15 @@ export function DockSetting() {
     <section className="glass rounded-xl p-4">
       <h2 className="font-semibold text-heading">Ma barre du bas</h2>
       <p className="text-sm text-muted">Choisis tes onglets et leur ordre ({DOCK_MAX} au plus, Accueil compris).</p>
+      {oldApp && (
+        <p className="mt-3 flex items-start gap-2 rounded-lg bg-amber-500/12 p-3 text-sm text-amber-900 ring-1 ring-inset ring-amber-500/30 dark:text-amber-200">
+          <RefreshCw className="mt-0.5 size-4 shrink-0" aria-hidden />
+          <span>
+            La barre du bas de ton appli vient de l&apos;iPhone et cette version ne suit pas encore ce réglage. Mets à jour GamingBase dans
+            AltStore (onglet « Mes apps », puis « Mettre à jour »), puis rouvre l&apos;appli.
+          </span>
+        </p>
+      )}
 
       {/* Aperçu */}
       <div className="mt-3 flex justify-around rounded-2xl bg-surface-2 px-2 py-2" aria-hidden>

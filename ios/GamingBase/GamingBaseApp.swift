@@ -168,7 +168,8 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         config.userContentController.add(WeakHandler(self), name: "gamingbase")
         // Pas de zoom (pincement ni double tap) dans l'app, comme une app native.
         // Le site masque sa propre barre d'onglets : c'est celle d'iOS qui s'affiche.
-        let nativeTabs = "document.documentElement.setAttribute('data-native-tabs', '1');"
+        // data-native-dock : cette version de l'appli suit « Ma barre du bas » du site (onglets envoyés par le site).
+        let nativeTabs = "document.documentElement.setAttribute('data-native-tabs', '1'); document.documentElement.setAttribute('data-native-dock', '1');"
         config.userContentController.addUserScript(WKUserScript(source: nativeTabs, injectionTime: .atDocumentStart, forMainFrameOnly: true))
         let noZoom = """
         (function () {
