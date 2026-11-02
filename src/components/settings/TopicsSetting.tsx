@@ -1,13 +1,13 @@
 "use client";
 
-import { Spade, Zap } from "lucide-react";
+import { BookOpen, Spade } from "lucide-react";
 import type { ComponentType } from "react";
 import { FlowerIcon } from "@/components/ui/FlowerIcon";
 import { setTopicShown, useHiddenTopics, type TopicId } from "@/lib/topics";
 
 export const TOPIC_META: Record<TopicId, { label: string; hint: string; Icon: ComponentType<{ className?: string; "aria-hidden"?: boolean }> }> = {
   Anime: { label: "Anime", hint: "Actus, épisodes et sorties", Icon: FlowerIcon },
-  Comics: { label: "Comics", hint: "DC, Marvel, films et séries", Icon: Zap },
+  Comics: { label: "Comics", hint: "DC, Marvel, films et séries", Icon: BookOpen },
   TCG: { label: "Cartes", hint: "Pokémon, Magic, Yu-Gi-Oh!, Lorcana…", Icon: Spade },
 };
 

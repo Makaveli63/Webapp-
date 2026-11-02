@@ -72,13 +72,13 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         ("Accueil", "house", "/"),
         ("Sorties", "calendar", "/sorties"),
         ("Anime", "flower", "/anime"), // fleur de cerisier de l'écran de démarrage
-        ("Comics", "bolt.fill", "/comics"),
-        ("Cartes", "suit.spade.fill", "/tcg"),
+        ("Comics", "book", "/comics"),
+        ("Cartes", "suit.spade", "/tcg"),
     ]
     /// Seuls ces onglets peuvent être demandés par le site (icône système et page connues).
     private static let allowedTabs: [String: (title: String, icon: String)] = [
         "/": ("Accueil", "house"), "/tests": ("Tests", "star"), "/sorties": ("Sorties", "calendar"),
-        "/anime": ("Anime", "flower"), "/comics": ("Comics", "bolt.fill"), "/tcg": ("Cartes", "suit.spade.fill"),
+        "/anime": ("Anime", "flower"), "/comics": ("Comics", "book"), "/tcg": ("Cartes", "suit.spade"),
         "/jeux-gratuits": ("Gratuits", "gift"),
     ]
     private var lastRoute = "/"

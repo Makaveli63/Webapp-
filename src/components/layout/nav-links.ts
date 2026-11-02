@@ -1,4 +1,4 @@
-import { CalendarDays, Clapperboard, Gamepad2, Gift, House, MessageSquare, Newspaper, Search, Spade, Star, Tag, Trophy, Zap } from "lucide-react";
+import { CalendarDays, Clapperboard, Gamepad2, Gift, House, MessageSquare, Newspaper, Search, BookOpen, Spade, Star, Tag, Trophy } from "lucide-react";
 import { FlowerIcon } from "@/components/ui/FlowerIcon";
 
 /**
@@ -12,7 +12,7 @@ export const NAV_LINKS = [
   { href: "/consoles", label: "Consoles", icon: Gamepad2, mobile: false, wide: "never" },
   { href: "/sorties", label: "Sorties", icon: CalendarDays, mobile: true },
   { href: "/anime", label: "Anime", icon: FlowerIcon, mobile: true },
-  { href: "/comics", label: "Comics", icon: Zap, mobile: true, wide: true },
+  { href: "/comics", label: "Comics", icon: BookOpen, mobile: true, wide: true },
   { href: "/tcg", label: "Cartes", icon: Spade, mobile: true, wide: true },
   { href: "/jeux-gratuits", label: "Gratuits", icon: Gift, mobile: false },
   { href: "/promos", label: "Promos", icon: Tag, mobile: false },

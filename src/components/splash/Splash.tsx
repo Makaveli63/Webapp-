@@ -100,7 +100,7 @@ export function Splash() {
         <path d="M100 10 L104 22 L116 26 L104 30 L100 42 L96 30 L84 26 L96 22 Z" fill="#ffe27a" />
       </svg>
 
-      {/* Comics : bulle d'onomatopée façon BD, éclair et trame de points */}
+      {/* Comics : bulle d'onomatopée façon BD (« POW! ») et trame de points */}
       <svg className="splash-group splash-comics" viewBox="0 0 120 120">
         <path
           d="M60 6 L70 30 L96 16 L88 42 L116 46 L92 62 L110 84 L82 80 L80 110 L62 88 L44 112 L40 84 L12 92 L28 68 L4 54 L32 44 L20 18 L46 30 Z"
@@ -112,7 +112,9 @@ export function Splash() {
         {[[44, 50], [52, 46], [60, 42], [48, 58], [56, 54]].map(([cx, cy]) => (
           <circle key={`d${cx}-${cy}`} cx={cx} cy={cy} r="1.8" fill="#f97316" opacity=".7" />
         ))}
-        <path d="M66 36 L52 64 H62 L54 86 L76 54 H65 L72 36 Z" fill="#e11d48" stroke="#1d4ed8" strokeWidth="3" strokeLinejoin="round" />
+        <text x="60" y="70" textAnchor="middle" fontSize="24" fontWeight="900" fontStyle="italic" fill="#e11d48" stroke="#1d4ed8" strokeWidth="1.5" fontFamily="system-ui, sans-serif" transform="rotate(-8 60 62)">
+          POW!
+        </text>
       </svg>
 
       {/* Cartes à collectionner : trois cartes en éventail, symboles pique et étoile */}
