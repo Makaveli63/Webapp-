@@ -136,7 +136,7 @@ async function xboxBrowseDeals() {
   const state = jsonAt(html, at);
   const summaries = state?.core2?.products?.productSummaries ?? {};
   const list = Object.values(summaries);
-  if (DEBUG) console.log("[promos:debug] xbox produit", JSON.stringify(list[0] ?? {}).slice(0, 1200));
+  if (DEBUG) console.log("[promos:debug] xbox produit", list.length, JSON.stringify({ k: Object.keys(list[0] ?? {}), sp: list[0]?.specificPrices, img: list[0]?.images, t: list[0]?.title, id: list[0]?.productId }).slice(0, 2500));
   return top(
     list
       .map((p) => {
@@ -236,8 +236,8 @@ async function playstationDeals() {
           title: clean(node.name, 120),
           store: "PlayStation Store",
           discount: Math.min(99, discount),
-          price: clean(price.discountedPrice, 20),
-          oldPrice: clean(price.basePrice, 20),
+          price: eur(now),
+          oldPrice: eur(before),
           image: https(img?.url),
           url: `${base}/${node.__typename === "Concept" ? "concept" : "product"}/${node.id}`,
           until: Number.isFinite(end) && end > Date.now() ? new Date(end).toISOString() : undefined,
