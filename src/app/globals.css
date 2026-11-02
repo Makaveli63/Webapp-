@@ -1253,3 +1253,18 @@ html.viewer-open, html.viewer-open body { overflow: hidden; }
 .daily-hint { animation: daily-hint-in .35s cubic-bezier(.2, .9, .3, 1) both; }
 @keyframes daily-hint-in { from { opacity: 0; transform: translateY(4px); } }
 @media (prefers-reduced-motion: reduce) { .daily-hint { animation: none; } }
+
+/* Raccourcis de l'accueil : pastilles en dégradé (mêmes teintes que « Mes rubriques ») */
+.quick-tile { color: #fff; box-shadow: inset 0 0 0 0.5px rgb(255 255 255 / 0.25), 0 1px 2px rgb(0 0 0 / 0.18); }
+.quick-tile-daily { background: linear-gradient(140deg, #fb923c, #e11d48); }
+.quick-tile-anime { background: linear-gradient(140deg, #f472b6, #db2777); }
+.quick-tile-comics { background: linear-gradient(140deg, #3b82f6, #e11d48); }
+.quick-tile-tcg { background: linear-gradient(140deg, #8b5cf6, #f59e0b); }
+.quick-tile-tests { background: linear-gradient(140deg, #fbbf24, #ea580c); }
+.quick-tile-free { background: linear-gradient(140deg, #34d399, #0d9488); }
+.quick-tile-ideas { background: linear-gradient(140deg, #fde047, #f59e0b); }
+.quick-tile-news { background: linear-gradient(140deg, #60a5fa, #4f46e5); }
+.quick-tile-deals { background: linear-gradient(140deg, #4ade80, #16a34a); }
+.quick-tile-videos { background: linear-gradient(140deg, #f87171, #b91c1c); }
+.quick-tile-ranking { background: linear-gradient(140deg, #facc15, #ca8a04); }
+.quick-tile-consoles { background: linear-gradient(140deg, #a78bfa, #6d28d9); }
