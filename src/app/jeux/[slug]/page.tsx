@@ -19,6 +19,7 @@ import { on20 } from "@/lib/compare";
 import { getDeals } from "@/lib/deals";
 import { formatDate } from "@/lib/format";
 import { aboutGame, getGames, testsOf } from "@/lib/games";
+import { synopsisOf } from "@/lib/synopses";
 import { getArticles } from "@/lib/news";
 import { themeFor } from "@/lib/themes";
 import type { Platform } from "@/types";
@@ -36,7 +37,7 @@ async function getGame(slug: string) {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const game = await getGame((await params).slug);
   if (!game) return {};
-  const description = `${game.title} : tests et notes de la presse, actus, promos et bande-annonce.`;
+  const description = synopsisOf(game.title)?.text.slice(0, 200) ?? `${game.title} : tests et notes de la presse, actus, promos et bande-annonce.`;
   return { title: game.title, description, openGraph: { title: game.title, description, images: game.image ? [game.image] : undefined } };
 }
 
@@ -56,6 +57,7 @@ export default async function GamePage({ params }: Props) {
   const upcoming = game.date ? Date.parse(`${game.date}T23:59:59Z`) > Date.now() : !!game.releaseAt;
   const theme = themeFor(game.title, game.platforms.filter((p): p is Platform => KNOWN.includes(p as Platform)));
   const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+  const synopsis = synopsisOf(game.title);
 
   return (
     <div className="mx-auto max-w-4xl space-y-8">
@@ -104,6 +106,19 @@ export default async function GamePage({ params }: Props) {
           <NotInterestedButton title={game.title} />
           <CollectionButtons game={{ id: game.releaseId ? `sortie-${game.releaseId}` : `jeu-${game.slug}`, title: game.title, image: game.image }} />
         </div>
+        {synopsis && (
+          <section aria-labelledby="synopsis-title" className="border-t border-border p-5">
+            <h2 id="synopsis-title" className="text-sm font-bold text-heading">Synopsis</h2>
+            <p className="mt-1.5 leading-relaxed text-fg">{synopsis.text}</p>
+            <p className="mt-2 text-xs text-muted">
+              Rédigé en français par intelligence artificielle à partir de la{" "}
+              <a href={synopsis.source} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
+                description officielle (RAWG)
+              </a>
+              .
+            </p>
+          </section>
+        )}
         {!upcoming && (
           <div className="border-t border-border p-5">
             <p className="mb-2 text-sm font-bold text-heading">📋 Mon suivi</p>
