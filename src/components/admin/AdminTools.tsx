@@ -220,6 +220,8 @@ export function AdminCommunity({ password, titles }: { password: string; titles:
   const [data, setData] = useState<Community | null>(null);
   const [error, setError] = useState("");
   const [all, setAll] = useState(false);
+  const [arming, setArming] = useState<string | null>(null);
+  const [rowNote, setRowNote] = useState<{ pseudo: string; text: string; ok: boolean } | null>(null);
   const load = useCallback(() => {
     rpc<Community>("admin_community", { p_password: password })
       .then((r) => (r?.error ? setError(message(r.error)) : setData(r)))
@@ -232,16 +234,30 @@ export function AdminCommunity({ password, titles }: { password: string; titles:
     const res = await rpc<string>("admin_set_role", { p_password: password, p_pseudo: pseudo, p_role: role || null }).catch((e) => (e as Error).message);
     // Ancienne version de la base (seul « Soutien » accepté) : les fichiers SQL n'ont pas été relancés.
     if (res === "REQUETE_INVALIDE" || /players_role_check/.test(String(res)))
-      return setError("Ce badge n'est pas encore connu de la base : relance profiles.sql puis admin.sql dans Supabase (SQL Editor).");
-    if (res !== "ok") return setError(message(res));
+      return setRowNote({ pseudo, ok: false, text: "Ce badge n'est pas encore connu de la base : relance profiles.sql puis admin.sql dans Supabase (SQL Editor)." });
+    if (res !== "ok") return setRowNote({ pseudo, ok: false, text: message(res) });
+    setRowNote(null);
     load();
   };
 
   // Accès « Rédaction » : le joueur publie des articles depuis la page Rédaction, sans le mot de passe admin.
+  // Confirmation dans le bouton lui-même (1er toucher : « Confirmer ? », 2e : activé) : les fenêtres confirm()
+  // ne s'affichent pas dans toutes les versions de l'appli. Le résultat s'affiche sous la ligne du joueur.
+  useEffect(() => {
+    if (!arming) return;
+    const t = window.setTimeout(() => setArming(null), 5000);
+    return () => window.clearTimeout(t);
+  }, [arming]);
   const setWriter = async (pseudo: string, on: boolean) => {
-    if (on && !confirm(`Autoriser ${pseudo} à publier des articles sur le site ? Tu pourras retirer cet accès et supprimer ses articles à tout moment.`)) return;
+    if (on && arming !== pseudo) return setArming(pseudo);
+    setArming(null);
+    setRowNote({ pseudo, text: "Enregistrement…", ok: true });
     const res = await rpc<string>("admin_set_writer", { p_password: password, p_pseudo: pseudo, p_on: on }).catch((e) => (e as Error).message);
-    if (res !== "ok") return setError(message(res));
+    if (res !== "ok") {
+      const missing = /admin_set_writer|can_write|pas encore installé/.test(String(res));
+      return setRowNote({ pseudo, ok: false, text: missing ? "Option pas encore installée : relance profiles.sql puis admin.sql dans Supabase (SQL Editor)." : message(res) });
+    }
+    setRowNote({ pseudo, ok: true, text: on ? `${pseudo} peut maintenant publier des articles (carte « Rédaction » dans son Mon espace).` : `${pseudo} ne peut plus publier.` });
     load();
   };
 
@@ -266,6 +282,11 @@ export function AdminCommunity({ password, titles }: { password: string; titles:
                       <span className="block text-xs text-muted">
                         Niveau {level} ({titleOf(level)}) · {nf.format(p.xp)} XP · inscrit le {day(p.created_at)} · actif {timeAgo(p.updated_at)}
                       </span>
+                      {rowNote?.pseudo === p.pseudo && (
+                        <span role="status" className={`mt-1 block text-xs font-semibold ${rowNote.ok ? "text-emerald-700 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+                          {rowNote.text}
+                        </span>
+                      )}
                     </span>
                     {!roleOf(p.pseudo) && (
                       <span className="flex shrink-0 flex-col items-end gap-1.5 sm:flex-row sm:items-center">
@@ -274,9 +295,11 @@ export function AdminCommunity({ password, titles }: { password: string; titles:
                           aria-pressed={!!p.can_write}
                           onClick={() => setWriter(p.pseudo, !p.can_write)}
                           title={p.can_write ? "Peut publier des articles (toucher pour retirer)" : "Autoriser à publier des articles"}
-                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ${p.can_write ? "bg-accent text-white ring-accent" : "text-muted ring-border hover:text-heading"}`}
+                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ${
+                            p.can_write ? "bg-accent text-white ring-accent" : arming === p.pseudo ? "bg-amber-500 text-white ring-amber-500" : "text-muted ring-border hover:text-heading"
+                          }`}
                         >
-                          <Feather className="size-3.5" aria-hidden /> Rédaction
+                          <Feather className="size-3.5" aria-hidden /> {arming === p.pseudo ? "Confirmer ?" : "Rédaction"}
                         </button>
                         <select
                           value={p.role ?? ""}
