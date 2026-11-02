@@ -165,6 +165,8 @@ html[data-splash="off"] .splash { display: none; }
 .splash-nin  { animation: fly-nin 1.5s cubic-bezier(.2,.8,.2,1) .12s forwards; }
 .splash-pc   { animation: fly-pc 1.5s cubic-bezier(.2,.8,.2,1) .18s forwards; }
 .splash-anime { animation: fly-anime 1.5s cubic-bezier(.2,.8,.2,1) .24s forwards; }
+.splash-comics { animation: fly-comics 1.5s cubic-bezier(.2,.8,.2,1) .09s forwards; }
+.splash-cards { animation: fly-cards 1.5s cubic-bezier(.2,.8,.2,1) .15s forwards; }
 
 /* Les symboles approchent, puis sont aspirés dans la manette du logo (--gb-in : centre du pictogramme). */
 .splash { --gb-in: 0px; }
@@ -201,6 +203,20 @@ html[data-splash="off"] .splash { display: none; }
   12%  { opacity: 1; }
   45%  { opacity: 1; transform: translate(0, calc(var(--gb-in) - 130px)) rotate(0) scale(.9); }
   68%  { opacity: 1; transform: translate(0, var(--gb-in)) rotate(120deg) scale(.08); }
+  72%, 100% { opacity: 0; transform: translate(0, var(--gb-in)) scale(0); }
+}
+@keyframes fly-comics {
+  0%   { opacity: 0; transform: translate(-70vw, 0) rotate(-160deg) scale(.5); }
+  12%  { opacity: 1; }
+  45%  { opacity: 1; transform: translate(-128px, var(--gb-in)) rotate(0) scale(.82); }
+  68%  { opacity: 1; transform: translate(0, var(--gb-in)) rotate(-100deg) scale(.08); }
+  72%, 100% { opacity: 0; transform: translate(0, var(--gb-in)) scale(0); }
+}
+@keyframes fly-cards {
+  0%   { opacity: 0; transform: translate(70vw, 0) rotate(160deg) scale(.5); }
+  12%  { opacity: 1; }
+  45%  { opacity: 1; transform: translate(128px, var(--gb-in)) rotate(0) scale(.82); }
+  68%  { opacity: 1; transform: translate(0, var(--gb-in)) rotate(100deg) scale(.08); }
   72%, 100% { opacity: 0; transform: translate(0, var(--gb-in)) scale(0); }
 }
 

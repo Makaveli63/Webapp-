@@ -58,19 +58,42 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
     /// et revient quand on remonte (comme les applis d'Apple). Une seule vue web, déplacée dans l'onglet affiché.
     private let tabController = UITabBarController()
     private var tabBar: UITabBar { tabController.tabBar }
-    private lazy var hosts: [UIViewController] = Self.tabs.enumerated().map { index, tab in
-        let host = UIViewController()
-        host.view.backgroundColor = .clear
-        host.tabBarItem = UITabBarItem(title: tab.title, image: tab.icon == "flower" ? Self.flowerIcon() : UIImage(systemName: tab.icon), tag: index)
-        return host
+    private lazy var hosts: [UIViewController] = makeHosts()
+    private func makeHosts() -> [UIViewController] {
+        tabs.enumerated().map { index, tab in
+            let host = UIViewController()
+            host.view.backgroundColor = .clear
+            host.tabBarItem = UITabBarItem(title: tab.title, image: tab.icon == "flower" ? Self.flowerIcon() : UIImage(systemName: tab.icon), tag: index)
+            return host
+        }
     }
-    private static let tabs: [(title: String, icon: String, path: String)] = [
+    /// Onglets par défaut ; le site envoie ensuite les siens (« Mes rubriques » : Anime, Comics, Cartes affichées ou non).
+    private var tabs: [(title: String, icon: String, path: String)] = [
         ("Accueil", "house", "/"),
-        ("Tests", "star", "/tests"),
         ("Sorties", "calendar", "/sorties"),
         ("Anime", "flower", "/anime"), // fleur de cerisier de l'écran de démarrage
-        ("Gratuits", "gift", "/jeux-gratuits"),
+        ("Comics", "bolt.fill", "/comics"),
+        ("Cartes", "suit.spade.fill", "/tcg"),
     ]
+    /// Seuls ces onglets peuvent être demandés par le site (icône système et page connues).
+    private static let allowedTabs: [String: (title: String, icon: String)] = [
+        "/": ("Accueil", "house"), "/tests": ("Tests", "star"), "/sorties": ("Sorties", "calendar"),
+        "/anime": ("Anime", "flower"), "/comics": ("Comics", "bolt.fill"), "/tcg": ("Cartes", "suit.spade.fill"),
+        "/jeux-gratuits": ("Gratuits", "gift"),
+    ]
+    private var lastRoute = "/"
+
+    /// Nouveaux onglets envoyés par le site : la barre est reconstruite, la page affichée ne change pas.
+    private func applyDock(_ paths: [String]) {
+        let next = paths.prefix(5).compactMap { path in Self.allowedTabs[path].map { (title: $0.title, icon: $0.icon, path: path) } }
+        guard next.count >= 2, next.map(\.path) != tabs.map(\.path) else { return }
+        tabs = next
+        hosts = makeHosts()
+        tabController.setViewControllers(hosts, animated: false)
+        let page = lastRoute
+        lastRoute = ""
+        selectTab(for: page.isEmpty ? "/" : page, force: true)
+    }
 
     /// Pas de barre « ^ v ✓ » au-dessus du clavier (les applis d'Apple n'en ont pas) : la vue de contenu
     /// de WebKit reçoit une sous-classe qui ne propose aucune barre d'accessoires.
@@ -238,21 +261,22 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
 
     // Onglet touché : le site change de page sans se recharger (navigation de l'app web).
     func tabBarController(_ controller: UITabBarController, didSelect viewController: UIViewController) {
-        guard let index = hosts.firstIndex(of: viewController), Self.tabs.indices.contains(index) else { return }
-        let path = Self.tabs[index].path
+        guard let index = hosts.firstIndex(of: viewController), tabs.indices.contains(index) else { return }
+        let path = tabs[index].path
         webView.evaluateJavaScript(
             "window.gbNavigate ? window.gbNavigate('\(path)') : (location.href = '\(Self.path)\(path)/'.replace('//', '/'))",
             completionHandler: nil)
     }
 
     /// Page affichée par le site → onglet correspondant sélectionné.
-    private func selectTab(for route: String) {
+    private func selectTab(for route: String, force: Bool = false) {
+        lastRoute = route
         let page = route.hasPrefix(Self.path) ? String(route.dropFirst(Self.path.count)) : route
-        let match = Self.tabs.enumerated()
+        let match = tabs.enumerated()
             .filter { $0.element.path == "/" ? (page == "/" || page.isEmpty || page.hasPrefix("/actualites")) : page.hasPrefix($0.element.path) }
             .max { $0.element.path.count < $1.element.path.count }
         // Page hors onglets (fiche, article…) : l'onglet d'origine reste sélectionné.
-        guard let index = match?.offset, tabController.selectedIndex != index else { return }
+        guard let index = match?.offset ?? (force ? 0 : nil), force || tabController.selectedIndex != index else { return }
         attachWebView(to: index)
         tabController.selectedIndex = index
     }
@@ -378,6 +402,11 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         }
         if let accent = body["accent"] as? String {
             applyAccent(accent)
+            return
+        }
+        // Onglets choisis par le site (rubriques affichées dans « Mes rubriques »).
+        if let dock = body["dock"] as? [String] {
+            applyDock(dock)
             return
         }
         // Changement de page sur le site : la barre d'onglets suit.

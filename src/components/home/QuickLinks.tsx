@@ -1,6 +1,6 @@
 "use client";
 
-import { Clapperboard, Gamepad2, Lightbulb, Newspaper, Puzzle, Spade, Tag, Trophy, Zap } from "lucide-react";
+import { Clapperboard, Gamepad2, Gift, Lightbulb, Newspaper, Puzzle, Spade, Star, Tag, Trophy, Zap } from "lucide-react";
 import Link from "next/link";
 import { FlowerIcon } from "@/components/ui/FlowerIcon";
 import { useHiddenTopics, type TopicId } from "@/lib/topics";
@@ -10,6 +10,8 @@ const LINKS: { href: string; label: string; icon: typeof Puzzle | typeof FlowerI
   { href: "/anime", label: "Anime", icon: FlowerIcon, topic: "Anime" },
   { href: "/comics", label: "Comics", icon: Zap, topic: "Comics" },
   { href: "/tcg", label: "Cartes", icon: Spade, topic: "TCG" },
+  { href: "/tests", label: "Tests", icon: Star },
+  { href: "/jeux-gratuits", label: "Jeux gratuits", icon: Gift },
   { href: "/suggestions", label: "Suggestions", icon: Lightbulb },
   { href: "/actualites", label: "Toutes les actus", icon: Newspaper },
   { href: "/promos", label: "Promos", icon: Tag },

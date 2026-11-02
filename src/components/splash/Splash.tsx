@@ -1,8 +1,8 @@
 import { LogoMark } from "@/components/ui/Logo";
 
 /**
- * Animation d'ouverture (≈ 2 s, CSS uniquement) : des éléments évoquant chaque plateforme
- * et l'anime convergent vers le logo. Formes dessinées pour le site, aucun logo de marque.
+ * Animation d'ouverture (≈ 2 s, CSS uniquement) : des éléments évoquant chaque plateforme,
+ * l'anime, les comics et les cartes convergent vers le logo. Formes dessinées pour le site, aucun logo de marque.
  * Masquée après la première page vue (public/splash.js) et si l'animation est réduite.
  */
 export function Splash() {
@@ -98,6 +98,37 @@ export function Splash() {
           <circle r="7" fill="#ffd166" />
         </g>
         <path d="M100 10 L104 22 L116 26 L104 30 L100 42 L96 30 L84 26 L96 22 Z" fill="#ffe27a" />
+      </svg>
+
+      {/* Comics : bulle d'onomatopée façon BD, éclair et trame de points */}
+      <svg className="splash-group splash-comics" viewBox="0 0 120 120">
+        <path
+          d="M60 6 L70 30 L96 16 L88 42 L116 46 L92 62 L110 84 L82 80 L80 110 L62 88 L44 112 L40 84 L12 92 L28 68 L4 54 L32 44 L20 18 L46 30 Z"
+          fill="#ffd23f"
+          stroke="#1d4ed8"
+          strokeWidth="4"
+          strokeLinejoin="round"
+        />
+        {[[44, 50], [52, 46], [60, 42], [48, 58], [56, 54]].map(([cx, cy]) => (
+          <circle key={`d${cx}-${cy}`} cx={cx} cy={cy} r="1.8" fill="#f97316" opacity=".7" />
+        ))}
+        <path d="M66 36 L52 64 H62 L54 86 L76 54 H65 L72 36 Z" fill="#e11d48" stroke="#1d4ed8" strokeWidth="3" strokeLinejoin="round" />
+      </svg>
+
+      {/* Cartes à collectionner : trois cartes en éventail, symboles pique et étoile */}
+      <svg className="splash-group splash-cards" viewBox="0 0 120 120">
+        <g transform="rotate(-18 60 96)">
+          <rect x="36" y="22" width="48" height="68" rx="6" fill="#1e1b4b" stroke="#a78bfa" strokeWidth="3" />
+          <circle cx="60" cy="56" r="11" fill="none" stroke="#a78bfa" strokeWidth="3" />
+        </g>
+        <g transform="rotate(16 60 96)">
+          <rect x="36" y="22" width="48" height="68" rx="6" fill="#fef3c7" stroke="#f59e0b" strokeWidth="3" />
+          <path d="M60 42 L64 52 L75 53 L67 60 L69 71 L60 65 L51 71 L53 60 L45 53 L56 52 Z" fill="#f59e0b" />
+        </g>
+        <g>
+          <rect x="36" y="20" width="48" height="68" rx="6" fill="#ffffff" stroke="#7c3aed" strokeWidth="3" />
+          <path d="M60 36 C 52 46 44 50 44 58 C 44 64 50 67 56 63 L 53 72 H 67 L 64 63 C 70 67 76 64 76 58 C 76 50 68 46 60 36 Z" fill="#7c3aed" />
+        </g>
       </svg>
 
       <div className="splash-logo">

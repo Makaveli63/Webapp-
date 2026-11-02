@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent } from "react";
-import { activeHref, NAV_LINKS } from "./nav-links";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent } from "react";
+import { activeHref, dockLinks } from "./nav-links";
+import { useHiddenTopics } from "@/lib/topics";
 import { hapticOnly } from "@/lib/feedback";
 
-const ITEMS = NAV_LINKS.filter((l) => l.mobile);
 
 // Carte de déplacement de la loupe : rouge = décalage horizontal, vert = vertical, gris neutre au centre.
 // Les bords dévient la lumière (réfraction), le centre reste net, comme le verre liquide.
@@ -41,6 +41,9 @@ export function MobileTabBar() {
   const router = useRouter();
   const pathname = usePathname();
   const path = activeHref(pathname);
+  // Onglets : Accueil, Sorties et les rubriques affichées dans Réglages → « Mes rubriques ».
+  const hiddenTopics = useHiddenTopics();
+  const ITEMS = useMemo(() => dockLinks(hiddenTopics), [hiddenTopics]);
   // Les actus n'ont plus d'onglet : elles font partie de l'accueil.
   const active = path === "/actualites" ? "/" : path;
   const activeIndex = ITEMS.findIndex((i) => i.href === active);
@@ -103,7 +106,7 @@ export function MobileTabBar() {
   // Les pages des onglets sont préchargées : elles s'ouvrent sans attendre le réseau.
   useEffect(() => {
     ITEMS.forEach((i) => router.prefetch(i.href));
-  }, [router]);
+  }, [router, ITEMS]);
   // La page demandée est affichée : plus rien en attente.
   useEffect(() => setPending(null), [activeIndex]);
 

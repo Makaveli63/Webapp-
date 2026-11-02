@@ -2,6 +2,8 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { dockLinks } from "@/components/layout/nav-links";
+import { useHiddenTopics } from "@/lib/topics";
 
 type AppWindow = Window & {
   gbNavigate?: (path: string) => void;
@@ -35,6 +37,12 @@ export function NativeTabsBridge() {
   useEffect(() => {
     send({ route: pathname });
   }, [pathname]);
+
+  // Onglets de l'app : mêmes que la barre du site (rubriques affichées dans « Mes rubriques »).
+  const hiddenTopics = useHiddenTopics();
+  useEffect(() => {
+    send({ dock: dockLinks(hiddenTopics).map((l) => l.href) });
+  }, [hiddenTopics]);
 
   // La barre d'onglets de l'app attend la fin de l'animation d'ouverture ; elle prend la couleur du site.
   useEffect(() => {
