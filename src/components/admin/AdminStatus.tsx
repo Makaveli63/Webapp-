@@ -122,7 +122,7 @@ export function AdminStatus() {
                   {f.error && (
                     <span className="block text-xs text-muted">
                       {feedError(f.error)}
-                      {f.pausedUntil ? " : en pause, réessai une fois par jour (à retirer s'il refuse toujours)" : ""}
+                      {f.pausedUntil ? " : en pause, réessai une fois par jour (à retirer si ça dure)" : ""}
                     </span>
                   )}
                   {!f.error && !f.count && f.note && <span className="block text-xs text-muted">{f.note}</span>}

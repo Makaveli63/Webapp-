@@ -1,11 +1,5 @@
 [
   {
-    "name": "Bleeding Cool TCG",
-    "url": "https://bleedingcool.com/tag/trading-card-games/feed/",
-    "category": "TCG",
-    "lang": "en"
-  },
-  {
     "name": "Jeuxvideo.com",
     "url": "https://www.jeuxvideo.com/rss/rss.xml"
   },
@@ -98,12 +92,6 @@
     "category": "Comics"
   },
   {
-    "name": "DC Comics News",
-    "url": "https://dccomicsnews.com/feed/",
-    "category": "Comics",
-    "lang": "en"
-  },
-  {
     "name": "Bleeding Cool",
     "url": "https://bleedingcool.com/comics/feed/",
     "category": "Comics",
@@ -126,5 +114,12 @@
     "url": "https://uvsgames.com/all-news?format=rss",
     "category": "TCG",
     "lang": "en"
+  },
+  {
+    "name": "Bleeding Cool Games (cartes)",
+    "url": "https://bleedingcool.com/games/feed/",
+    "category": "TCG",
+    "lang": "en",
+    "match": "tcg"
   }
 ]

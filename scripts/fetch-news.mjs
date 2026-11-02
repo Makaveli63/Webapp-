@@ -78,7 +78,7 @@ const CONSOLE_KEYWORDS =
 
 // Jeux de cartes à collectionner cités dans le titre (sources jeu vidéo) : rubrique TCG.
 const TCG_KEYWORDS =
-  /(\btcg\b|\bjcc\b|jeux? de cartes? à collectionner|magic\s*:?\s*the gathering|\bmtg\b|yu-gi-oh|\blorcana\b|one piece card game|flesh and blood|altered tcg|star wars\s*:?\s*unlimited|digimon card game|pokémon (jcc|tcg)|cartes? pokémon)/i;
+  /(\btcg\b|\bjcc\b|\bccg\b|jeux? de cartes? à collectionner|trading card|card game|magic\s*:?\s*the gathering|\bmtg\b|yu-gi-oh|\blorcana\b|one piece card game|flesh and blood|altered tcg|star wars\s*:?\s*unlimited|digimon card game|pok[eé]mon (jcc|tcg|cards?)|cartes? pok[eé]mon|universus|weiss schwarz|cardfight|dragon ball super card)/i;
 /** Rubriques à part (feeds.json « category ») : pas de plateforme de jeu, pas de note de test. */
 const SIDE_CATEGORIES = ["Anime", "Comics", "TCG"];
 
@@ -498,6 +498,8 @@ async function fetchFeed(feed) {
   const list = parsed.items
     .map((item) => ({ item, link: safeUrl(item.link ?? item.guid, parsed.link || feed.url) }))
     .filter(({ item, link }) => item.title && link)
+    // feeds.json « match »: "tcg" : flux général dont on ne garde que les articles sur les jeux de cartes.
+    .filter(({ item }) => feed.match !== "tcg" || TCG_KEYWORDS.test(`${item.title} ${(item.categories ?? []).join(" ")}`))
     .slice(0, MAX_ITEMS_PER_FEED)
     .map(({ item, link }) => {
       const title = clean(item.title, 200);
@@ -741,7 +743,7 @@ async function main() {
   const results = await Promise.allSettled(
     feeds.map((f) => {
       const h = health[f.url];
-      if (h?.pausedUntil && Date.parse(h.pausedUntil) > now) return Promise.reject(Object.assign(new Error("HTTP 403"), { paused: h.pausedUntil }));
+      if (h?.pausedUntil && Date.parse(h.pausedUntil) > now) return Promise.reject(Object.assign(new Error(h.reason ?? "HTTP 403"), { paused: h.pausedUntil }));
       return fetchFeed(f);
     }),
   );
@@ -749,15 +751,17 @@ async function main() {
     const url = feeds[i].url;
     if (r.status === "fulfilled") return void delete health[url];
     if (r.reason?.paused) return;
-    if (/HTTP (401|403)/.test(r.reason?.message ?? "")) {
+    // Refus des robots, flux introuvable ou supprimé : pause après trois échecs de suite.
+    if (/HTTP (401|403|404|410)|page web sans flux/.test(r.reason?.message ?? "")) {
       const blocked = (health[url]?.blocked ?? 0) + 1;
-      health[url] = { blocked, ...(blocked >= 3 ? { pausedUntil: new Date(now + 86_400_000).toISOString() } : {}) };
+      const reason = String(r.reason?.message ?? "").slice(0, 60);
+      health[url] = { blocked, reason, ...(blocked >= 3 ? { pausedUntil: new Date(now + 86_400_000).toISOString() } : {}) };
     } else delete health[url];
   });
   for (const url of Object.keys(health)) if (!feeds.some((f) => f.url === url)) delete health[url];
   writeJson(FEED_HEALTH_FILE, health);
   results.forEach((r, i) =>
-    console.log(`[rss] ${feeds[i].name}: ${r.status === "fulfilled" ? `${r.value.length} articles` : r.reason?.paused ? "en pause (bloque les robots), réessai demain" : `échec (${r.reason?.message})`}`),
+    console.log(`[rss] ${feeds[i].name}: ${r.status === "fulfilled" ? `${r.value.length} articles` : r.reason?.paused ? `en pause (${r.reason.message}), réessai demain` : `échec (${r.reason?.message})`}`),
   );
   const seen = new Set();
   // Même article dans deux flux (ex. Bleeding Cool Comics et TCG) : gardé une fois.
