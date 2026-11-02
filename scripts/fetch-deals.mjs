@@ -1,5 +1,7 @@
 // Promos du moment et calendriers des grosses sorties, écrits avant le build.
 // - Promos PC : données publiques de la boutique Steam (prix en euros, France) → .cache/news/deals.json
+// - Promos consoles : données publiques des boutiques PlayStation Store, Xbox et eShop Nintendo (France).
+//   Une boutique qui refuse l'accès (403…) est simplement laissée de côté jusqu'à la mise à jour suivante.
 // - Calendrier : un fichier .ics par grosse sortie → public/calendrier/<id>.ics (ajout au calendrier du téléphone)
 // Ne bloque jamais la publication.
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
@@ -48,6 +50,161 @@ async function steamDeals() {
     }))
     .sort((a, b) => b.discount - a.discount)
     .slice(0, 24);
+}
+
+// ---------- Consoles ----------
+
+const UA = { "User-Agent": "GamingBase/1.0 (promos)", "Accept-Language": "fr-FR,fr;q=0.9" };
+const DEBUG = !!process.env.DEALS_DEBUG;
+const MAX = 24;
+
+async function getJson(url, headers = {}) {
+  const res = await fetch(url, { headers: { ...UA, Accept: "application/json", ...headers }, signal: AbortSignal.timeout(20_000) });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+async function getText(url) {
+  const res = await fetch(url, { headers: { ...UA, Accept: "text/html" }, signal: AbortSignal.timeout(20_000) });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.text();
+}
+const https = (u) => (typeof u !== "string" || !u ? undefined : u.startsWith("//") ? `https:${u}` : u.startsWith("https://") ? u : undefined);
+const pct = (now, before) => (before > 0 && now < before ? Math.round((1 - now / before) * 100) : 0);
+const eur = (n) => (Number.isFinite(n) ? `${n.toFixed(2).replace(".", ",")} €` : undefined);
+const slug = (t) => t.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "jeu";
+const dedupe = (list) => {
+  const seen = new Set();
+  return list.filter((d) => d.title && d.discount > 0 && !seen.has(d.title.toLowerCase()) && seen.add(d.title.toLowerCase()));
+};
+const top = (list) => dedupe(list).sort((a, b) => b.discount - a.discount).slice(0, MAX);
+
+/** eShop Nintendo : moteur de recherche public de nintendo.com (jeux Switch en promo, prix France). */
+async function nintendoDeals() {
+  const q = new URLSearchParams({
+    q: "*",
+    fq: 'type:GAME AND price_has_discount_b:true AND system_type:nintendoswitch*',
+    sort: "popularity asc",
+    rows: "60",
+    start: "0",
+    wt: "json",
+  });
+  const data = await getJson(`https://searching.nintendo-europe.com/fr/select?${q}`);
+  const docs = Array.isArray(data?.response?.docs) ? data.response.docs : [];
+  if (DEBUG) console.log("[promos:debug] nintendo", JSON.stringify(docs[0] ?? data).slice(0, 1500));
+  return top(
+    docs.map((d) => {
+      const now = Number(d.price_lowest_f ?? d.price_discounted_f);
+      const before = Number(d.price_regular_f);
+      const url = typeof d.url === "string" && d.url.startsWith("/") ? `https://www.nintendo.com/fr-fr${d.url}` : undefined;
+      return {
+        id: `nintendo-${d.fs_id ?? d.nsuid_txt?.[0] ?? slug(String(d.title ?? ""))}`,
+        title: clean(d.title, 120),
+        store: "eShop Nintendo",
+        discount: Math.min(99, Math.round(Number(d.price_discount_percentage_f) || pct(now, before))),
+        price: eur(now),
+        oldPrice: eur(before),
+        image: https(d.wishlist_email_banner640w_image_url_s) ?? https(d.image_url_h2x1_s) ?? https(d.image_url),
+        url: url ?? "https://www.nintendo.com/fr-fr/Rechercher/Rechercher-299117.html",
+      };
+    }).filter((d) => d.discount > 0 && d.price),
+  );
+}
+
+/** Xbox : liste publique « Promotions » du Microsoft Store, puis fiches (titre, image, prix) par lots de 20. */
+async function xboxDeals() {
+  const list = await getJson(
+    "https://reco-public.rec.mp.microsoft.com/channels/Reco/V8.0/Lists/Computed/Deal?Market=FR&Language=fr&ItemTypes=Game&deviceFamily=Windows.Xbox&count=100&skipitems=0",
+  );
+  const ids = (list?.Items ?? []).map((i) => i?.Id).filter((id) => typeof id === "string" && /^[A-Z0-9]{12}$/.test(id));
+  if (DEBUG) console.log("[promos:debug] xbox ids", ids.length, JSON.stringify(list).slice(0, 400));
+  const out = [];
+  for (let i = 0; i < ids.length && out.length < 60; i += 20) {
+    const data = await getJson(
+      `https://displaycatalog.mp.microsoft.com/v7.0/products?bigIds=${ids.slice(i, i + 20).join(",")}&market=FR&languages=fr-fr,fr,neutral`,
+    );
+    for (const p of data?.Products ?? []) {
+      const title = clean(p?.LocalizedProperties?.[0]?.ProductTitle, 120);
+      const images = p?.LocalizedProperties?.[0]?.Images ?? [];
+      const pick = (purpose) => https(images.find((im) => im?.ImagePurpose === purpose)?.Uri);
+      // Prix public (sans abonnement requis) le plus bas parmi les offres d'achat.
+      let best = null;
+      for (const sku of p?.DisplaySkuAvailabilities ?? []) {
+        for (const a of sku?.Availabilities ?? []) {
+          const price = a?.OrderManagementData?.Price;
+          if (!a?.Actions?.includes("Purchase") || a?.RemediationRequired || !price) continue;
+          if (price.CurrencyCode !== "EUR" || !(price.ListPrice < price.MSRP)) continue;
+          if (!best || price.ListPrice < best.price.ListPrice) best = { price, end: a?.Conditions?.EndDate };
+        }
+      }
+      if (!title || !best) continue;
+      const end = Date.parse(best.end);
+      out.push({
+        id: `xbox-${p.ProductId}`,
+        title,
+        store: "Xbox",
+        discount: Math.min(99, pct(best.price.ListPrice, best.price.MSRP)),
+        price: eur(best.price.ListPrice),
+        oldPrice: eur(best.price.MSRP),
+        image: pick("SuperHeroArt") ?? pick("TitledHeroArt") ?? pick("BoxArt") ?? pick("Poster"),
+        url: `https://www.xbox.com/fr-FR/games/store/${slug(title)}/${p.ProductId}`,
+        until: Number.isFinite(end) && end < Date.now() + 365 * 86_400_000 ? new Date(end).toISOString() : undefined,
+      });
+    }
+  }
+  return top(out);
+}
+
+/** PlayStation Store : la page publique des offres contient les données des jeux (prix, image, fin de l'offre). */
+async function playstationDeals() {
+  const base = "https://store.playstation.com/fr-fr";
+  const page = await getText(`${base}/pages/deals`);
+  const cats = [...new Set([...page.matchAll(/\/fr-fr\/category\/([0-9a-f-]{36})/g)].map((m) => m[1]))];
+  if (DEBUG) console.log("[promos:debug] ps categories", cats.slice(0, 8));
+  const found = new Map();
+  const walk = (node) => {
+    if (!node || typeof node !== "object") return;
+    if (Array.isArray(node)) return node.forEach(walk);
+    const price = node.price;
+    if (typeof node.name === "string" && price && typeof price === "object" && price.discountedPrice && price.basePrice) {
+      const num = (s) => Number(String(s).replace(/[^\d,]/g, "").replace(",", "."));
+      const now = num(price.discountedPrice);
+      const before = num(price.basePrice);
+      const media = Array.isArray(node.media) ? node.media : [];
+      const img = media.find((m) => m?.role === "MASTER") ?? media.find((m) => m?.role === "GAMEHUB_COVER_ART") ?? media.find((m) => m?.type === "IMAGE");
+      const end = Number(price.endTime);
+      const discount = pct(now, before);
+      if (discount > 0 && node.id && !price.isTiedToSubscription)
+        found.set(node.id, {
+          id: `ps-${node.id}`,
+          title: clean(node.name, 120),
+          store: "PlayStation Store",
+          discount: Math.min(99, discount),
+          price: clean(price.discountedPrice, 20),
+          oldPrice: clean(price.basePrice, 20),
+          image: https(img?.url),
+          url: `${base}/${node.__typename === "Concept" ? "concept" : "product"}/${node.id}`,
+          until: Number.isFinite(end) && end > Date.now() ? new Date(end).toISOString() : undefined,
+        });
+    }
+    for (const v of Object.values(node)) walk(v);
+  };
+  const scan = (html) => {
+    for (const m of html.matchAll(/<script[^>]*type="application\/json"[^>]*>([\s\S]*?)<\/script>/g)) {
+      try {
+        walk(JSON.parse(m[1]));
+      } catch {}
+    }
+  };
+  scan(page);
+  for (const id of cats.slice(0, 3)) {
+    if (found.size >= 60) break;
+    try {
+      scan(await getText(`${base}/category/${id}/1`));
+    } catch (err) {
+      if (DEBUG) console.log(`[promos:debug] ps category ${id} : ${err.message}`);
+    }
+  }
+  return top([...found.values()]);
 }
 
 // ---------- Calendriers (.ics) ----------
@@ -113,7 +270,22 @@ async function main() {
   } catch (err) {
     console.log(`[promos] Steam indisponible (${err.message})`);
   }
-  writeJson(OUT_FILE, { updatedAt: new Date().toISOString(), steam });
+  const consoles = {};
+  for (const [name, label, fn] of [
+    ["playstation", "PlayStation Store", playstationDeals],
+    ["xbox", "Xbox", xboxDeals],
+    ["nintendo", "eShop Nintendo", nintendoDeals],
+  ]) {
+    try {
+      consoles[name] = await fn();
+      console.log(`[promos] ${label} : ${consoles[name].length} jeux en promo`);
+      if (DEBUG) console.log(JSON.stringify(consoles[name].slice(0, 2)));
+    } catch (err) {
+      consoles[name] = [];
+      console.log(`[promos] ${label} indisponible (${err.message})`);
+    }
+  }
+  writeJson(OUT_FILE, { updatedAt: new Date().toISOString(), steam, ...consoles });
 }
 
 main().catch((err) => console.error(`[promos] erreur inattendue : ${err.message}`));
