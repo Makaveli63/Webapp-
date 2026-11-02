@@ -313,6 +313,14 @@ enum NewsAlerts {
         try? BGTaskScheduler.shared.submit(request)
     }
 
+    /// App ouverte : les notifications déjà reçues (actus, promos, sorties) quittent le centre de notifications
+    /// et la pastille de l'icône est remise à zéro. Les rappels programmés (épisodes, jour J, résumé) restent.
+    static func clearDelivered() {
+        let center = UNUserNotificationCenter.current()
+        center.removeAllDeliveredNotifications()
+        center.setBadgeCount(0)
+    }
+
     /// Compare les derniers articles à ceux déjà vus et notifie les nouveaux.
     static func check(notify: Bool) async -> Int {
         guard enabled, let feed = await FeedLoader.load() else { return 0 }

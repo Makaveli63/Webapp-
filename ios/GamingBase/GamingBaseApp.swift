@@ -15,10 +15,12 @@ struct GamingBaseApp: App {
                 .ignoresSafeArea() // le site gère lui-même l'encoche et la barre du bas (viewport-fit=cover)
                 .onOpenURL { WebViewController.open($0) } // lien venant d'un widget
                 .onChange(of: scenePhase) { phase in
-                    // À chaque ouverture : nouvelles actus vérifiées, résumé du soir mis à jour.
+                    // À chaque ouverture : les actus du moment sont marquées comme vues SANS notification (elles sont
+                    // déjà sous les yeux dans l'app), les notifications déjà reçues sont rangées, résumé du soir mis à jour.
                     if phase == .active {
                         Task {
-                            _ = await NewsAlerts.check(notify: true)
+                            _ = await NewsAlerts.check(notify: false)
+                            NewsAlerts.clearDelivered()
                             await NewsAlerts.refreshDigest() // résumé du soir programmé pour les soirs à venir
                             await NewsAlerts.scheduleReleaseDays()
                         }
