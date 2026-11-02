@@ -5,7 +5,7 @@ import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { CONSOLE_CHOICES, onMyConsoles, useMyConsoles, writeConsoles } from "@/lib/consoles";
 import { isMuted, useMuted } from "@/lib/muted";
-import { CATEGORIES, PLATFORMS, type Article, type Category, type Platform } from "@/types";
+import { CATEGORIES, isGameCategory, PLATFORMS, type Article, type Category, type Platform } from "@/types";
 import { NewsCard } from "./NewsCard";
 
 // Pages de 4 articles (grille 2 × 2 sur grand écran) plutôt qu'une liste sans fin.
@@ -80,7 +80,7 @@ function FilterableNewsList({ articles, showCategories, initialPlatform }: Props
     <div>
       {showCategories && (
         <div className="mb-2 scroll-row -mx-4 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0" role="group" aria-label="Filtrer par rubrique">
-          {(["Toutes", ...(Object.keys(CATEGORIES) as Category[]).filter((c) => c !== "Anime")] as const).map((c) => (
+          {(["Toutes", ...(Object.keys(CATEGORIES) as Category[]).filter(isGameCategory)] as const).map((c) => (
             <button
               key={c}
               type="button"

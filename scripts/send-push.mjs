@@ -108,6 +108,8 @@ async function main() {
     const known = new Set(next.sent);
     const fresh = articles.filter((a) => a?.slug && !known.has(a.slug) && now - Date.parse(a.publishedAt) < FRESH_MS);
     for (const a of fresh) next.sent.push(a.slug);
+    // Comics et TCG : rubriques à consulter sur le site, sans notification (pas d'option d'abonnement dédiée).
+    fresh.splice(0, fresh.length, ...fresh.filter((a) => a.category !== "Comics" && a.category !== "TCG"));
     const picked = fresh.sort((x, y) => (y.category === "Test") - (x.category === "Test") || y.publishedAt.localeCompare(x.publishedAt)).slice(0, MAX_ARTICLES);
     for (const a of picked) {
       const anime = a.category === "Anime";

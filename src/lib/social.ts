@@ -30,7 +30,7 @@ const SQL_FILES: Record<string, string> = {
   track_view: "stats.sql", admin_set_password: "stats.sql", admin_stats: "stats.sql", admin_moderate: "stats.sql",
   admin_set_notifications: "notifications.sql", admin_push_register: "notifications.sql", admin_push_remove: "notifications.sql",
   admin_push_status: "notifications.sql", admin_push_likes: "notifications.sql", admin_push_test: "notifications.sql",
-  admin_set_writer: "admin.sql", writer_publish_article: "community.sql", writer_my_articles: "community.sql", writer_delete_article: "community.sql",
+  admin_set_writer: "admin.sql", admin_issue_token: "admin.sql", writer_publish_article: "community.sql", writer_my_articles: "community.sql", writer_delete_article: "community.sql",
   sync_save: "extras.sql", sync_load: "extras.sql",
   toggle_dislike: "dislikes.sql", get_dislikes: "dislikes.sql",
   check_pseudo: "profiles.sql", save_player: "profiles.sql", merge_player: "profiles.sql",
@@ -122,10 +122,31 @@ export function timeAgo(iso: string): string {
  * jamais sur le disque ; il permet aussi de modérer directement sous les articles.
  */
 export const ADMIN_SESSION_KEY = "gb-admin";
+/**
+ * « Rester connecté sur cet appareil » : jeton d'appareil (gbtok:…) gardé à la place du mot de passe.
+ * Révocable depuis le tableau de bord (« Oublier »), annulé si le mot de passe change ; 90 jours sans usage au plus.
+ */
+export const ADMIN_TOKEN_KEY = "gb-admin-token";
+
+export function adminToken(): string {
+  try {
+    return localStorage.getItem(ADMIN_TOKEN_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
+export function saveAdminToken(token: string | null) {
+  try {
+    if (token) localStorage.setItem(ADMIN_TOKEN_KEY, token);
+    else localStorage.removeItem(ADMIN_TOKEN_KEY);
+  } catch {
+    // stockage indisponible
+  }
+}
 
 export function adminPassword(): string {
   try {
-    return sessionStorage.getItem(ADMIN_SESSION_KEY) ?? "";
+    return sessionStorage.getItem(ADMIN_SESSION_KEY) || adminToken();
   } catch {
     return "";
   }
@@ -137,6 +158,7 @@ export function clearAdminSession() {
   } catch {
     // stockage indisponible : rien à effacer
   }
+  saveAdminToken(null);
 }
 
 export const ADMIN_ERRORS: Record<string, string> = {

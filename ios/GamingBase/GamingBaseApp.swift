@@ -301,6 +301,16 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
             handleAdmin(body["admin"] as? [String: Any] ?? [:])
             return
         }
+        // Micro-interactions (j'aime, suivre, épingler…) : retour haptique de l'iPhone.
+        if let kind = body["haptic"] as? String {
+            switch kind {
+            case "success": UINotificationFeedbackGenerator().notificationOccurred(.success)
+            case "on": UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            case "off": UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+            default: UIImpactFeedbackGenerator(style: .light).impactOccurred(intensity: 0.7)
+            }
+            return
+        }
         // Réglages des notifications (plateformes, tests, mes jeux, résumé du soir).
         if let prefs = body["notifPrefs"] as? [String: Any] {
             NewsAlerts.savePrefs(prefs)

@@ -11,6 +11,7 @@ import android.os.Build;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.util.Base64;
+import android.view.HapticFeedbackConstants;
 import android.webkit.JavascriptInterface;
 
 import org.json.JSONArray;
@@ -43,6 +44,15 @@ final class AppBridge {
                 MainActivity.recordError(ctx, e, false);
             }
         });
+    }
+
+    /** Micro-interactions du site (j'aime, suivre, épingler…) : retour haptique du téléphone. */
+    @JavascriptInterface
+    public void haptic(String kind) {
+        int effect = "success".equals(kind) || "on".equals(kind)
+                ? (Build.VERSION.SDK_INT >= 30 ? HapticFeedbackConstants.CONFIRM : HapticFeedbackConstants.VIRTUAL_KEY)
+                : (Build.VERSION.SDK_INT >= 27 ? HapticFeedbackConstants.KEYBOARD_PRESS : HapticFeedbackConstants.KEYBOARD_TAP);
+        ui(() -> activity.haptic(effect));
     }
 
     /** Dernière erreur de l'appli (texte à copier), remise une seule fois ; vide s'il n'y en a pas. */

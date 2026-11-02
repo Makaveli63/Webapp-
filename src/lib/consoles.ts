@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { Article, Platform } from "@/types";
+import { isGameCategory, type Article, type Platform } from "@/types";
 
 /**
  * « Mes consoles » : les plateformes choisies une fois pour toutes (gardées sur l'appareil et synchronisées).
@@ -31,7 +31,7 @@ export function writeConsoles(list: readonly string[]) {
 
 /** L'actu concerne-t-elle mes consoles ? Les actus toutes plateformes (« Multi », sans plateforme) et l'anime restent. */
 export function onMyConsoles(a: Pick<Article, "platforms" | "category">, mine: readonly string[]): boolean {
-  if (!mine.length || a.category === "Anime" || !a.platforms.length || a.platforms.includes("Multi")) return true;
+  if (!mine.length || !isGameCategory(a.category) || !a.platforms.length || a.platforms.includes("Multi")) return true;
   return a.platforms.some((p) => mine.includes(p));
 }
 

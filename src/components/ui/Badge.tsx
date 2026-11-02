@@ -20,9 +20,11 @@ const CATEGORY_STYLE: Record<Category, string> = {
   Test: "bg-amber-500/15 text-amber-700 ring-amber-500/30 dark:text-amber-300",
   Console: "bg-emerald-500/15 text-emerald-700 ring-emerald-500/30 dark:text-emerald-300",
   Anime: "bg-pink-500/15 text-pink-700 ring-pink-500/30 dark:text-pink-300",
+  Comics: "bg-blue-600/15 text-blue-700 ring-blue-600/30 dark:text-blue-300",
+  TCG: "bg-violet-500/15 text-violet-700 ring-violet-500/30 dark:text-violet-300",
 };
 
-const CATEGORY_LABEL: Record<Category, string> = { Actu: "Actu", Test: "Test", Console: "Console", Anime: "Anime" };
+const CATEGORY_LABEL: Record<Category, string> = { Actu: "Actu", Test: "Test", Console: "Console", Anime: "Anime", Comics: "Comics", TCG: "TCG" };
 
 export function CategoryBadge({ category }: { category: Category }) {
   return <Badge className={CATEGORY_STYLE[category]}>{CATEGORY_LABEL[category]}</Badge>;

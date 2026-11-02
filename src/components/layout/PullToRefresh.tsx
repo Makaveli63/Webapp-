@@ -2,6 +2,7 @@
 
 import { RefreshCw } from "lucide-react";
 import { useEffect, useRef } from "react";
+import { hapticOnly } from "@/lib/feedback";
 
 const THRESHOLD = 76; // distance (px) à tirer pour déclencher l'actualisation
 const LIMIT = 160; // étirement maximal de l'élastique
@@ -47,7 +48,7 @@ export function PullToRefresh() {
       halo.style.setProperty("--glow", String(p));
       el.dataset.on = d > 6 ? "1" : "0";
       const ready = d >= THRESHOLD ? "1" : "0";
-      if (ready === "1" && el.dataset.ready !== "1") navigator.vibrate?.(8); // petit retour haptique (Android)
+      if (ready === "1" && el.dataset.ready !== "1") hapticOnly("tap"); // petit retour haptique (selon Réglages → Sons et vibrations)
       el.dataset.ready = ready;
     };
     // Lâcher : retour avec un léger rebond (ressort).

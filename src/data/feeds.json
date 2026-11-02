@@ -65,5 +65,30 @@
   {
     "name": "IndieMag",
     "url": "https://www.indiemag.fr/"
+  },
+  {
+    "name": "Superpouvoir",
+    "url": "https://www.superpouvoir.com/feed/",
+    "category": "Comics"
+  },
+  {
+    "name": "DCPlanet",
+    "url": "https://www.dcplanet.fr/",
+    "category": "Comics"
+  },
+  {
+    "name": "Comicsblog",
+    "url": "https://www.comicsblog.fr/",
+    "category": "Comics"
+  },
+  {
+    "name": "Pokécardex",
+    "url": "https://www.pokecardex.com/",
+    "category": "TCG"
+  },
+  {
+    "name": "MTG France",
+    "url": "https://www.mtgfrance.fr/",
+    "category": "TCG"
   }
 ]

@@ -4,6 +4,7 @@ import { AppNotificationsToggle } from "@/components/app/AppNotificationsToggle"
 import { LiveActivityToggle } from "@/components/app/LiveActivityToggle";
 import { OpenLinksSetting } from "@/components/app/OpenLinksSetting";
 import { ConsolesSetting } from "@/components/settings/ConsolesSetting";
+import { FeedbackSetting } from "@/components/settings/FeedbackSetting";
 import { SpoilerToggle } from "@/components/settings/SpoilerToggle";
 import { MutedList } from "@/components/settings/MutedList";
 import { VoiceSettings } from "@/components/settings/VoiceSettings";
@@ -30,6 +31,7 @@ export default function SettingsPage() {
       <ConsolesSetting />
       <SpoilerToggle />
       <MutedList />
+      <FeedbackSetting />
       <VoiceSettings />
       <SyncPanel />
       <ThemePicker />

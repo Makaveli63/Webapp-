@@ -1,4 +1,4 @@
-import { Clapperboard, Gamepad2, Lightbulb, Newspaper, Puzzle, Tag, Trophy } from "lucide-react";
+import { BookOpen, Clapperboard, Layers, Gamepad2, Lightbulb, Newspaper, Puzzle, Tag, Trophy } from "lucide-react";
 import Link from "next/link";
 
 const LINKS = [
@@ -9,6 +9,8 @@ const LINKS = [
   { href: "/videos", label: "Vidéos", icon: Clapperboard },
   { href: "/classement", label: "Classement", icon: Trophy },
   { href: "/consoles", label: "Consoles", icon: Gamepad2 },
+  { href: "/comics", label: "DC / Comics", icon: BookOpen },
+  { href: "/tcg", label: "TCG", icon: Layers },
 ];
 
 /** Raccourcis discrets vers les rubriques absentes de la barre d'onglets mobile. */

@@ -70,6 +70,13 @@ begin
   if char_length(trim(coalesce(p_password, ''))) < 10 then raise exception 'MOT_DE_PASSE_TROP_COURT (10 caractères minimum)'; end if;
   update public.admin_config set password_hash = crypt(trim(p_password), gen_salt('bf', 10)) where id = 1;
   delete from public.admin_attempts; -- nouveau mot de passe : on repart de zéro
+  -- Les appareils restés connectés (« Rester connecté ») doivent se reconnecter avec le nouveau mot de passe.
+  if to_regclass('public.admin_devices') is not null then
+    begin
+      execute 'update public.admin_devices set token_hash = null, token_expires = null';
+    exception when undefined_column then null;
+    end;
+  end if;
   return 'Mot de passe du tableau de bord enregistré.';
 end $$;
 
@@ -81,11 +88,28 @@ language plpgsql volatile security definer set search_path = public, extensions 
 declare
   v_ip text := public.gb_ip_hash();
   v_hash text := (select password_hash from public.admin_config where id = 1);
+  v_rows int := 0;
 begin
   -- 5 essais ratés en 15 minutes au maximum par adresse (protection contre les essais en série).
   if v_hash is null then return 'MOT_DE_PASSE_NON_DEFINI'; end if;
   if (select count(*) from public.admin_attempts where ip_hash = v_ip and created_at > now() - interval '15 minutes') >= 5 then
     return 'TROP_DE_TENTATIVES';
+  end if;
+  -- « Rester connecté » : jeton d'appareil (gbtok:<appareil>:<secret>, créé par admin_issue_token dans admin.sql).
+  -- Valable 90 jours après la dernière utilisation, annulé par « Oublier cet appareil » ou un nouveau mot de passe.
+  if p_password like 'gbtok:%' then
+    begin
+      execute 'update public.admin_devices set token_expires = now() + interval ''90 days'', last_seen = now()
+               where voter = $1 and not revoked and token_hash is not null and token_expires > now()
+                 and crypt($2, token_hash) = token_hash'
+        using split_part(p_password, ':', 2), split_part(p_password, ':', 3);
+      get diagnostics v_rows = row_count;
+    exception when others then
+      v_rows := 0; -- admin.sql pas encore relancé
+    end;
+    if v_rows = 1 then return 'ok'; end if;
+    insert into public.admin_attempts (ip_hash) values (v_ip);
+    return 'ACCES_REFUSE';
   end if;
   if p_password is null or crypt(trim(p_password), v_hash) <> v_hash then
     insert into public.admin_attempts (ip_hash) values (v_ip);

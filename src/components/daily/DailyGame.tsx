@@ -6,29 +6,12 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { aliasesOf } from "@/lib/aliases";
 import { award } from "@/lib/player";
 import { canon, distance, prepareTitles, suggestTitles } from "@/lib/fuzzy";
+import { DAILY_KEY, DAILY_MAX_TRIES, dailyAnswer, dailyNumber, parisDay, type DailyCandidate } from "@/lib/daily";
 
-export interface DailyCandidate {
-  title: string;
-  image: string;
-  year: string;
-  genres: string[];
-  platforms: string[];
-  slug: string;
-}
+export type { DailyCandidate };
 
-const MAX_TRIES = 5;
-const KEY = "gb-daily";
-const START = Date.UTC(2026, 9, 28); // n° 1
-
-/** Jour à Paris (AAAA-MM-JJ) : le jeu change à minuit pour tout le monde. */
-const parisDay = () => new Intl.DateTimeFormat("fr-CA", { timeZone: "Europe/Paris" }).format(new Date());
-
-/** Petit hachage stable : même jour + même titre = même nombre, sur tous les appareils. */
-function hash(s: string): number {
-  let h = 2166136261;
-  for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619);
-  return h >>> 0;
-}
+const MAX_TRIES = DAILY_MAX_TRIES;
+const KEY = DAILY_KEY;
 
 interface Saved {
   day: string;
@@ -80,13 +63,10 @@ export function DailyGame({ candidates }: { candidates: DailyCandidate[] }) {
     setStats(read<Stats>(`${KEY}-stats`, { played: 0, wins: 0, streak: 0, best: 0 }));
   }, []);
 
-  const answer = useMemo(() => {
-    if (!day || !candidates.length) return null;
-    return candidates.reduce((best, c) => (hash(`${day}|${c.title}`) < hash(`${day}|${best.title}`) ? c : best));
-  }, [day, candidates]);
+  const answer = useMemo(() => (day ? dailyAnswer(candidates, day) : null), [day, candidates]);
   const keys = useMemo(() => (answer ? new Set(aliasesOf(answer.title).map(canon)) : new Set<string>()), [answer]);
   const titles = useMemo(() => prepareTitles(candidates.map((c) => c.title)), [candidates]);
-  const number = day ? Math.floor((Date.parse(`${day}T00:00:00Z`) - START) / 86_400_000) + 1 : 0;
+  const number = day ? dailyNumber(day) : 0;
 
   if (!candidates.length) return <p className="mt-6 text-muted">Le jeu du jour arrive à la prochaine mise à jour du site.</p>;
   if (!answer || !game) return <p className="mt-6 text-muted">Chargement du jeu du jour…</p>;

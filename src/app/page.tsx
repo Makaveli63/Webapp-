@@ -1,5 +1,6 @@
 import { FreeGamesTeaser } from "@/components/free/FreeGamesTeaser";
 import { AnimeTeaser } from "@/components/home/AnimeTeaser";
+import { DailyHero } from "@/components/home/DailyHero";
 import { ForYou } from "@/components/home/ForYou";
 import { ListenNews } from "@/components/home/ListenNews";
 import { PromosTeaser } from "@/components/home/PromosTeaser";
@@ -8,13 +9,18 @@ import { VideosTeaser } from "@/components/home/VideosTeaser";
 import { NewsSection } from "@/components/news/NewsSection";
 import { UpcomingReleases } from "@/components/releases/UpcomingReleases";
 import { WeekReleasesTeaser } from "@/components/releases/WeekReleasesTeaser";
+import { getDailyPicks } from "@/lib/daily-candidates";
 import { getArticles, getArticlesByCategory } from "@/lib/news";
+import { isGameCategory } from "@/types";
 
 export default async function HomePage() {
-  const [latest, tests, consoles] = await Promise.all([
+  const [latest, tests, consoles, daily, comics, tcg] = await Promise.all([
     getArticles(),
     getArticlesByCategory("Test"),
     getArticlesByCategory("Console"),
+    getDailyPicks(),
+    getArticlesByCategory("Comics"),
+    getArticlesByCategory("TCG"),
   ]);
 
   return (
@@ -29,10 +35,12 @@ export default async function HomePage() {
       </section>
 
       <QuickLinks />
+      {/* Jeu du jour en vedette, visible dès l'ouverture */}
+      {daily.length > 0 && <DailyHero picks={daily} />}
       <UpcomingReleases />
       <ListenNews
         items={latest
-          .filter((a) => a.category !== "Anime")
+          .filter((a) => isGameCategory(a.category))
           .slice(0, 8)
           .map((a) => ({ title: a.title, path: `/actualites/${a.slug}`, text: `${a.title}. ${(a.aiSummary ?? a.excerpt).replace(/[#*_>`]/g, "").slice(0, 900)}` }))}
       />
@@ -49,7 +57,7 @@ export default async function HomePage() {
           source: { name: a.source.name },
         }))}
       />
-      <NewsSection id="latest-title" title="Dernières actualités" href="/actualites" articles={latest.filter((a) => a.category !== "Anime").slice(0, 30)} limit={6} />
+      <NewsSection id="latest-title" title="Dernières actualités" href="/actualites" articles={latest.filter((a) => isGameCategory(a.category)).slice(0, 30)} limit={6} />
       <WeekReleasesTeaser />
       <FreeGamesTeaser />
       <AnimeTeaser />
@@ -57,6 +65,8 @@ export default async function HomePage() {
       <VideosTeaser />
       <NewsSection id="tests-title" title="Derniers tests" href="/tests" articles={tests.slice(0, 15)} limit={3} />
       <NewsSection id="consoles-title" title="Consoles & matériel" href="/consoles" articles={consoles.slice(0, 15)} limit={3} />
+      {comics.length > 0 && <NewsSection id="comics-title" title="DC / Comics" href="/comics" articles={comics.slice(0, 15)} limit={3} />}
+      {tcg.length > 0 && <NewsSection id="tcg-title" title="TCG · cartes à collectionner" href="/tcg" articles={tcg.slice(0, 15)} limit={3} />}
     </div>
   );
 }

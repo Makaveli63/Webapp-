@@ -4,7 +4,7 @@ import path from "node:path";
 import { mockArticles } from "@/data/news";
 import { getCalendar } from "@/lib/calendar";
 import { themeFor } from "@/lib/themes";
-import type { Article, Category } from "@/types";
+import { isGameCategory, type Article, type Category } from "@/types";
 
 /** Écrit par `npm run news` (scripts/fetch-news.mjs) avant le build. */
 const ARTICLES_FILE = path.join(process.cwd(), ".cache", "news", "articles.json");
@@ -40,9 +40,9 @@ export async function getArticles(): Promise<Article[]> {
   return cache;
 }
 
-/** Actu jeu vidéo seulement : l'anime a sa propre rubrique et n'est pas mélangé au reste. */
+/** Actu jeu vidéo seulement : anime, comics et TCG ont leur propre rubrique et ne sont pas mélangés au reste. */
 export async function getGamingArticles(): Promise<Article[]> {
-  return (await getArticles()).filter((a) => a.category !== "Anime");
+  return (await getArticles()).filter((a) => isGameCategory(a.category));
 }
 
 export async function getArticlesByCategory(category: Category): Promise<Article[]> {

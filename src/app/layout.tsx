@@ -11,6 +11,7 @@ import { NotifBridge } from "@/components/app/NotifBridge";
 import { StaleBuildGuard } from "@/components/app/ErrorScreen";
 import { EdgeFade } from "@/components/layout/EdgeFade";
 import { XpToast } from "@/components/player/XpToast";
+import { TapFeedback } from "@/components/layout/TapFeedback";
 import { OpenInAppBanner } from "@/components/app/OpenInAppBanner";
 import { ListenPlayer } from "@/components/layout/ListenPlayer";
 import { AppleTransitions } from "@/components/layout/AppleTransitions";
@@ -97,6 +98,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <StaleBuildGuard />
         <EdgeFade />
         <XpToast />
+        <TapFeedback />
         <OpenInAppBanner />
         <AppleTransitions />
         <Tracker />

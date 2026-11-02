@@ -12,14 +12,20 @@ export type Platform = "PC" | "PS5" | "Switch 2" | "Xbox" | "Mobile" | "Multi";
 export const PLATFORMS: readonly Platform[] = ["PC", "PS5", "Switch 2", "Xbox", "Mobile", "Multi"] as const;
 
 /** Rubrique de l'article, détectée automatiquement à partir du titre. */
-export type Category = "Actu" | "Test" | "Console" | "Anime";
+export type Category = "Actu" | "Test" | "Console" | "Anime" | "Comics" | "TCG";
 
 export const CATEGORIES: Record<Category, { label: string; href: string }> = {
   Actu: { label: "Actus", href: "/actualites" },
   Test: { label: "Tests", href: "/tests" },
   Console: { label: "Consoles", href: "/consoles" },
   Anime: { label: "Anime", href: "/anime" },
+  Comics: { label: "DC / Comics", href: "/comics" },
+  TCG: { label: "TCG", href: "/tcg" },
 };
+
+/** Rubriques à part (anime, comics, jeux de cartes) : jamais mélangées à l'actu jeu vidéo. */
+export const SIDE_CATEGORIES: readonly Category[] = ["Anime", "Comics", "TCG"];
+export const isGameCategory = (c: Category) => !SIDE_CATEGORIES.includes(c);
 
 export interface Article {
   slug: string;

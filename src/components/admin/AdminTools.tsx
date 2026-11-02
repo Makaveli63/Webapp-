@@ -361,7 +361,7 @@ export function AdminSources({ password }: { password: string }) {
   const [list, setList] = useState<{ id: string; name: string; url: string; category: string | null }[] | null>(null);
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
-  const [anime, setAnime] = useState(false);
+  const [topic, setTopic] = useState(""); // vide = jeu vidéo ; Anime, Comics ou TCG
   const [error, setError] = useState("");
   const [done, setDone] = useState("");
   const load = useCallback(() => {
@@ -375,14 +375,14 @@ export function AdminSources({ password }: { password: string }) {
     e.preventDefault();
     setError("");
     setDone("");
-    const res = await rpc<string>("admin_add_source", { p_password: password, p_name: name.trim(), p_url: url.trim(), p_category: anime ? "Anime" : null }).catch(
+    const res = await rpc<string>("admin_add_source", { p_password: password, p_name: name.trim(), p_url: url.trim(), p_category: topic || null }).catch(
       (err) => (err as Error).message,
     );
     if (res !== "ok") return setError(message(res));
     setDone(`« ${name.trim()} » ajoutée : ses articles arriveront à la prochaine mise à jour (moins d'une heure).`);
     setName("");
     setUrl("");
-    setAnime(false);
+    setTopic("");
     load();
   };
   const remove = async (id: string, label: string) => {
@@ -405,7 +405,13 @@ export function AdminSources({ password }: { password: string }) {
           Ajouter
         </button>
         <label className="flex items-center gap-2 text-xs text-muted sm:col-span-3">
-          <input type="checkbox" checked={anime} onChange={(e) => setAnime(e.target.checked)} className="size-4 accent-[var(--accent)]" /> Source d&apos;actus anime (rubrique Anime)
+          Rubrique :
+          <select value={topic} onChange={(e) => setTopic(e.target.value)} aria-label="Rubrique de la source" className="rounded-full border border-border bg-bg py-1 pl-3 pr-7 text-base text-fg md:text-xs">
+            <option value="">Jeu vidéo</option>
+            <option value="Anime">Anime</option>
+            <option value="Comics">DC / Comics</option>
+            <option value="TCG">TCG (cartes)</option>
+          </select>
         </label>
       </form>
       {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
@@ -416,7 +422,7 @@ export function AdminSources({ password }: { password: string }) {
             <li key={s.id} className="flex items-center gap-3 py-2 text-sm">
               <span className="min-w-0 flex-1">
                 <span className="font-semibold text-heading">{s.name}</span>
-                {s.category === "Anime" && <span className="ml-2 text-xs text-pink-600 dark:text-pink-400">Anime</span>}
+                {s.category && <span className="ml-2 text-xs text-pink-600 dark:text-pink-400">{s.category === "Comics" ? "DC / Comics" : s.category}</span>}
                 <span className="block truncate text-xs text-muted">{s.url}</span>
               </span>
               <button type="button" onClick={() => remove(s.id, s.name)} aria-label={`Retirer ${s.name}`} className="shrink-0 rounded-full p-2 text-muted hover:bg-red-500/10 hover:text-red-600">

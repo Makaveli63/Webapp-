@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { loadSearchIndex } from "@/lib/search-index";
 import { setPageGlow } from "@/lib/background";
-import { ADMIN_ERRORS, ADMIN_SESSION_KEY, rpc, setAdminDevice, socialEnabled, timeAgo, voterId } from "@/lib/social";
+import { ADMIN_ERRORS, ADMIN_SESSION_KEY, adminToken, rpc, saveAdminToken, setAdminDevice, socialEnabled, timeAgo, voterId } from "@/lib/social";
 import { AdminArticles } from "./AdminArticles";
 import { AdminStatus } from "./AdminStatus";
 import { AdminAlerts, AdminCommunity, AdminDevices, AdminReleases, AdminSources, AdminSuggestions, deviceLabel } from "./AdminTools";
@@ -80,6 +80,9 @@ export function AdminDashboard() {
   // iPhone : mot de passe déjà dans le trousseau (null = pas dans l'app), case « enregistrer » et origine de l'essai.
   const [vaultSaved, setVaultSaved] = useState<boolean | null>(null);
   const [remember, setRemember] = useState(true);
+  // « Rester connecté sur cet appareil » (jeton d'appareil, voir social.ts).
+  const [stay, setStay] = useState(true);
+  const stayNext = useRef(false);
   const saveNext = useRef<string | null>(null);
   const fromVault = useRef(false);
 
@@ -89,10 +92,16 @@ export function AdminDashboard() {
     try {
       const data = await rpc<Stats>("admin_stats", { p_password: pwd, p_days: period });
       if (data.error) {
-        setError(ERRORS[data.error] ?? data.error);
         setStats(null);
         setPassword("");
         sessionStorage.removeItem(SESSION_KEY);
+        if (pwd.startsWith("gbtok:")) {
+          // Connexion gardée expirée, révoquée ou mot de passe changé : on demande le mot de passe.
+          saveAdminToken(null);
+          setError(data.error === "ACCES_REFUSE" ? "Ta connexion gardée a expiré : saisis le mot de passe." : (ERRORS[data.error] ?? data.error));
+          return;
+        }
+        setError(ERRORS[data.error] ?? data.error);
         // Mot de passe du trousseau refusé (il a changé) : on l'oublie.
         if (fromVault.current && data.error === "ACCES_REFUSE") {
           vault("forget");
@@ -108,6 +117,13 @@ export function AdminDashboard() {
         setPassword(pwd);
         sessionStorage.setItem(SESSION_KEY, pwd);
         setAdminDevice(true); // affiche l'onglet « Admin » sur cet appareil
+        // « Rester connecté » : jeton d'appareil enregistré à la place du mot de passe.
+        if (stayNext.current && !pwd.startsWith("gbtok:")) {
+          stayNext.current = false;
+          rpc<string>("admin_issue_token", { p_password: pwd, p_voter: voterId() })
+            .then((tok) => typeof tok === "string" && tok.startsWith("gbtok:") && saveAdminToken(tok))
+            .catch(() => {}); // admin.sql pas encore relancé : session limitée à l'onglet, comme avant
+        }
         // Liste des appareils admin (supabase/admin.sql) : cet appareil y est (ré)inscrit.
         rpc("admin_register_device", { p_password: pwd, p_voter: voterId(), p_label: deviceLabel() }).catch(() => {});
       }
@@ -142,6 +158,7 @@ export function AdminDashboard() {
       .then((status) => {
         if (status !== "revoked") return;
         sessionStorage.removeItem(SESSION_KEY);
+        saveAdminToken(null);
         setAdminDevice(false);
         vault("forget");
         setVaultSaved((v) => (v === null ? null : false));
@@ -150,7 +167,7 @@ export function AdminDashboard() {
         setError("Cet appareil a été oublié depuis le tableau de bord : reconnecte-toi avec le mot de passe.");
       })
       .catch(() => {}); // service pas encore installé
-    const saved = sessionStorage.getItem(SESSION_KEY);
+    const saved = sessionStorage.getItem(SESSION_KEY) || adminToken();
     if (saved) load(saved, 30);
     loadSearchIndex()
       .then((i) => setTitles(Object.fromEntries(i.articles.map((a) => [a.slug, a.title]))))
@@ -178,6 +195,7 @@ export function AdminDashboard() {
       e.preventDefault();
       fromVault.current = false;
       saveNext.current = vaultSaved === false && remember ? input.trim() : null;
+      stayNext.current = stay;
       load(input.trim(), days);
     };
     return (
@@ -209,6 +227,10 @@ export function AdminDashboard() {
             Enregistrer dans l&apos;appli (protégé par Face ID)
           </label>
         )}
+        <label className="flex items-center gap-2 text-sm text-muted">
+          <input type="checkbox" checked={stay} onChange={(e) => setStay(e.target.checked)} className="size-4 accent-[var(--accent)]" />
+          Rester connecté sur cet appareil
+        </label>
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
         <button type="submit" disabled={loading || !input} className="rounded-full bg-accent px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
           {loading ? "Vérification…" : "Ouvrir le tableau de bord"}
@@ -250,6 +272,7 @@ export function AdminDashboard() {
           type="button"
           onClick={() => {
             sessionStorage.removeItem(SESSION_KEY);
+            saveAdminToken(null);
             setPassword("");
             setStats(null);
           }}
@@ -265,6 +288,8 @@ export function AdminDashboard() {
             vault("forget"); // iPhone : le mot de passe enregistré est aussi effacé
             setVaultSaved((v) => (v === null ? null : false));
             sessionStorage.removeItem(SESSION_KEY);
+            saveAdminToken(null);
+            rpc("admin_forget_device", { p_password: password, p_voter: voterId() }).catch(() => {});
             setPassword("");
             setStats(null);
           }}

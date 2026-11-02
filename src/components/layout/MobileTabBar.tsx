@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent } from "react";
 import { activeHref, NAV_LINKS } from "./nav-links";
+import { hapticOnly } from "@/lib/feedback";
 
 const ITEMS = NAV_LINKS.filter((l) => l.mobile);
 
@@ -172,7 +173,7 @@ export function MobileTabBar() {
     start.current.lastX = e.clientX;
     start.current.lastT = e.timeStamp;
     const x = relX(e);
-    if (dragX !== null && indexAt(x) !== indexAt(dragX)) navigator.vibrate?.(6); // petit retour haptique (Android)
+    if (dragX !== null && indexAt(x) !== indexAt(dragX)) hapticOnly("tap"); // petit retour haptique (selon Réglages → Sons et vibrations)
     setDragX(x);
   };
   const up = (e: PointerEvent<HTMLUListElement>) => {

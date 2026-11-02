@@ -12,6 +12,8 @@ const SECTIONS = [
       { href: "/jeux-gratuits", label: "Jeux gratuits" },
       { href: "/sorties", label: "Sorties de la semaine" },
       { href: "/anime", label: "Anime" },
+      { href: "/comics", label: "DC / Comics" },
+      { href: "/tcg", label: "TCG (cartes)" },
       { href: "/promos", label: "Promos du moment" },
       { href: "/videos", label: "Vidéos" },
       { href: "/classement", label: "Classement et tendances" },

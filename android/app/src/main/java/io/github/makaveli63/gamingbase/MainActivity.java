@@ -282,6 +282,10 @@ public class MainActivity extends Activity {
         return reader;
     }
 
+    void haptic(int effect) {
+        if (web != null) web.performHapticFeedback(effect);
+    }
+
     /** Message au site depuis n'importe quel fil (la synthèse vocale répond sur un fil à part). */
     private void toPage(String js) {
         runOnUiThread(() -> {

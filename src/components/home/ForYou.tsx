@@ -2,7 +2,8 @@
 
 import { Bell, Sparkles } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ScrollArrows } from "@/components/ui/ScrollArrows";
 import { isMuted, useMuted } from "@/lib/muted";
 import { RemoteImage } from "@/components/ui/RemoteImage";
 import { aliasesOf } from "@/lib/aliases";
@@ -11,7 +12,7 @@ import { canon } from "@/lib/fuzzy";
 import { readPrefs } from "@/lib/notif-prefs";
 import { themeFor } from "@/lib/themes";
 import { useTracker } from "@/lib/tracker";
-import type { Article } from "@/types";
+import { isGameCategory, type Article } from "@/types";
 
 /** Juste ce qu'il faut pour les cartes (la page reste légère). */
 export type ForYouArticle = Pick<Article, "slug" | "title" | "tags" | "platforms" | "category" | "image" | "publishedAt"> & { source: { name: string } };
@@ -55,6 +56,7 @@ export function ForYou({ articles }: { articles: ForYouArticle[] }) {
   }, []);
 
   const muted = useMuted();
+  const row = useRef<HTMLUListElement>(null);
   const picks = useMemo(() => {
     if (!follows || !tracker || !extra) return null;
     const signals: Signal[] = [
@@ -71,7 +73,7 @@ export function ForYou({ articles }: { articles: ForYouArticle[] }) {
         if (s.keys.some((k) => hay.includes(` ${k} `)) && (!best || s.weight > best.score)) best = { reason: s.reason, score: s.weight };
       }
       // Plateformes choisies (notifications) : seulement en complément.
-      if (!best && extra.platforms.length && a.category !== "Anime" && a.platforms.some((p) => extra.platforms.includes(p))) {
+      if (!best && extra.platforms.length && isGameCategory(a.category) && a.platforms.some((p) => extra.platforms.includes(p))) {
         best = { reason: `🎯 Sur ${a.platforms.find((p) => extra.platforms.includes(p))}`, score: 1 };
       }
       if (best) out.push({ article: a, ...best });
@@ -90,7 +92,10 @@ export function ForYou({ articles }: { articles: ForYouArticle[] }) {
       </h2>
       <p className="mt-0.5 text-sm text-muted">Selon tes suivis, ta bibliothèque et tes plateformes</p>
       {picks.length > 0 ? (
-        <ul className="scroll-row -mx-4 mt-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1">
+        <div className="relative mt-4">
+          {/* Flèches sur ordinateur, de part et d'autre de la rangée */}
+          <ScrollArrows target={row} label="Pour toi" />
+          <ul ref={row} className="scroll-row -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1">
           {picks.map(({ article, reason }) => (
             <li key={article.slug} className="w-[78%] shrink-0 snap-start sm:w-72">
               <Link href={`/actualites/${article.slug}`} className="glass group flex h-full flex-col overflow-hidden rounded-2xl">
@@ -113,7 +118,8 @@ export function ForYou({ articles }: { articles: ForYouArticle[] }) {
               </Link>
             </li>
           ))}
-        </ul>
+          </ul>
+        </div>
       ) : (
         <div className="glass mt-4 flex items-start gap-3 rounded-2xl p-4">
           <Bell className="mt-0.5 size-5 shrink-0 text-accent" aria-hidden />

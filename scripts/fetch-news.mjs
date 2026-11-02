@@ -75,7 +75,14 @@ const TEST_KEYWORDS = /(\btest\b|\bcritique\b|\breview\b|\bverdict\b|on a testé
 const CONSOLE_KEYWORDS =
   /(\bconsoles?\b|\bhardware\b|\bmatériel\b|\bmanettes?\b|ps5 pro|playstation 6|\bps6\b|switch 2|xbox series|prochaine xbox|steam deck|rog ally|\bportables?\b|mise à jour système|\bfirmware\b)/i;
 
+// Jeux de cartes à collectionner cités dans le titre (sources jeu vidéo) : rubrique TCG.
+const TCG_KEYWORDS =
+  /(\btcg\b|\bjcc\b|jeux? de cartes? à collectionner|magic\s*:?\s*the gathering|\bmtg\b|yu-gi-oh|\blorcana\b|one piece card game|flesh and blood|altered tcg|star wars\s*:?\s*unlimited|digimon card game|pokémon (jcc|tcg)|cartes? pokémon)/i;
+/** Rubriques à part (feeds.json « category ») : pas de plateforme de jeu, pas de note de test. */
+const SIDE_CATEGORIES = ["Anime", "Comics", "TCG"];
+
 function detectCategory(title) {
+  if (TCG_KEYWORDS.test(title)) return "TCG";
   if (TEST_KEYWORDS.test(title)) return "Test";
   if (CONSOLE_KEYWORDS.test(title)) return "Console";
   return "Actu";
@@ -110,7 +117,7 @@ async function adminFeeds() {
     const rows = await res.json();
     return (Array.isArray(rows) ? rows : [])
       .filter((r) => r && typeof r.name === "string" && typeof r.url === "string" && r.url.startsWith("https://"))
-      .map((r) => ({ name: r.name.slice(0, 60), url: r.url, ...(r.category === "Anime" ? { category: "Anime" } : {}) }));
+      .map((r) => ({ name: r.name.slice(0, 60), url: r.url, ...(SIDE_CATEGORIES.includes(r.category) ? { category: r.category } : {}) }));
   } catch {
     return []; // service absent : seules les sources de feeds.json sont lues
   }
@@ -497,13 +504,13 @@ async function fetchFeed(feed) {
         title,
         excerpt: clean(sourceSummary, 220),
         content: sourceSummary,
-        // Flux anime (feeds.json : "category": "Anime") : rubrique Anime, sans plateforme de jeu.
-        category: feed.category === "Anime" ? "Anime" : detectCategory(title),
+        // Flux à part (feeds.json : "category": "Anime", "Comics" ou "TCG") : leur rubrique, sans plateforme de jeu.
+        category: SIDE_CATEGORIES.includes(feed.category) ? feed.category : detectCategory(title),
         score:
-          feed.category !== "Anime" && detectCategory(title) === "Test"
+          !SIDE_CATEGORIES.includes(feed.category) && detectCategory(title) === "Test"
             ? (extractScore(`${title} ${sourceSummary}`) ?? scoreFromHtml(String(item["content:encoded"] ?? item.content ?? "")))
             : undefined,
-        platforms: feed.category === "Anime" ? [] : detectPlatforms(text),
+        platforms: SIDE_CATEGORIES.includes(feed.category) ? [] : detectPlatforms(text),
         tags,
         author: clean(item.creator ?? feed.name, 80),
         publishedAt: validDate(item.isoDate),

@@ -10,6 +10,9 @@ create table if not exists public.admin_devices (
   last_seen timestamptz not null default now(),
   revoked boolean not null default false
 );
+-- « Rester connecté » : jeton secret de l'appareil (seule son empreinte est gardée), voir gb_admin_check (stats.sql).
+alter table public.admin_devices add column if not exists token_hash text;
+alter table public.admin_devices add column if not exists token_expires timestamptz;
 alter table public.admin_devices enable row level security;
 revoke all on public.admin_devices from anon, authenticated;
 
@@ -38,6 +41,26 @@ begin
                    from public.admin_devices where not revoked), '[]'::json);
 end $$;
 
+-- « Rester connecté sur cet appareil » : après une connexion avec le mot de passe (pas avec un jeton),
+-- crée un jeton pour cet appareil. Le site le garde à la place du mot de passe, qui n'est jamais enregistré.
+create or replace function public.admin_issue_token(p_password text, p_voter text)
+returns text
+language plpgsql volatile security definer set search_path = public, extensions as $$
+declare
+  v_check text;
+  v_secret text := encode(gen_random_bytes(24), 'hex');
+begin
+  if coalesce(p_password, '') like 'gbtok:%' then return 'REQUETE_INVALIDE'; end if;
+  v_check := public.gb_admin_check(p_password);
+  if v_check <> 'ok' then return v_check; end if;
+  if coalesce(p_voter, '') !~ '^[A-Za-z0-9-]{8,64}$' then return 'REQUETE_INVALIDE'; end if;
+  insert into public.admin_devices as d (voter, label) values (p_voter, 'Appareil')
+  on conflict (voter) do update set revoked = false, last_seen = now();
+  update public.admin_devices set token_hash = crypt(v_secret, gen_salt('bf', 8)), token_expires = now() + interval '90 days'
+  where voter = p_voter;
+  return 'gbtok:' || p_voter || ':' || v_secret;
+end $$;
+
 -- « Oublier » : l'appareil perd l'onglet Admin et son mot de passe enregistré à sa prochaine ouverture.
 create or replace function public.admin_forget_device(p_password text, p_voter text)
 returns text
@@ -46,7 +69,7 @@ declare
   v_check text := public.gb_admin_check(p_password);
 begin
   if v_check <> 'ok' then return v_check; end if;
-  update public.admin_devices set revoked = true where voter = p_voter;
+  update public.admin_devices set revoked = true, token_hash = null, token_expires = null where voter = p_voter;
   return 'ok';
 end $$;
 
@@ -126,12 +149,15 @@ create table if not exists public.admin_sources (
   id uuid primary key default gen_random_uuid(),
   name text not null check (char_length(name) between 2 and 60),
   url text not null unique,
-  category text check (category is null or category = 'Anime'),
+  category text,
   created_at timestamptz not null default now()
 );
 -- Adresse https sans espace, 500 caractères au plus (Postgres refuse les répétitions {n,m} au-delà de 255).
 alter table public.admin_sources drop constraint if exists admin_sources_url_check;
 alter table public.admin_sources add constraint admin_sources_url_check check (url ~ '^https://[^[:space:]]{4,}$' and char_length(url) <= 500);
+-- Rubrique de la source : vide = jeu vidéo ; sinon Anime, Comics (DC / Comics) ou TCG.
+alter table public.admin_sources drop constraint if exists admin_sources_category_check;
+alter table public.admin_sources add constraint admin_sources_category_check check (category is null or category in ('Anime', 'Comics', 'TCG'));
 alter table public.admin_sources enable row level security;
 revoke all on public.admin_sources from anon, authenticated;
 
@@ -144,7 +170,7 @@ begin
   if v_check <> 'ok' then return v_check; end if;
   if (select count(*) from public.admin_sources) >= 40 then return 'TROP_DE_SOURCES'; end if;
   insert into public.admin_sources (name, url, category)
-  values (trim(p_name), trim(p_url), case when p_category = 'Anime' then 'Anime' end);
+  values (trim(p_name), trim(p_url), case when p_category in ('Anime', 'Comics', 'TCG') then p_category end);
   return 'ok';
 exception
   when unique_violation then return 'SOURCE_EXISTANTE';
@@ -318,6 +344,7 @@ grant execute on function public.admin_device_status(text) to anon;
 grant execute on function public.admin_community(text) to anon;
 grant execute on function public.admin_set_role(text, text, text) to anon;
 grant execute on function public.admin_set_writer(text, text, boolean) to anon;
+grant execute on function public.admin_issue_token(text, text) to anon;
 grant execute on function public.admin_add_source(text, text, text, text) to anon;
 grant execute on function public.admin_delete_source(text, uuid) to anon;
 grant execute on function public.get_sources() to anon;

@@ -24,6 +24,7 @@ import { renderMarkdown } from "@/lib/markdown";
 import { formatDate } from "@/lib/format";
 import { getArticles } from "@/lib/news";
 import { themeFor } from "@/lib/themes";
+import { CATEGORIES, isGameCategory, type Article } from "@/types";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -68,9 +69,11 @@ export default async function ArticlePage({ params }: Props) {
   const gamePage = aboutThis?.slug;
   // Actu anime : d'autres actus anime ; actu jeu vidéo : même plateforme, jamais d'anime.
   const isAnime = article.category === "Anime";
+  // Articles liés : même rubrique pour anime, comics et TCG ; sinon l'actu jeu vidéo.
+  const family = (c: Article["category"]) => (isGameCategory(c) ? "jeux" : c);
   const related = all
-    .filter((a) => a.slug !== article.slug && (a.category === "Anime") === isAnime)
-    .filter((a) => isAnime || a.platforms.some((p) => article.platforms.includes(p)))
+    .filter((a) => a.slug !== article.slug && family(a.category) === family(article.category))
+    .filter((a) => !isGameCategory(article.category) || a.platforms.some((p) => article.platforms.includes(p)))
     .sort((a, b) => Number(b.category === article.category) - Number(a.category === article.category))
     .slice(0, 3);
 
@@ -78,8 +81,8 @@ export default async function ArticlePage({ params }: Props) {
     <div className="mx-auto max-w-2xl">
       <PageTheme themeId={themeFor(`${article.title} ${article.tags.join(" ")}`, article.platforms).id} image={article.image} />
       <article>
-        <Link href={isAnime ? "/anime" : "/actualites"} className="-my-2 inline-flex items-center gap-1 py-2 text-sm text-muted hover:text-fg">
-          <ArrowLeft className="size-4" aria-hidden /> {isAnime ? "Toute l'actu anime" : "Toutes les actualités"}
+        <Link href={isGameCategory(article.category) ? "/actualites" : CATEGORIES[article.category].href} className="-my-2 inline-flex items-center gap-1 py-2 text-sm text-muted hover:text-fg">
+          <ArrowLeft className="size-4" aria-hidden /> {isAnime ? "Toute l'actu anime" : isGameCategory(article.category) ? "Toutes les actualités" : `Toute l'actu ${CATEGORIES[article.category].label}`}
         </Link>
         <RemoteImage
           src={article.image}
