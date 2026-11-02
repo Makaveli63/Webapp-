@@ -73,7 +73,7 @@ begin
         'total', (select count(*) from public.players),
         'week', (select count(*) from public.players where created_at > now() - interval '7 days'),
         'list', coalesce((select json_agg(p order by p.created_at desc) from (
-          select pseudo, avatar, xp, role, created_at, updated_at from public.players order by created_at desc limit 300) p), '[]'::json))
+          select pseudo, avatar, xp, role, can_write, created_at, updated_at from public.players order by created_at desc limit 300) p), '[]'::json))
     $q$ into v_players;
   end if;
   if to_regclass('public.dislikes') is not null then
@@ -88,7 +88,8 @@ begin
   return json_build_object('players', v_players, 'dislikes', v_dislikes);
 end $$;
 
--- Badge sur un pseudo (« Soutien », « VIP »… ; null pour le retirer). Le badge « Fondateur » est réservé au site.
+-- Badge sur un pseudo (« Soutien », « Netrunner »… ; null pour le retirer). Le badge « Fondateur » est réservé au site.
+-- La liste des badges acceptés est la contrainte players_role_check de profiles.sql.
 create or replace function public.admin_set_role(p_password text, p_pseudo text, p_role text)
 returns text
 language plpgsql volatile security definer set search_path = public, extensions as $$
@@ -96,8 +97,27 @@ declare
   v_check text := public.gb_admin_check(p_password);
 begin
   if v_check <> 'ok' then return v_check; end if;
-  if p_role is not null and p_role not in ('Soutien', 'VIP', 'Modérateur', 'Rédacteur', 'Testeur', 'Streamer', 'Partenaire', 'Légende') then return 'REQUETE_INVALIDE'; end if;
-  execute 'update public.players set role = $1 where pseudo_key = lower($2)' using p_role, trim(coalesce(p_pseudo, ''));
+  update public.players set role = nullif(trim(coalesce(p_role, '')), '') where pseudo_key = lower(trim(coalesce(p_pseudo, '')));
+  return 'ok';
+exception when check_violation then
+  return 'REQUETE_INVALIDE'; -- badge inconnu : profiles.sql pas relancé
+end $$;
+
+-- Accès « Rédaction » : le joueur publie des articles depuis son appareil, sans le mot de passe admin.
+-- À l'activation, il reçoit le badge « Rédacteur » s'il n'en a pas déjà un.
+alter table public.players add column if not exists can_write boolean not null default false;
+create or replace function public.admin_set_writer(p_password text, p_pseudo text, p_on boolean)
+returns text
+language plpgsql volatile security definer set search_path = public, extensions as $$
+declare
+  v_check text := public.gb_admin_check(p_password);
+begin
+  if v_check <> 'ok' then return v_check; end if;
+  update public.players
+    set can_write = coalesce(p_on, false),
+        role = case when coalesce(p_on, false) and role is null then 'Rédacteur' else role end
+    where pseudo_key = lower(trim(coalesce(p_pseudo, '')));
+  if not found then return 'REQUETE_INVALIDE'; end if;
   return 'ok';
 end $$;
 
@@ -240,7 +260,8 @@ begin
   insert into public.suggestions (pseudo, body, kind, voter, ip_hash)
   values (v_pseudo, v_body, v_kind, case when char_length(coalesce(p_voter, '')) between 8 and 64 then p_voter end, v_ip);
   if to_regprocedure('public.gb_notify(text,text,text,text)') is not null then
-    perform public.gb_notify('Nouvelle suggestion (' || v_kind || ')', coalesce(v_pseudo || ' : ', '') || v_body, null, 'bulb');
+    perform public.gb_notify('💡 Nouvelle suggestion (' || v_kind || ')', coalesce(v_pseudo || ' : ', '') || v_body,
+      'https://makaveli63.github.io/Webapp-/admin/', 'bulb');
   end if;
   return 'ok';
 end $$;
@@ -296,6 +317,7 @@ grant execute on function public.admin_forget_device(text, text) to anon;
 grant execute on function public.admin_device_status(text) to anon;
 grant execute on function public.admin_community(text) to anon;
 grant execute on function public.admin_set_role(text, text, text) to anon;
+grant execute on function public.admin_set_writer(text, text, boolean) to anon;
 grant execute on function public.admin_add_source(text, text, text, text) to anon;
 grant execute on function public.admin_delete_source(text, uuid) to anon;
 grant execute on function public.get_sources() to anon;

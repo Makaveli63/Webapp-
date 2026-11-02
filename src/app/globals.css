@@ -971,6 +971,51 @@ html:not([data-splash="off"]) .tabbar { animation: tabbar-in .4s ease-out 1.9s b
 .role-streamer { background: linear-gradient(135deg, #a855f7, #6d28d9); }
 .role-partner { background: linear-gradient(135deg, #64748b, #334155); }
 .role-legend { background: linear-gradient(135deg, #f43f5e, #f59e0b 55%, #8b5cf6); }
+/*
+ * Badges néon, style cyberpunk : plaque aux coins coupés, capitales espacées, liseré lumineux,
+ * et un bref « glitch » (décalage cyan/magenta) toutes les quelques secondes. Couleurs fixes,
+ * lisibles en clair comme en sombre (fond noir ou jaune électrique, contraste AA).
+ */
+.role-cyber {
+  --cy-fg: #0b0b0f; --cy-bg: #fcee0a; --cy-edge: rgb(0 0 0 / .35);
+  position: relative;
+  border-radius: 0 !important;
+  padding-inline: .5rem .6rem;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-weight: 800; letter-spacing: .08em; text-transform: uppercase; font-size: 10px;
+  color: var(--cy-fg); background: var(--cy-bg);
+  box-shadow: inset 0 0 0 1px var(--cy-edge), inset 0 -2px 0 rgb(0 0 0 / .25);
+  clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
+  animation: cyber-glitch 5s steps(1) infinite;
+}
+.role-cyber::after {
+  /* Petit trait « néon » dans le coin coupé. */
+  content: ""; position: absolute; right: 1px; top: 1px; width: 8px; height: 1.5px;
+  background: currentColor; transform: rotate(45deg) translate(1px, 1px); opacity: .8;
+}
+.role-cyber svg { filter: drop-shadow(0 0 2px currentColor); }
+.cyber-yellow { --cy-fg: #0b0b0f; --cy-bg: #fcee0a; }
+.cyber-cyan, .cyber-magenta, .cyber-green, .cyber-orange, .cyber-red {
+  --cy-bg: linear-gradient(135deg, #0d0f1a, #141a2b);
+  text-shadow: 0 0 6px color-mix(in srgb, var(--cy-fg) 70%, transparent);
+}
+.cyber-cyan { --cy-fg: #2de2f5; --cy-edge: rgb(45 226 245 / .7); }
+.cyber-magenta { --cy-fg: #ff4fa3; --cy-edge: rgb(255 79 163 / .7); }
+.cyber-green { --cy-fg: #3dfc9b; --cy-edge: rgb(61 252 155 / .65); }
+.cyber-orange { --cy-fg: #ffa23d; --cy-edge: rgb(255 162 61 / .7); }
+.cyber-red { --cy-fg: #ff4b4b; --cy-edge: rgb(255 75 75 / .75); }
+.cyber-corpo { --cy-fg: #fcee0a; --cy-bg: linear-gradient(135deg, #0b0b0f 0 70%, #2a2a10); --cy-edge: rgb(252 238 10 / .6); }
+.cyber-chrome {
+  --cy-fg: #10131c; --cy-edge: rgb(255 255 255 / .6);
+  --cy-bg: linear-gradient(120deg, #e8edf5, #9aa6b8 35%, #f4f7fb 50%, #7d8aa0 70%, #d9e2ee);
+}
+@keyframes cyber-glitch {
+  0%, 92%, 100% { transform: none; }
+  93% { transform: translateX(1px) skewX(-8deg); text-shadow: -1.5px 0 #ff2a6d, 1.5px 0 #05d9e8; }
+  95% { transform: translateX(-1px); text-shadow: 1.5px 0 #ff2a6d, -1.5px 0 #05d9e8; }
+  97% { transform: none; text-shadow: -1px 0 #05d9e8; }
+}
+@media (prefers-reduced-motion: reduce) { .role-cyber { animation: none; } }
 /* Île de l'XP : pastille du niveau, dorée quand on monte de niveau. */
 .xp-toast-level {
   display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;

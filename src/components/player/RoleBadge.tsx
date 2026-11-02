@@ -1,4 +1,4 @@
-import { BadgeCheck, Crown, Feather, FlaskConical, Gem, Handshake, HeartHandshake, Radio, ShieldCheck, Sparkles, type LucideIcon } from "lucide-react";
+import { BadgeCheck, Bot, Briefcase, Building2, CarFront, Cpu, Crosshair, Crown, Feather, FlaskConical, Gem, Handshake, HeartHandshake, Radio, ShieldCheck, Sparkles, Wrench, Zap, type LucideIcon } from "lucide-react";
 import { PLAYER_ROLES, roleOf } from "@/lib/player";
 
 /** Icône et couleur de chaque badge (classes role-* de globals.css). */
@@ -12,6 +12,15 @@ export const ROLE_STYLES: Record<string, { Icon: LucideIcon; className: string }
   Streamer: { Icon: Radio, className: "role-streamer" },
   Partenaire: { Icon: Handshake, className: "role-partner" },
   Légende: { Icon: Sparkles, className: "role-legend" },
+  // Néon cyberpunk : coins coupés, capitales espacées, léger glitch de temps en temps (classes cyber-* de globals.css).
+  Netrunner: { Icon: Cpu, className: "role-cyber cyber-cyan" },
+  Edgerunner: { Icon: Zap, className: "role-cyber cyber-yellow" },
+  Fixer: { Icon: Briefcase, className: "role-cyber cyber-magenta" },
+  Techie: { Icon: Wrench, className: "role-cyber cyber-green" },
+  Nomade: { Icon: CarFront, className: "role-cyber cyber-orange" },
+  Solo: { Icon: Crosshair, className: "role-cyber cyber-red" },
+  Corpo: { Icon: Building2, className: "role-cyber cyber-corpo" },
+  Chromé: { Icon: Bot, className: "role-cyber cyber-chrome" },
 };
 
 /**

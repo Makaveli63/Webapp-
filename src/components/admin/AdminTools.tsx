@@ -1,11 +1,12 @@
 "use client";
 
-import { CalendarPlus, Laptop, Lightbulb, Rss, ThumbsDown, Trash2, Users } from "lucide-react";
+import { BellRing, CalendarPlus, Feather, Laptop, Lightbulb, Rss, ThumbsDown, Trash2, Users } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { PlayerAvatar } from "@/components/player/PlayerAvatar";
 import { RoleBadge } from "@/components/player/RoleBadge";
-import { levelOf, PLAYER_ROLES, roleOf, titleOf } from "@/lib/player";
+import { CLASSIC_ROLES, CYBER_ROLES, levelOf, roleOf, titleOf } from "@/lib/player";
+import { pushSubscriptionId, pushSupport } from "@/lib/push";
 import { ADMIN_ERRORS, rpc, timeAgo, voterId } from "@/lib/social";
 import { STATUS_STYLES, SUGGESTION_KINDS, SUGGESTION_STATUSES, type Suggestion } from "@/lib/suggestions";
 import { PLATFORMS } from "@/types";
@@ -85,9 +86,132 @@ export function AdminDevices({ password }: { password: string }) {
   );
 }
 
+interface PushStatus {
+  error?: string;
+  has_key: boolean;
+  ntfy: boolean;
+  likes: boolean;
+  devices: { id: string; label: string; created_at: string }[];
+}
+
+/**
+ * Alertes admin par OneSignal : suggestions, commentaires, signalements, nouveaux joueurs, articles des rédacteurs.
+ * Chaque appareil inscrit ici les reçoit (en plus des actus qu'il a choisies dans les Réglages).
+ */
+export function AdminAlerts({ password }: { password: string }) {
+  const [status, setStatus] = useState<PushStatus | null>(null);
+  const [error, setError] = useState("");
+  const [info, setInfo] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [mine, setMine] = useState<string | null>(null);
+
+  const load = useCallback(() => {
+    rpc<PushStatus>("admin_push_status", { p_password: password })
+      .then((r) => (r?.error ? setError(message(r.error)) : setStatus(r)))
+      .catch((e) => setError((e as Error).message));
+  }, [password]);
+  useEffect(load, [load]);
+
+  // Appelé directement au toucher : la demande d'autorisation de notifications doit partir dans le geste.
+  const register = async () => {
+    setError("");
+    setInfo("");
+    if (pushSupport() === "ios-home-screen") return setError("Sur iPhone et iPad, ouvre le site depuis son icône sur l'écran d'accueil pour recevoir des notifications.");
+    if (pushSupport() !== "ok") return setError("Cet appareil ou ce navigateur ne reçoit pas les notifications du site (l'appli GamingBase a les siennes).");
+    setBusy(true);
+    try {
+      const id = await pushSubscriptionId();
+      if (id === "denied") return setError("Notifications refusées : autorise-les dans les réglages de l'appareil, puis réessaie.");
+      if (!id) return setError("OneSignal n'a pas encore donné d'identifiant à cet appareil : réessaie dans quelques secondes.");
+      const res = await rpc<string>("admin_push_register", { p_password: password, p_subscription: id, p_label: deviceLabel() });
+      if (res !== "ok") return setError(message(res));
+      setMine(id);
+      setInfo("Cet appareil reçoit maintenant les alertes admin ✅");
+      load();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const remove = async (id: string, label: string) => {
+    if (!confirm(`Ne plus envoyer les alertes à « ${label} » ?`)) return;
+    const res = await rpc<string>("admin_push_remove", { p_password: password, p_subscription: id }).catch((e) => (e as Error).message);
+    if (res !== "ok") return setError(message(res));
+    load();
+  };
+
+  const test = async () => {
+    setError("");
+    const res = await rpc<string>("admin_push_test", { p_password: password }).catch((e) => (e as Error).message);
+    if (res !== "ok") return setError(message(res));
+    setInfo("Alerte de test envoyée : elle arrive en quelques secondes.");
+  };
+
+  const likes = async (on: boolean) => {
+    const res = await rpc<string>("admin_push_likes", { p_password: password, p_on: on }).catch((e) => (e as Error).message);
+    if (res !== "ok") return setError(message(res));
+    load();
+  };
+
+  return (
+    <Panel
+      icon={<BellRing className="size-4 text-accent" aria-hidden />}
+      title="Alertes admin"
+      hint="Une notification à chaque suggestion, commentaire, signalement, nouveau joueur ou article d'un rédacteur."
+    >
+      {status && !status.has_key && (
+        <p className="mb-3 rounded-lg bg-amber-500/12 p-3 text-xs text-amber-800 ring-1 ring-inset ring-amber-500/30 dark:text-amber-300">
+          Clé OneSignal pas encore enregistrée dans Supabase : dans le SQL Editor, requête à part, lance{" "}
+          <code className="font-mono">select vault.create_secret(&apos;ta clé OneSignal&apos;, &apos;onesignal_api_key&apos;);</code> (la même clé que le secret ONESIGNAL_API_KEY de GitHub).
+        </p>
+      )}
+      <div className="flex flex-wrap gap-2">
+        <button type="button" onClick={register} disabled={busy} className="rounded-full bg-accent px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
+          {busy ? "Activation…" : "Recevoir les alertes sur cet appareil"}
+        </button>
+        {status && status.devices.length > 0 && (
+          <button type="button" onClick={test} className="rounded-full glass-pill px-4 py-2 text-sm font-semibold text-heading ring-1 ring-inset ring-border">
+            Envoyer un test
+          </button>
+        )}
+      </div>
+      {info && <p className="mt-2 text-sm text-emerald-700 dark:text-emerald-400">{info}</p>}
+      {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {status && (
+        <>
+          <ul className="mt-3 divide-y divide-border">
+            {status.devices.map((d) => (
+              <li key={d.id} className="flex items-center gap-3 py-2 text-sm">
+                <span className="min-w-0 flex-1">
+                  <span className="font-semibold text-heading">{d.label}</span>
+                  {d.id === mine && <span className="ml-2 rounded-full bg-emerald-600/15 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">Cet appareil</span>}
+                  <span className="block text-xs text-muted">Inscrit le {day(d.created_at)}</span>
+                </span>
+                <button type="button" onClick={() => remove(d.id, d.label)} className="shrink-0 rounded-full px-3 py-1 text-xs font-semibold text-red-600 ring-1 ring-red-500/40 hover:bg-red-500/10 dark:text-red-400">
+                  Retirer
+                </button>
+              </li>
+            ))}
+            {status.devices.length === 0 && <li className="py-2 text-sm text-muted">Aucun appareil inscrit.</li>}
+          </ul>
+          <label className="mt-3 flex items-center justify-between gap-3 text-sm">
+            <span>
+              <span className="font-semibold text-heading">Aussi les « j&apos;aime »</span>
+              <span className="block text-xs text-muted">Regroupés : une alerte par article toutes les 15 minutes au plus.</span>
+            </span>
+            <input type="checkbox" checked={status.likes} onChange={(e) => likes(e.target.checked)} className="size-5 accent-accent" />
+          </label>
+        </>
+      )}
+    </Panel>
+  );
+}
+
 interface Community {
   error?: string;
-  players: { total: number; week: number; list: { pseudo: string; avatar: number; xp: number; role?: string | null; created_at: string; updated_at: string }[] };
+  players: { total: number; week: number; list: { pseudo: string; avatar: number; xp: number; role?: string | null; can_write?: boolean; created_at: string; updated_at: string }[] };
   dislikes: { total: number; top: { slug: string; n: number }[] };
 }
 
@@ -109,6 +233,14 @@ export function AdminCommunity({ password, titles }: { password: string; titles:
     // Ancienne version de la base (seul « Soutien » accepté) : les fichiers SQL n'ont pas été relancés.
     if (res === "REQUETE_INVALIDE" || /players_role_check/.test(String(res)))
       return setError("Ce badge n'est pas encore connu de la base : relance profiles.sql puis admin.sql dans Supabase (SQL Editor).");
+    if (res !== "ok") return setError(message(res));
+    load();
+  };
+
+  // Accès « Rédaction » : le joueur publie des articles depuis la page Rédaction, sans le mot de passe admin.
+  const setWriter = async (pseudo: string, on: boolean) => {
+    if (on && !confirm(`Autoriser ${pseudo} à publier des articles sur le site ? Tu pourras retirer cet accès et supprimer ses articles à tout moment.`)) return;
+    const res = await rpc<string>("admin_set_writer", { p_password: password, p_pseudo: pseudo, p_on: on }).catch((e) => (e as Error).message);
     if (res !== "ok") return setError(message(res));
     load();
   };
@@ -136,19 +268,39 @@ export function AdminCommunity({ password, titles }: { password: string; titles:
                       </span>
                     </span>
                     {!roleOf(p.pseudo) && (
-                      <select
-                        value={p.role ?? ""}
-                        onChange={(e) => setRole(p.pseudo, e.target.value)}
-                        aria-label={`Badge de ${p.pseudo}`}
-                        className="shrink-0 rounded-full border border-border bg-bg py-1 pl-3 pr-7 text-base font-semibold text-fg focus:border-accent focus:outline-none md:text-xs"
-                      >
-                        <option value="">Aucun badge</option>
-                        {PLAYER_ROLES.map((r) => (
-                          <option key={r} value={r}>
-                            {r}
-                          </option>
-                        ))}
-                      </select>
+                      <span className="flex shrink-0 flex-col items-end gap-1.5 sm:flex-row sm:items-center">
+                        <button
+                          type="button"
+                          aria-pressed={!!p.can_write}
+                          onClick={() => setWriter(p.pseudo, !p.can_write)}
+                          title={p.can_write ? "Peut publier des articles (toucher pour retirer)" : "Autoriser à publier des articles"}
+                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ${p.can_write ? "bg-accent text-white ring-accent" : "text-muted ring-border hover:text-heading"}`}
+                        >
+                          <Feather className="size-3.5" aria-hidden /> Rédaction
+                        </button>
+                        <select
+                          value={p.role ?? ""}
+                          onChange={(e) => setRole(p.pseudo, e.target.value)}
+                          aria-label={`Badge de ${p.pseudo}`}
+                          className="rounded-full border border-border bg-bg py-1 pl-3 pr-7 text-base font-semibold text-fg focus:border-accent focus:outline-none md:text-xs"
+                        >
+                          <option value="">Aucun badge</option>
+                          <optgroup label="Badges">
+                            {CLASSIC_ROLES.map((r) => (
+                              <option key={r} value={r}>
+                                {r}
+                              </option>
+                            ))}
+                          </optgroup>
+                          <optgroup label="Néon (cyberpunk)">
+                            {CYBER_ROLES.map((r) => (
+                              <option key={r} value={r}>
+                                {r}
+                              </option>
+                            ))}
+                          </optgroup>
+                        </select>
+                      </span>
                     )}
                   </li>
                 );

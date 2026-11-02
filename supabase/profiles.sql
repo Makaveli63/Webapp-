@@ -11,10 +11,15 @@ create table if not exists public.players (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
--- Badge attribué par l'admin (« Soutien », « VIP »…), affiché à côté du pseudo.
+-- Badge attribué par l'admin (« Soutien », « VIP », « Netrunner »…), affiché à côté du pseudo.
+-- Liste de référence (même liste que PLAYER_ROLES dans src/lib/player.ts) : admin_set_role s'appuie dessus.
 alter table public.players add column if not exists role text;
 alter table public.players drop constraint if exists players_role_check;
-alter table public.players add constraint players_role_check check (role is null or role in ('Soutien', 'VIP', 'Modérateur', 'Rédacteur', 'Testeur', 'Streamer', 'Partenaire', 'Légende'));
+alter table public.players add constraint players_role_check check (role is null or role in (
+  'Soutien', 'VIP', 'Modérateur', 'Rédacteur', 'Testeur', 'Streamer', 'Partenaire', 'Légende',
+  'Netrunner', 'Edgerunner', 'Fixer', 'Techie', 'Nomade', 'Solo', 'Corpo', 'Chromé'));
+-- Rédacteur autorisé par l'admin : peut publier des articles depuis la page Rédaction, sans le mot de passe admin.
+alter table public.players add column if not exists can_write boolean not null default false;
 alter table public.players enable row level security;
 revoke all on public.players from anon, authenticated;
 
@@ -59,7 +64,7 @@ end $$;
 create or replace function public.get_player(p_voter text)
 returns json
 language sql stable security definer set search_path = public, extensions as $$
-  select json_build_object('pseudo', pseudo, 'avatar', avatar, 'xp', xp, 'role', role) from public.players where voter = p_voter
+  select json_build_object('pseudo', pseudo, 'avatar', avatar, 'xp', xp, 'role', role, 'can_write', can_write) from public.players where voter = p_voter
 $$;
 
 -- Niveau, avatar et badge des auteurs d'une liste de commentaires : { "kenji": { "xp": 120, "avatar": 2, "role": null } }.

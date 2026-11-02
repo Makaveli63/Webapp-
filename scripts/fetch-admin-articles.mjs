@@ -80,7 +80,8 @@ async function main() {
         score: typeof r.score === "string" && /^\d{1,2}([,.]\d)?\/(5|10|20|100)$/.test(r.score) ? r.score.replace(".", ",") : undefined,
         tags: ["GamingBase"],
         platforms: (Array.isArray(r.platforms) ? r.platforms : []).filter((p) => PLATFORMS.includes(p)).slice(0, 4),
-        author: "Makaveli63",
+        // Article d'un rédacteur (page Rédaction) : signé de son pseudo ; sinon de l'admin.
+        author: typeof r.author === "string" && /^[\p{L}\p{N}_.-]{3,20}$/u.test(r.author) ? r.author : "Makaveli63",
         publishedAt: new Date(Date.parse(r.created_at) || Date.now()).toISOString(),
         source: { name: "GamingBase", url: `${SITE}/` },
         image: typeof r.image === "string" && r.image.startsWith("https://") ? r.image : undefined,

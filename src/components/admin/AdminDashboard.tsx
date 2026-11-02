@@ -8,7 +8,7 @@ import { setPageGlow } from "@/lib/background";
 import { ADMIN_ERRORS, ADMIN_SESSION_KEY, rpc, setAdminDevice, socialEnabled, timeAgo, voterId } from "@/lib/social";
 import { AdminArticles } from "./AdminArticles";
 import { AdminStatus } from "./AdminStatus";
-import { AdminCommunity, AdminDevices, AdminReleases, AdminSources, AdminSuggestions, deviceLabel } from "./AdminTools";
+import { AdminAlerts, AdminCommunity, AdminDevices, AdminReleases, AdminSources, AdminSuggestions, deviceLabel } from "./AdminTools";
 import { BarList, DailyChart, type DailyPoint } from "./charts";
 
 interface Stats {
@@ -290,6 +290,7 @@ export function AdminDashboard() {
       <AdminStatus />
       <AdminCommunity password={password} titles={titles} />
       <AdminSuggestions password={password} />
+      <AdminAlerts password={password} />
       <AdminDevices password={password} />
 
       <section className="rounded-xl glass p-4">

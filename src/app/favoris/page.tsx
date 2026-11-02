@@ -6,6 +6,7 @@ import { FavoritesList } from "@/components/news/FavoritesList";
 import { PinnedReleaseGrid } from "@/components/releases/PinnedReleaseGrid";
 import { PlayerCard } from "@/components/player/PlayerCard";
 import { SuggestShortcut } from "@/components/suggestions/SuggestShortcut";
+import { WriterShortcut } from "@/components/writer/WriterShortcut";
 import { getUpcomingReleases } from "@/lib/releases";
 
 export const metadata: Metadata = { title: "Mon espace" };
@@ -19,6 +20,7 @@ export default function FavoritesPage() {
       </header>
       <PlayerCard />
       <div className="grid gap-3">
+        <WriterShortcut />
         <LibraryShortcut />
         <Link href="/mon-calendrier" className="glass flex items-center gap-4 rounded-2xl p-4 hover:border-accent/60">
           <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-pink-500 text-white">

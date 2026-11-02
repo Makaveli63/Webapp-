@@ -28,7 +28,9 @@ const ERRORS: Record<string, string> = {
 /** Fichier SQL qui crée chaque fonction : le message d'erreur indique le bon fichier à exécuter. */
 const SQL_FILES: Record<string, string> = {
   track_view: "stats.sql", admin_set_password: "stats.sql", admin_stats: "stats.sql", admin_moderate: "stats.sql",
-  admin_set_notifications: "notifications.sql",
+  admin_set_notifications: "notifications.sql", admin_push_register: "notifications.sql", admin_push_remove: "notifications.sql",
+  admin_push_status: "notifications.sql", admin_push_likes: "notifications.sql", admin_push_test: "notifications.sql",
+  admin_set_writer: "admin.sql", writer_publish_article: "community.sql", writer_my_articles: "community.sql", writer_delete_article: "community.sql",
   sync_save: "extras.sql", sync_load: "extras.sql",
   toggle_dislike: "dislikes.sql", get_dislikes: "dislikes.sql",
   check_pseudo: "profiles.sql", save_player: "profiles.sql", merge_player: "profiles.sql",

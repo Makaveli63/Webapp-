@@ -46,6 +46,8 @@ export interface PlayerState {
   xp: number;
   /** Badge attribué par l'admin (« Soutien », « VIP »…, voir PLAYER_ROLES), lu sur le serveur */
   role?: string | null;
+  /** Autorisé par l'admin à publier des articles (page Rédaction), lu sur le serveur */
+  canWrite?: boolean;
   /** Jour (AAAA-MM-JJ, heure de Paris) → nombre de gains par action ce jour-là (seul le jour courant est gardé) */
   today: { day: string; counts: Partial<Record<XpAction, number>> };
   streak: { last: string; days: number };
@@ -87,7 +89,10 @@ export function levelOf(xp: number) {
  */
 const ROLES: Record<string, string> = { makaveli63: "Fondateur" };
 /** Badges que l'admin peut attribuer (même liste que la contrainte players_role_check de supabase/profiles.sql). */
-export const PLAYER_ROLES = ["Soutien", "VIP", "Modérateur", "Rédacteur", "Testeur", "Streamer", "Partenaire", "Légende"] as const;
+export const CLASSIC_ROLES = ["Soutien", "VIP", "Modérateur", "Rédacteur", "Testeur", "Streamer", "Partenaire", "Légende"] as const;
+/** Badges néon, style cyberpunk (jaune électrique, cyan, magenta, coins coupés). */
+export const CYBER_ROLES = ["Netrunner", "Edgerunner", "Fixer", "Techie", "Nomade", "Solo", "Corpo", "Chromé"] as const;
+export const PLAYER_ROLES = [...CLASSIC_ROLES, ...CYBER_ROLES] as const;
 export const roleOf = (pseudo: string | undefined | null): string | undefined => (pseudo ? ROLES[pseudo.trim().toLowerCase()] : undefined);
 
 export const titleOf = (level: number) => [...TITLES].reverse().find((t) => level >= t.from)!.name;
@@ -215,6 +220,7 @@ export function mergePlayers(a: Partial<PlayerState> | null, b: Partial<PlayerSt
     pseudo: lead.pseudo,
     avatar: lead.avatar,
     role: lead.role ?? x.role ?? y.role ?? null,
+    canWrite: !!(x.canWrite || y.canWrite),
     xp: Math.max(x.xp, y.xp),
     today,
     streak,
@@ -262,11 +268,13 @@ export async function playersLevels(pseudos: string[]): Promise<Record<string, {
  */
 export async function restorePlayer(): Promise<void> {
   if (!socialEnabled) return;
-  const r = await rpc<{ pseudo: string; avatar: number; xp: number; role?: string | null } | null>("get_player", { p_voter: voterId() }).catch(() => null);
+  const r = await rpc<{ pseudo: string; avatar: number; xp: number; role?: string | null; can_write?: boolean } | null>("get_player", { p_voter: voterId() }).catch(() => null);
   if (!r?.pseudo) return;
   const me = readPlayer();
-  if (!me.pseudo) write({ ...me, pseudo: r.pseudo, avatar: r.avatar, xp: Math.max(r.xp, me.xp), role: r.role ?? null });
-  else if ((me.role ?? null) !== (r.role ?? null)) write({ ...me, role: r.role ?? null });
+  const role = r.role ?? null;
+  const canWrite = !!r.can_write;
+  if (!me.pseudo) write({ ...me, pseudo: r.pseudo, avatar: r.avatar, xp: Math.max(r.xp, me.xp), role, canWrite });
+  else if ((me.role ?? null) !== role || !!me.canWrite !== canWrite) write({ ...me, role, canWrite });
   else return;
   emit(null);
 }

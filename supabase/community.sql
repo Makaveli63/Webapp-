@@ -1,5 +1,5 @@
 -- GamingBase : note des lecteurs, pronostics, badges, articles de l'admin et rapport hebdomadaire
--- À exécuter APRÈS schema.sql, stats.sql, notifications.sql et extras.sql. Ré-exécutable sans risque.
+-- À exécuter APRÈS schema.sql, stats.sql, notifications.sql, extras.sql et profiles.sql. Ré-exécutable sans risque.
 -- Pour le rapport hebdomadaire : Supabase → Database → Extensions → activer « pg_cron » avant de lancer ce fichier.
 
 -- ---------------------------------------------------------------- Note des lecteurs (sur 20)
@@ -115,6 +115,9 @@ create table if not exists public.admin_articles (
   body text not null check (char_length(body) between 20 and 20000),
   created_at timestamptz not null default now()
 );
+-- Auteur affiché (pseudo du rédacteur ; vide = l'admin) et appareil qui l'a publié (jamais renvoyé au site).
+alter table public.admin_articles add column if not exists author text;
+alter table public.admin_articles add column if not exists voter text;
 alter table public.admin_articles enable row level security;
 revoke all on public.admin_articles from anon, authenticated;
 
@@ -152,9 +155,76 @@ create or replace function public.get_published_articles()
 returns json
 language sql stable security definer set search_path = public, extensions as $$
   select coalesce(json_agg(t order by t.created_at desc), '[]'::json) from (
-    select id, title, category, platforms, score, image, body, created_at from admin_articles order by created_at desc limit 200
+    select id, title, category, platforms, score, image, body, author, created_at from admin_articles order by created_at desc limit 200
   ) t
 $$;
+
+-- ---------------------------------------------------------------- Rédacteurs (sans le mot de passe admin)
+-- L'admin autorise un joueur (tableau de bord → Joueurs inscrits → « Rédaction ») ; le joueur publie depuis
+-- la page Rédaction du site. Il est reconnu par l'identifiant aléatoire de son appareil (jamais affiché),
+-- comme pour ses « j'aime ». Il ne voit et ne supprime que ses propres articles. 10 articles par jour au plus.
+do $$ begin
+  if to_regclass('public.players') is not null then
+    alter table public.players add column if not exists can_write boolean not null default false;
+  end if;
+end $$;
+
+-- Pseudo du rédacteur autorisé sur cet appareil, sinon null.
+create or replace function public.gb_writer(p_voter text)
+returns text
+language plpgsql stable security definer set search_path = public, extensions as $$
+begin
+  if char_length(coalesce(p_voter, '')) not between 8 and 64 then return null; end if;
+  return (select pseudo from public.players where voter = p_voter and can_write);
+end $$;
+
+create or replace function public.writer_publish_article(
+  p_voter text, p_title text, p_category text, p_platforms text[], p_score text, p_image text, p_body text)
+returns text
+language plpgsql volatile security definer set search_path = public, extensions as $$
+declare
+  v_pseudo text := public.gb_writer(p_voter);
+begin
+  if v_pseudo is null then return 'ACCES_REFUSE'; end if;
+  if (select count(*) from admin_articles where voter = p_voter and created_at > now() - interval '1 day') >= 10 then
+    return 'TROP_DE_REQUETES';
+  end if;
+  if public.gb_is_offensive(p_title) or public.gb_is_offensive(p_body) then return 'PROPOS_INTERDITS'; end if;
+  insert into admin_articles (title, category, platforms, score, image, body, author, voter)
+  values (trim(p_title), p_category,
+          (select coalesce(array_agg(p), '{}') from unnest(coalesce(p_platforms, '{}')) p
+            where p in ('PC', 'PS5', 'Switch 2', 'Xbox', 'Mobile', 'Multi')),
+          nullif(trim(coalesce(p_score, '')), ''), nullif(trim(coalesce(p_image, '')), ''), trim(p_body), v_pseudo, p_voter);
+  if to_regprocedure('public.gb_notify(text,text,text,text)') is not null then
+    perform public.gb_notify('✍️ ' || v_pseudo || ' a publié un article', trim(p_title) || E'\n— en ligne à la prochaine mise à jour',
+      'https://makaveli63.github.io/Webapp-/admin/', 'memo');
+  end if;
+  return 'ok';
+exception when check_violation then
+  return 'ARTICLE_INVALIDE';
+end $$;
+
+-- Articles de ce rédacteur : { "pseudo": "…", "articles": [...] }, ou { "error": "ACCES_REFUSE" }.
+create or replace function public.writer_my_articles(p_voter text)
+returns json
+language plpgsql stable security definer set search_path = public, extensions as $$
+declare
+  v_pseudo text := public.gb_writer(p_voter);
+begin
+  if v_pseudo is null then return json_build_object('error', 'ACCES_REFUSE'); end if;
+  return json_build_object('pseudo', v_pseudo, 'articles', coalesce((
+    select json_agg(json_build_object('id', id, 'title', title, 'category', category, 'created_at', created_at) order by created_at desc)
+    from admin_articles where voter = p_voter), '[]'::json));
+end $$;
+
+create or replace function public.writer_delete_article(p_voter text, p_id uuid)
+returns text
+language plpgsql volatile security definer set search_path = public, extensions as $$
+begin
+  if public.gb_writer(p_voter) is null then return 'ACCES_REFUSE'; end if;
+  delete from admin_articles where id = p_id and voter = p_voter;
+  return 'ok';
+end $$;
 
 -- ---------------------------------------------------------------- Rapport hebdomadaire (lundi 9 h, via ntfy)
 create or replace function public.gb_weekly_report()
@@ -205,3 +275,7 @@ grant execute on function public.get_author_badges(text[]) to anon;
 grant execute on function public.admin_publish_article(text, text, text, text[], text, text, text) to anon;
 grant execute on function public.admin_delete_article(text, uuid) to anon;
 grant execute on function public.get_published_articles() to anon;
+revoke execute on function public.gb_writer(text) from anon, authenticated, public;
+grant execute on function public.writer_publish_article(text, text, text, text[], text, text, text) to anon;
+grant execute on function public.writer_my_articles(text) to anon;
+grant execute on function public.writer_delete_article(text, uuid) to anon;

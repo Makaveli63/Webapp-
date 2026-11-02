@@ -41,7 +41,7 @@ export function pushTag(p: PushPrefs): string {
 interface OneSignalApi {
   init: (o: Record<string, unknown>) => Promise<void>;
   Notifications: { permission: boolean; requestPermission: () => Promise<void> };
-  User: { addTag: (k: string, v: string) => void; PushSubscription: { optedIn?: boolean; optIn: () => Promise<void>; optOut: () => Promise<void> } };
+  User: { addTag: (k: string, v: string) => void; PushSubscription: { id?: string | null; optedIn?: boolean; optIn: () => Promise<void>; optOut: () => Promise<void> } };
 }
 type PushWindow = Window & { OneSignalDeferred?: ((os: OneSignalApi) => void)[] };
 
@@ -143,4 +143,22 @@ export async function savePushPrefs(prefs: PushPrefs) {
   if (!pushOn()) return;
   const OneSignal = await loadOneSignal();
   OneSignal.User.addTag("gb", pushTag(prefs));
+}
+
+/**
+ * Identifiant OneSignal de cet appareil, pour les alertes admin (tableau de bord → Alertes admin).
+ * Active d'abord les notifications si besoin : à appeler directement au toucher du bouton.
+ */
+export async function pushSubscriptionId(): Promise<string | null | "denied"> {
+  if (!pushOn() || Notification.permission !== "granted") {
+    if ((await enablePush(readPushPrefs())) === "denied") return "denied";
+  }
+  const OneSignal = await step("Démarrage", loadOneSignal);
+  // L'identifiant arrive quelques instants après l'abonnement.
+  for (let i = 0; i < 20; i++) {
+    const id = OneSignal.User.PushSubscription.id;
+    if (id) return id;
+    await new Promise((r) => setTimeout(r, 250));
+  }
+  return null;
 }
