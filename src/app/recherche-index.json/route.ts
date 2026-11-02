@@ -74,6 +74,11 @@ export async function GET() {
   for (const g of games) {
     const slug = gameSlug(g.title);
     if (pages.has(slug) && !g.note?.startsWith("Gratuit")) g.url = `/jeux/${slug}`;
+    // Jeu sans page dédiée (grande base RAWG) : fiche du site, RAWG cité en source.
+    else if (!g.anime && !g.note?.startsWith("Gratuit") && g.url && !g.url.startsWith("/")) {
+      g.source = g.url;
+      g.url = `/jeux/fiche?id=${encodeURIComponent(g.id)}`;
+    }
   }
   for (const g of await getGames()) {
     if (!seen.has(norm(g.title))) {

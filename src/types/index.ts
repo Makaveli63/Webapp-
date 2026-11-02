@@ -158,8 +158,10 @@ export interface SearchGame {
   date?: string;
   platforms: string[];
   image?: string;
-  /** Lien externe (fiche RAWG, Steam, boutique) ou page interne commençant par « / » */
+  /** Lien externe (boutique d'un jeu gratuit) ou page interne commençant par « / » */
   url?: string;
+  /** Fiche d'origine (RAWG), citée en source sur la fiche du site */
+  source?: string;
   rating?: number;
   video?: Video;
   note?: string;
