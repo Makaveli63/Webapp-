@@ -95,7 +95,7 @@ async function nintendoDeals() {
     docs.map((d) => {
       const now = Number(d.price_lowest_f ?? d.price_discounted_f);
       const before = Number(d.price_regular_f);
-      const url = typeof d.url === "string" && d.url.startsWith("/") ? `https://www.nintendo.com/fr-fr${d.url}` : undefined;
+      const url = typeof d.url === "string" && d.url.startsWith("/") ? `https://www.nintendo.com${d.url.startsWith("/fr-fr/") ? "" : "/fr-fr"}${d.url}` : undefined;
       return {
         id: `nintendo-${d.fs_id ?? d.nsuid_txt?.[0] ?? slug(String(d.title ?? ""))}`,
         title: clean(d.title, 120),
@@ -110,8 +110,47 @@ async function nintendoDeals() {
   );
 }
 
+/** Xbox : page publique « Jeux en promotion » de xbox.com (les données des jeux sont dans la page). */
+async function xboxBrowseDeals() {
+  const html = await getText("https://www.xbox.com/fr-FR/games/browse/DynamicChannel.GameDeals");
+  const m = html.match(/window\.__PRELOADED_STATE__\s*=\s*(\{[\s\S]*?\})\s*;?\s*<\/script>/);
+  if (DEBUG) console.log("[promos:debug] xbox page", html.length, !!m);
+  if (!m) return [];
+  const state = JSON.parse(m[1]);
+  const summaries = state?.core2?.products?.productSummaries ?? {};
+  const list = Object.values(summaries);
+  if (DEBUG) console.log("[promos:debug] xbox produit", JSON.stringify(list[0] ?? {}).slice(0, 1200));
+  return top(
+    list
+      .map((p) => {
+        const offers = (p?.specificPrices?.purchaseable ?? []).filter((o) => o?.listPrice < o?.msrp && !o?.eligibilityInfo);
+        const o = offers.sort((a, b) => a.listPrice - b.listPrice)[0];
+        if (!o || !p?.title || !p?.productId) return null;
+        const end = Date.parse(o.endDate);
+        return {
+          id: `xbox-${p.productId}`,
+          title: clean(p.title, 120),
+          store: "Xbox",
+          discount: Math.min(99, Math.round(o.discountPercentage || pct(o.listPrice, o.msrp))),
+          price: eur(o.listPrice),
+          oldPrice: eur(o.msrp),
+          image: https(p?.images?.superHeroArt?.url) ?? https(p?.images?.boxArt?.url) ?? https(p?.images?.poster?.url),
+          url: `https://www.xbox.com/fr-FR/games/store/${slug(p.title)}/${p.productId}`,
+          until: Number.isFinite(end) && end < Date.now() + 365 * 86_400_000 ? new Date(end).toISOString() : undefined,
+        };
+      })
+      .filter(Boolean),
+  );
+}
+
 /** Xbox : liste publique « Promotions » du Microsoft Store, puis fiches (titre, image, prix) par lots de 20. */
 async function xboxDeals() {
+  try {
+    const fromPage = await xboxBrowseDeals();
+    if (fromPage.length) return fromPage;
+  } catch (err) {
+    if (DEBUG) console.log(`[promos:debug] xbox page : ${err.message}`);
+  }
   const list = await getJson(
     "https://reco-public.rec.mp.microsoft.com/channels/Reco/V8.0/Lists/Computed/Deal?Market=FR&Language=fr&ItemTypes=Game&deviceFamily=Windows.Xbox&count=100&skipitems=0",
   );
@@ -158,8 +197,9 @@ async function xboxDeals() {
 async function playstationDeals() {
   const base = "https://store.playstation.com/fr-fr";
   const page = await getText(`${base}/pages/deals`);
-  const cats = [...new Set([...page.matchAll(/\/fr-fr\/category\/([0-9a-f-]{36})/g)].map((m) => m[1]))];
-  if (DEBUG) console.log("[promos:debug] ps categories", cats.slice(0, 8));
+  // Catégorie « Toutes les offres » connue, plus celles citées par la page.
+  const cats = [...new Set(["3f772501-f6f8-49b7-abac-874a88ca4897", ...[...page.matchAll(/category\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/g)].map((m) => m[1])])];
+  if (DEBUG) console.log("[promos:debug] ps page", page.length, (page.match(/<script/g) ?? []).length, "scripts", cats.slice(0, 8), page.slice(0, 300).replace(/\s+/g, " "));
   const found = new Map();
   const walk = (node) => {
     if (!node || typeof node !== "object") return;
@@ -189,7 +229,7 @@ async function playstationDeals() {
     for (const v of Object.values(node)) walk(v);
   };
   const scan = (html) => {
-    for (const m of html.matchAll(/<script[^>]*type="application\/json"[^>]*>([\s\S]*?)<\/script>/g)) {
+    for (const m of html.matchAll(/<script[^>]*(?:type="application\/json"|id="__NEXT_DATA__")[^>]*>([\s\S]*?)<\/script>/g)) {
       try {
         walk(JSON.parse(m[1]));
       } catch {}
@@ -199,7 +239,10 @@ async function playstationDeals() {
   for (const id of cats.slice(0, 3)) {
     if (found.size >= 60) break;
     try {
-      scan(await getText(`${base}/category/${id}/1`));
+      const html = await getText(`${base}/category/${id}/1`);
+      const before = found.size;
+      scan(html);
+      if (DEBUG) console.log(`[promos:debug] ps category ${id} : ${html.length} car., ${found.size - before} jeux`);
     } catch (err) {
       if (DEBUG) console.log(`[promos:debug] ps category ${id} : ${err.message}`);
     }

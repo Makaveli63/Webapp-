@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { getAnime } from "@/lib/anime";
-import { getDeals } from "@/lib/deals";
+import { allDeals } from "@/lib/deals";
 import { getFreeGames } from "@/lib/free-games";
 import { getGames } from "@/lib/games";
 import { getArticles } from "@/lib/news";
@@ -37,7 +37,7 @@ export async function GET() {
       games: (await getGames()).length,
       releases: getUpcomingReleases().length,
       free: getFreeGames().games.filter((g) => g.status === "now").length,
-      deals: getDeals().steam.length,
+      deals: allDeals().length,
       anime: getAnime().airing.length,
       animeUpcoming: getAnime().upcoming.length,
     },

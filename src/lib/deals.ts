@@ -14,10 +14,16 @@ const isDeal = (d: unknown): d is Deal => {
 export function getDeals(): DealsData {
   try {
     const data = JSON.parse(fs.readFileSync(FILE, "utf8")) as Partial<DealsData>;
-    return { updatedAt: data.updatedAt, steam: Array.isArray(data.steam) ? data.steam.filter(isDeal) : [] };
+    const list = (v: unknown) => (Array.isArray(v) ? v.filter(isDeal) : []);
+    return { updatedAt: data.updatedAt, steam: list(data.steam), playstation: list(data.playstation), xbox: list(data.xbox), nintendo: list(data.nintendo) };
   } catch {
-    return { steam: [] };
+    return { steam: [], playstation: [], xbox: [], nintendo: [] };
   }
+}
+
+/** Toutes les promos, toutes boutiques confondues (bibliothèque, fiches de jeu). */
+export function allDeals(d: DealsData = getDeals()): Deal[] {
+  return [...d.steam, ...d.playstation, ...d.xbox, ...d.nintendo];
 }
 
 const PROMO = /\b(promos?|promotions?|soldes|r[ée]ductions?|bons? plans?|prix (cass|bas)|black friday|french days|days of play|offres?)\b/i;

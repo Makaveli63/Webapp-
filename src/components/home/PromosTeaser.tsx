@@ -2,9 +2,14 @@ import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { DealCard } from "@/components/deals/DealCard";
 import { getDeals } from "@/lib/deals";
+import type { Deal } from "@/types";
 
 export function PromosTeaser() {
-  const deals = getDeals().steam.slice(0, 3);
+  // Une promo de chaque boutique à tour de rôle (la plus forte d'abord), pour ne pas montrer que du PC.
+  const d = getDeals();
+  const lists = [d.steam, d.playstation, d.xbox, d.nintendo].filter((l) => l.length);
+  const deals: Deal[] = [];
+  for (let i = 0; deals.length < 3 && lists.some((l) => l[i]); i++) for (const l of lists) if (l[i] && deals.length < 3) deals.push(l[i]);
   if (!deals.length) return null;
   return (
     <section aria-labelledby="promos-teaser">

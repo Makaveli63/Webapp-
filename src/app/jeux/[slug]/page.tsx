@@ -16,7 +16,7 @@ import { RemoteImage } from "@/components/ui/RemoteImage";
 import { ScoreBadge, scoreTier } from "@/components/ui/ScoreBadge";
 import { VideoPlayer } from "@/components/ui/VideoPlayer";
 import { on20 } from "@/lib/compare";
-import { getDeals } from "@/lib/deals";
+import { allDeals } from "@/lib/deals";
 import { formatDate } from "@/lib/format";
 import { aboutGame, getGames, testsOf } from "@/lib/games";
 import { synopsisOf } from "@/lib/synopses";
@@ -53,7 +53,7 @@ export default async function GamePage({ params }: Props) {
   const notes = tests.map((t) => on20(t.score!)).filter((n): n is number => n !== null);
   const pressAverage = notes.length ? notes.reduce((s, n) => s + n, 0) / notes.length : undefined;
   const news = articles.filter((a) => a.category !== "Test" && aboutGame(a.title, game)).slice(0, 6);
-  const deals = getDeals().steam.filter((d) => aboutGame(d.title, game));
+  const deals = allDeals().filter((d) => aboutGame(d.title, game));
   const upcoming = game.date ? Date.parse(`${game.date}T23:59:59Z`) > Date.now() : !!game.releaseAt;
   const theme = themeFor(game.title, game.platforms.filter((p): p is Platform => KNOWN.includes(p as Platform)));
   const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";

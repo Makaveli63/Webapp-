@@ -197,6 +197,9 @@ export interface Deal {
 export interface DealsData {
   updatedAt?: string;
   steam: Deal[];
+  playstation: Deal[];
+  xbox: Deal[];
+  nintendo: Deal[];
 }
 
 /** Anime (AniList) : en cours de diffusion ou à venir. */
