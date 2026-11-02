@@ -179,8 +179,8 @@ export default async function ArticlePage({ params }: Props) {
             </p>
             <p className="mt-1 text-muted">
               {article.aiSummary
-                ? `Résumé rédigé automatiquement par intelligence artificielle à partir de l'article de ${article.source.name}, qui peut contenir des imprécisions.`
-                : `Extrait publié par ${article.source.name} dans son flux d'actualités.`}{" "}
+                ? `${article.lang === "en" ? "Traduit et résumé" : "Résumé rédigé"} automatiquement par intelligence artificielle à partir de l'article ${article.lang === "en" ? "en anglais " : ""}de ${article.source.name}, qui peut contenir des imprécisions.`
+                : `Extrait publié par ${article.source.name} dans son flux d'actualités${article.lang === "en" ? " (en anglais : la traduction arrive à la prochaine mise à jour)" : ""}.`}{" "}
               L&apos;article original et ses illustrations appartiennent à leur éditeur.
             </p>
             {article.source.url && (

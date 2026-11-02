@@ -1,5 +1,11 @@
 [
   {
+    "name": "Bleeding Cool TCG",
+    "url": "https://bleedingcool.com/tag/trading-card-games/feed/",
+    "category": "TCG",
+    "lang": "en"
+  },
+  {
     "name": "Jeuxvideo.com",
     "url": "https://www.jeuxvideo.com/rss/rss.xml"
   },
@@ -77,11 +83,6 @@
     "category": "Comics"
   },
   {
-    "name": "Comicsblog",
-    "url": "https://www.comicsblog.fr/",
-    "category": "Comics"
-  },
-  {
     "name": "Pokécardex",
     "url": "https://www.pokecardex.com/",
     "category": "TCG"
@@ -90,5 +91,40 @@
     "name": "MTG France",
     "url": "https://www.mtgfrance.fr/",
     "category": "TCG"
+  },
+  {
+    "name": "Comicsblog",
+    "url": "https://www.comicsblog.fr/comicsblog.rss",
+    "category": "Comics"
+  },
+  {
+    "name": "DC Comics News",
+    "url": "https://dccomicsnews.com/feed/",
+    "category": "Comics",
+    "lang": "en"
+  },
+  {
+    "name": "Bleeding Cool",
+    "url": "https://bleedingcool.com/comics/feed/",
+    "category": "Comics",
+    "lang": "en"
+  },
+  {
+    "name": "PokéBeach",
+    "url": "https://www.pokebeach.com/feed",
+    "category": "TCG",
+    "lang": "en"
+  },
+  {
+    "name": "YGOPRODeck",
+    "url": "https://ygoprodeck.com/feed/",
+    "category": "TCG",
+    "lang": "en"
+  },
+  {
+    "name": "UVS Games",
+    "url": "https://uvsgames.com/all-news?format=rss",
+    "category": "TCG",
+    "lang": "en"
   }
 ]

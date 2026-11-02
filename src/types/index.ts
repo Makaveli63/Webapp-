@@ -52,6 +52,8 @@ export interface Article {
   gallery?: string[];
   /** Autres vidéos YouTube de l'article */
   clips?: string[];
+  /** Source en anglais : titre traduit et résumé rédigé en français */
+  lang?: "en";
   /** Résumé original rédigé automatiquement (IA) à partir de la source */
   aiSummary?: string;
   /** true si l'article provient d'un flux RSS externe */
