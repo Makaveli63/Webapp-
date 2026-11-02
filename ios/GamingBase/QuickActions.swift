@@ -10,7 +10,7 @@ enum QuickActions {
         if let feed = await FeedLoader.load() {
             let now = Date()
             let upcoming = feed.releases.filter { $0.date > now.addingTimeInterval(-86_400) }
-            let pinned = FeedLoader.pins.compactMap { id in upcoming.first { $0.id == id } }
+            let pinned = FeedLoader.pinnedUpcoming(feed, now: now) // triés par date de sortie
             for release in pinned.prefix(2) {
                 items.append(item(release.title, subtitle: "Épinglé · \(Countdown.long(to: release.date, now: now))",
                                   icon: "pin.fill", path: release.path))

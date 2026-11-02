@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { AppErrorReport } from "@/components/app/AppErrorReport";
 import { AppNotificationsToggle } from "@/components/app/AppNotificationsToggle";
 import { LiveActivityToggle } from "@/components/app/LiveActivityToggle";
 import { OpenLinksSetting } from "@/components/app/OpenLinksSetting";
@@ -20,6 +21,7 @@ export default function SettingsPage() {
         <h1 className="text-2xl font-extrabold text-heading sm:text-3xl">Réglages</h1>
         <p className="mt-2 text-muted">Notifications, synchronisation entre tes appareils, thème et couleur du site.</p>
       </header>
+      <AppErrorReport />
       <SuggestShortcut />
       <AppNotificationsToggle />
       <WebPushToggle />

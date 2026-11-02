@@ -58,21 +58,26 @@ export function MobileTabBar() {
   const [collapsed, setCollapsed] = useState(false);
   const nav = useRef<HTMLElement>(null);
 
-  // Défilement vers le bas : la barre se rétracte ; vers le haut (ou en haut de page) : elle revient.
+  // Défilement vers le bas : la barre se rétracte ; dès qu'on remonte (8 px suffisent) ou en haut de page : elle revient.
+  // Les événements sans mouvement (fréquents sur iPhone pendant un glissé lent) sont ignorés : avant, ils
+  // remettaient le compteur à zéro et la barre ne revenait qu'en haut de la page.
   useEffect(() => {
     let lastY = window.scrollY;
     let run = 0; // distance parcourue dans le même sens
     const onScroll = () => {
       const y = window.scrollY;
       const d = y - lastY;
+      if (d === 0) return;
       lastY = y;
       if (y < 80) {
         run = 0;
         return setCollapsed(false);
       }
-      run = Math.sign(d) === Math.sign(run) ? run + d : d;
+      // Rebond élastique en bas de page : ce n'est pas l'utilisateur qui remonte.
+      if (y > document.documentElement.scrollHeight - window.innerHeight) return;
+      run = d > 0 === run > 0 ? run + d : d;
       if (run > 30) setCollapsed(true);
-      else if (run < -30) setCollapsed(false);
+      else if (run < -8) setCollapsed(false);
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);

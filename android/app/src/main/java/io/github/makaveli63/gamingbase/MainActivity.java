@@ -3,6 +3,7 @@ package io.github.makaveli63.gamingbase;
 import android.Manifest;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -17,6 +18,10 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
+
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.Date;
 
 /**
  * Application GamingBase : le site en plein écran, sans barre d'adresse.
@@ -42,9 +47,45 @@ public class MainActivity extends Activity {
     private View fullscreenView;
     private WebChromeClient.CustomViewCallback fullscreenCallback;
 
+    // ---------- Rapport d'erreur (affiché une fois dans les Réglages du site, pour le copier) ----------
+
+    private static final String CRASH_PREFS = "crash";
+
+    /** Garde la dernière erreur (fermeture de l'appli, ou erreur rattrapée si fatal = false). */
+    static void recordError(Context ctx, Throwable e, boolean fatal) {
+        try {
+            StringWriter sw = new StringWriter();
+            e.printStackTrace(new PrintWriter(sw));
+            String text = (fatal ? "Fermeture de l'appli" : "Erreur rattrapée") + " · " + new Date() + " · Android " + Build.VERSION.RELEASE
+                    + " · " + Build.MANUFACTURER + " " + Build.MODEL + " · v" + BuildConfig.VERSION_NAME + "\n" + sw;
+            ctx.getApplicationContext().getSharedPreferences(CRASH_PREFS, MODE_PRIVATE).edit()
+                    .putString("last", text.length() > 6000 ? text.substring(0, 6000) : text).commit();
+        } catch (Throwable ignored) {
+            // rien de plus à faire
+        }
+    }
+
+    static String takeLastError(Context ctx) {
+        android.content.SharedPreferences sp = ctx.getApplicationContext().getSharedPreferences(CRASH_PREFS, MODE_PRIVATE);
+        String text = sp.getString("last", "");
+        if (!text.isEmpty()) sp.edit().remove("last").apply();
+        return text;
+    }
+
+    private static boolean crashHandlerSet;
+
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
+        if (!crashHandlerSet) {
+            crashHandlerSet = true;
+            Thread.UncaughtExceptionHandler previous = Thread.getDefaultUncaughtExceptionHandler();
+            Context app = getApplicationContext();
+            Thread.setDefaultUncaughtExceptionHandler((thread, e) -> {
+                recordError(app, e, true);
+                if (previous != null) previous.uncaughtException(thread, e);
+            });
+        }
         root = new FrameLayout(this);
         web = new WebView(this);
         root.addView(web, new FrameLayout.LayoutParams(
@@ -229,17 +270,28 @@ public class MainActivity extends Activity {
             reader = new NewsReader(this, new NewsReader.Listener() {
                 @Override
                 public void onState(int index, String state) {
-                    runOnUiThread(() -> web.evaluateJavascript(
-                            "window.dispatchEvent(new CustomEvent('gb-speak',{detail:{index:" + index + ",state:'" + state + "'}}))", null));
+                    toPage("window.dispatchEvent(new CustomEvent('gb-speak',{detail:{index:" + index + ",state:'" + state + "'}}))");
                 }
 
                 @Override
                 public void onVoices(String json) {
-                    runOnUiThread(() -> web.evaluateJavascript("window.dispatchEvent(new CustomEvent('gb-voices',{detail:" + json + "}))", null));
+                    toPage("window.dispatchEvent(new CustomEvent('gb-voices',{detail:" + json + "}))");
                 }
             });
         }
         return reader;
+    }
+
+    /** Message au site depuis n'importe quel fil (la synthèse vocale répond sur un fil à part). */
+    private void toPage(String js) {
+        runOnUiThread(() -> {
+            if (isDestroyed() || web == null) return;
+            try {
+                web.evaluateJavascript(js, null);
+            } catch (RuntimeException e) {
+                recordError(this, e, false);
+            }
+        });
     }
 
     @Override

@@ -36,7 +36,7 @@ function ReleaseCardBody({ release, pinned = false, compact = false }: { release
           <div className="pointer-events-auto flex shrink-0 items-center gap-2">
             {release.video && <TrailerButton video={release.video} title={release.title} iconOnly={compact || "mobile"} />}
             <FollowButton compact item={{ id: gameFollowId(release.title), kind: "game", title: release.title, href: `/jeux/${gameSlug(release.title)}/` }} titles={[release.short]} />
-            <PinButton id={release.id} title={release.title} />
+            <PinButton id={release.id} title={release.title} at={release.at} />
           </div>
         </div>
         {/* pt-14 : le titre ne remonte jamais sous la rangée de boutons ; l'image s'allonge si besoin. */}

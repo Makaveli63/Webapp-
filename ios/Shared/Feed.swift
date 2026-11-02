@@ -168,15 +168,21 @@ enum FeedLoader {
     /// Jeux épinglés dans l'app (📌), le plus récent en premier.
     static var pins: [String] { AppGroup.defaults?.stringArray(forKey: AppGroup.pinsKey) ?? [] }
 
-    /// Sortie à afficher : le jeu choisi dans le widget, sinon le plus récemment épinglé dans l'app,
-    /// sinon la grosse sortie la plus proche.
+    /// Jeux épinglés encore à venir (ou sortis aujourd'hui), le prochain à sortir en premier.
+    static func pinnedUpcoming(_ feed: Feed?, now: Date = Date()) -> [Feed.Release] {
+        guard let releases = feed?.releases else { return [] }
+        let ids = Set(pins)
+        return releases.filter { ids.contains($0.id) && $0.date > now.addingTimeInterval(-86_400) }.sorted { $0.date < $1.date }
+    }
+
+    /// Sortie à afficher : le jeu choisi dans le widget, sinon le jeu épinglé le plus proche de sa sortie,
+    /// sinon la grosse sortie la plus proche. Les jeux sortis depuis plus d'un jour sont ignorés.
     static func choose(_ feed: Feed?, preferred: String? = nil, now: Date = Date()) -> (release: Feed.Release, pinned: Bool)? {
         guard let releases = feed?.releases else { return nil }
         let upcoming = releases.filter { $0.date > now.addingTimeInterval(-86_400) }
-        for id in [preferred].compactMap({ $0 }) + pins {
-            if let r = upcoming.first(where: { $0.id == id }) { return (r, true) }
-        }
-        return upcoming.first.map { ($0, false) }
+        if let id = preferred, let r = upcoming.first(where: { $0.id == id }) { return (r, true) }
+        if let r = pinnedUpcoming(feed, now: now).first { return (r, true) }
+        return upcoming.min(by: { $0.date < $1.date }).map { ($0, false) }
     }
 }
 

@@ -31,6 +31,30 @@ final class AppBridge {
         this.ctx = activity.getApplicationContext();
     }
 
+    /**
+     * Action sur le fil de l'interface. Une erreur ici fermerait l'appli : elle est rattrapée et gardée
+     * pour le rapport d'erreur des Réglages.
+     */
+    private void ui(Runnable action) {
+        activity.runOnUiThread(() -> {
+            try {
+                action.run();
+            } catch (RuntimeException e) {
+                MainActivity.recordError(ctx, e, false);
+            }
+        });
+    }
+
+    /** Dernière erreur de l'appli (texte à copier), remise une seule fois ; vide s'il n'y en a pas. */
+    @JavascriptInterface
+    public String takeLastError() {
+        try {
+            return MainActivity.takeLastError(ctx);
+        } catch (RuntimeException e) {
+            return "";
+        }
+    }
+
     /** Réglages des notifications (plateformes, tests, mes jeux, résumé du soir). */
     @JavascriptInterface
     public void setNotificationPrefs(String json) {
@@ -45,12 +69,12 @@ final class AppBridge {
     /** Interrupteur « Notifications des nouveaux articles » du site. */
     @JavascriptInterface
     public void setNotifications(boolean on) {
-        activity.runOnUiThread(() -> activity.setNotifications(on));
+        ui(() -> activity.setNotifications(on));
     }
 
     @JavascriptInterface
     public void setLiveActivity(boolean on) {
-        activity.runOnUiThread(() -> activity.setLiveActivity(on));
+        ui(() -> activity.setLiveActivity(on));
     }
 
     @JavascriptInterface
@@ -105,7 +129,7 @@ final class AppBridge {
             }
             Intent send = new Intent(Intent.ACTION_SEND).setType("image/png").putExtra(Intent.EXTRA_STREAM, uri)
                     .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            activity.runOnUiThread(() -> activity.startActivity(Intent.createChooser(send, "Partager mon récap")));
+            ui(() -> activity.startActivity(Intent.createChooser(send, "Partager mon récap")));
             return true;
         } catch (Exception e) {
             return false;
@@ -116,20 +140,20 @@ final class AppBridge {
     @JavascriptInterface
     public void speak(String json) {
         if (json == null || json.length() > 100_000) return;
-        activity.runOnUiThread(() -> activity.reader().start(json));
+        ui(() -> activity.reader().start(json));
     }
 
     /** Réglages : voix françaises du téléphone (réponse par l'événement « gb-voices »). */
     @JavascriptInterface
     public void speakVoices() {
-        activity.runOnUiThread(() -> activity.reader().sendVoices());
+        ui(() -> activity.reader().sendVoices());
     }
 
     /** pause, resume, next, previous ou stop. */
     @JavascriptInterface
     public void speakControl(String cmd) {
         if (cmd == null || !cmd.matches("pause|resume|next|previous|stop")) return;
-        activity.runOnUiThread(() -> activity.reader().control(cmd));
+        ui(() -> activity.reader().control(cmd));
     }
 
     /** Les liens du site partagés par d'autres applis s'ouvrent-ils ici ? (avant Android 12 : Android propose l'appli) */
@@ -153,7 +177,7 @@ final class AppBridge {
         Uri app = Uri.parse("package:" + ctx.getPackageName());
         Intent intent = new Intent(Build.VERSION.SDK_INT >= 31 ? Settings.ACTION_APP_OPEN_BY_DEFAULT_SETTINGS : Settings.ACTION_APPLICATION_DETAILS_SETTINGS, app);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        activity.runOnUiThread(() -> {
+        ui(() -> {
             try {
                 activity.startActivity(intent);
             } catch (RuntimeException e) {
@@ -165,8 +189,13 @@ final class AppBridge {
     /** Épisodes cochés depuis le widget « Mes épisodes », remis au site une seule fois (JSON [{id, episode}]). */
     @JavascriptInterface
     public String takePendingEpisodes() {
-        String json = EpisodesWidget.takePending(ctx);
-        if (!"[]".equals(json)) WidgetData.refreshAll(ctx); // seulement s'il y avait des épisodes cochés
-        return json;
+        try {
+            String json = EpisodesWidget.takePending(ctx);
+            if (!"[]".equals(json)) WidgetData.refreshAll(ctx); // seulement s'il y avait des épisodes cochés
+            return json;
+        } catch (RuntimeException e) {
+            MainActivity.recordError(ctx, e, false);
+            return "[]";
+        }
     }
 }

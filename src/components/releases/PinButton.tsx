@@ -4,7 +4,7 @@ import { Pin } from "lucide-react";
 import { togglePin, usePins } from "@/lib/pins";
 
 /** Épingle un compte à rebours : il passe en tête des listes et dans le bandeau. */
-export function PinButton({ id, title, className = "" }: { id: string; title: string; className?: string }) {
+export function PinButton({ id, title, at, className = "" }: { id: string; title: string; at?: string; className?: string }) {
   const pins = usePins();
   const pinned = !!pins?.includes(id);
   return (
@@ -13,7 +13,7 @@ export function PinButton({ id, title, className = "" }: { id: string; title: st
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
-        togglePin(id);
+        togglePin(id, at);
       }}
       aria-pressed={pinned}
       aria-label={pinned ? `Désépingler ${title}` : `Épingler ${title}`}

@@ -7,6 +7,13 @@
     <!-- Android 16 : affichage du compte à rebours en « Live Update » -->
     <uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS" />
 
+    <!-- Android 11+ : sans cette déclaration, l'appli ne voit pas le moteur de synthèse vocale du téléphone
+         (« Écouter les actus » et la liste des voix des Réglages). -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+    </queries>
     <application
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"

@@ -1,7 +1,8 @@
 "use client";
 
 import { isMuted, useMuted } from "@/lib/muted";
-import { pinnedFirst, usePins } from "@/lib/pins";
+import { useEffect } from "react";
+import { pinnedFirst, syncPinDates, usePins } from "@/lib/pins";
 import type { Release } from "@/types";
 import { ReleaseCard } from "./ReleaseCard";
 
@@ -21,6 +22,8 @@ export function PinnedReleaseGrid({
 }) {
   const pins = usePins();
   const muted = useMuted();
+  // Dates des épingles complétées, jeux sortis désépinglés (liste complète des sorties à venir).
+  useEffect(() => syncPinDates(releases, onlyPinned), [releases, onlyPinned]); // Mon espace : liste complète
   // Licences « Pas intéressé » retirées (sans laisser de trou dans le carrousel).
   const visible = releases.filter((r) => !isMuted(r.title, muted));
   const list = onlyPinned ? visible.filter((r) => pins?.includes(r.id)) : pinnedFirst(visible, pins);

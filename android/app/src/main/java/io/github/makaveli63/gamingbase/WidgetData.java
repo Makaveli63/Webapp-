@@ -73,6 +73,7 @@ final class WidgetData {
 
     /**
      * Sortie à afficher : la plus récemment épinglée encore à venir, sinon la plus proche.
+     * Jeu épinglé le plus proche de sa sortie (les jeux sortis depuis plus d'un jour sont ignorés).
      * Renvoie null s'il n'y a aucune sortie ; « pinned » indique si elle vient d'une épingle.
      */
     static JSONObject chooseRelease(Context ctx, JSONObject data, boolean[] pinned) {
@@ -80,15 +81,19 @@ final class WidgetData {
         if (releases == null) return null;
         long now = System.currentTimeMillis();
         try {
+            // Parmi les jeux épinglés pas encore sortis (ou sortis aujourd'hui) : le prochain à sortir.
             JSONArray pins = new JSONArray(pinsJson(ctx));
+            JSONObject best = null;
             for (int p = 0; p < pins.length(); p++) {
                 for (int i = 0; i < releases.length(); i++) {
                     JSONObject r = releases.optJSONObject(i);
-                    if (r != null && pins.optString(p).equals(r.optString("id")) && r.optLong("atMs") > now - 86_400_000L) {
-                        if (pinned != null) pinned[0] = true;
-                        return r;
-                    }
+                    if (r != null && pins.optString(p).equals(r.optString("id")) && r.optLong("atMs") > now - 86_400_000L
+                            && (best == null || r.optLong("atMs") < best.optLong("atMs"))) best = r;
                 }
+            }
+            if (best != null) {
+                if (pinned != null) pinned[0] = true;
+                return best;
             }
         } catch (Exception ignored) {
             // épingles illisibles : sortie la plus proche

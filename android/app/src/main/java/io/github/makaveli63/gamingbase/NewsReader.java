@@ -38,14 +38,29 @@ final class NewsReader {
 
     NewsReader(MainActivity activity, Listener listener) {
         this.listener = listener;
-        tts = new TextToSpeech(activity.getApplicationContext(), status -> {
-            ready = status == TextToSpeech.SUCCESS;
+        try {
+            // Sans moteur de synthèse vocale, Android peut appeler onInit pendant ce constructeur, avant que
+            // « tts » soit rempli : onInit le vérifie. Toute erreur ici laisse le lecteur hors service sans fermer l'appli.
+            tts = new TextToSpeech(activity.getApplicationContext(), this::onInit);
+        } catch (RuntimeException e) {
+            MainActivity.recordError(activity, e, false);
+            tts = null;
+            failed = true;
+        }
+    }
+
+    private boolean failed;
+
+    private void onInit(int status) {
+        try {
+            ready = status == TextToSpeech.SUCCESS && tts != null;
             if (!ready) {
+                failed = true;
                 listener.onState(-1, "error");
+                if (voicesWanted) sendVoices(); // liste vide : les Réglages n'attendent pas indéfiniment
                 return;
             }
             tts.setLanguage(Locale.FRANCE);
-            if (voicesWanted) sendVoices();
             tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
                 @Override
                 public void onStart(String id) {
@@ -63,29 +78,36 @@ final class NewsReader {
                     listener.onState(index, "error");
                 }
             });
+            if (voicesWanted) sendVoices();
             if (index >= 0) play(index);
-        });
+        } catch (RuntimeException e) {
+            ready = false;
+            failed = true;
+            listener.onState(-1, "error");
+        }
     }
 
     /** Voix françaises, les plus naturelles d'abord (qualité « très haute », puis sur l'appareil). */
     private List<Voice> frenchVoices() {
         List<Voice> out = new ArrayList<>();
+        if (tts == null) return out;
         try {
             for (Voice v : tts.getVoices()) {
-                if (v.getLocale() != null && "fr".equals(v.getLocale().getLanguage()) && !v.getFeatures().contains("notInstalled")) out.add(v);
+                if (v != null && v.getLocale() != null && v.getName() != null && "fr".equals(v.getLocale().getLanguage())
+                        && (v.getFeatures() == null || !v.getFeatures().contains("notInstalled"))) out.add(v);
             }
+            Collections.sort(out, (a, b) -> a.getQuality() != b.getQuality() ? b.getQuality() - a.getQuality()
+                    : a.isNetworkConnectionRequired() != b.isNetworkConnectionRequired() ? (a.isNetworkConnectionRequired() ? 1 : -1)
+                    : a.getName().compareTo(b.getName()));
         } catch (Exception ignored) {
-            // moteur sans liste de voix
+            // moteur sans liste de voix (ou liste incohérente) : on garde ce qu'on a
         }
-        Collections.sort(out, (a, b) -> a.getQuality() != b.getQuality() ? b.getQuality() - a.getQuality()
-                : a.isNetworkConnectionRequired() != b.isNetworkConnectionRequired() ? (a.isNetworkConnectionRequired() ? 1 : -1)
-                : a.getName().compareTo(b.getName()));
         return out;
     }
 
     void sendVoices() {
-        if (!ready) {
-            voicesWanted = true;
+        if (!ready && !failed) {
+            voicesWanted = true; // réponse dès que le moteur est prêt
             return;
         }
         voicesWanted = false;
@@ -125,11 +147,16 @@ final class NewsReader {
             // liste illisible : rien à lire
         }
         paused = false;
-        if (ready) play(0);
+        if (failed) listener.onState(-1, "error");
+        else if (ready) play(0);
         else index = 0;
     }
 
     void control(String cmd) {
+        if (tts == null) {
+            listener.onState(-1, "error");
+            return;
+        }
         switch (cmd) {
             case "pause":
                 paused = true;
@@ -154,7 +181,7 @@ final class NewsReader {
     }
 
     private void play(int i) {
-        if (!ready) return;
+        if (!ready || tts == null) return;
         if (i >= texts.size()) {
             stop();
             return;
