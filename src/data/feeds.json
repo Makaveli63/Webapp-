@@ -41,18 +41,21 @@
   {
     "name": "Superpouvoir",
     "url": "https://www.superpouvoir.com/feed/",
-    "category": "Comics"
+    "category": "Comics",
+    "strict": true
   },
   {
     "name": "Comicsblog",
     "url": "https://www.comicsblog.fr/comicsblog.rss",
-    "category": "Comics"
+    "category": "Comics",
+    "strict": true
   },
   {
     "name": "Bleeding Cool",
     "url": "https://bleedingcool.com/comics/feed/",
     "category": "Comics",
-    "lang": "en"
+    "lang": "en",
+    "strict": true
   },
   {
     "name": "Bleeding Cool Games (cartes)",
@@ -88,13 +91,15 @@
     "name": "CBR",
     "url": "https://www.cbr.com/feed/category/comics/",
     "category": "Comics",
-    "lang": "en"
+    "lang": "en",
+    "strict": true
   },
   {
     "name": "AIPT Comics",
     "url": "https://aiptcomics.com/feed/",
     "category": "Comics",
-    "lang": "en"
+    "lang": "en",
+    "strict": true
   },
   {
     "name": "The Beat",

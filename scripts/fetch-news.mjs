@@ -83,10 +83,13 @@ export const TCG_KEYWORDS =
 // sauf si le titre parle aussi d'un comic (numéro, BD, roman graphique, éditeur…).
 const SCREEN_KEYWORDS =
   /(\bs[ée]ries?\b|\bsaison\b|\bseason\b|[ée]pisodes?\b|\bfilms?\b|\bmovies?\b|\bcin[ée]ma\b|box[- ]office|bande[- ]annonce|\btrailer\b|\bteaser\b|\bcasting\b|\bcast\b|\bactor\b|\bactrice\b|\bacteur\b|showrunner|\bnetflix\b|\bhbo\b|disney\+|prime video|\bmax\b|apple tv|\bstreaming\b|\btv\b|t[ée]l[ée]vision|tournage|\bfilming\b|\bpremiere\b|\bavant-premi[èe]re\b|réalisateur|\bdirector\b|\bmcu\b|\bdcu\b|\bjeu vid[ée]o\b|video ?game|\bemmys?\b|\boscars?\b|golden globes?|\bc[ée]sar\b|\bsag awards?\b)/i;
+// Repères forts d'une actu comics (« preview », « writer », « cover »… seuls ne suffisent pas : ils servent aussi aux séries).
 const COMIC_MARKERS =
-  /(\bcomics?\b|#\s?\d+|\bissues?\b|\bbd\b|bande dessin[ée]e|roman graphique|graphic novel|\btome\b|\bvolume\b|\bomnibus\b|\bvariant\b|\bcover\b|couverture|\burban comics\b|\bpanini\b|image comics|\bidw\b|dark horse|boom! studios|\bdc comics\b|marvel comics|\bpreview\b|\bscénariste\b|\bdessinateur\b|\bwriter\b|\bartist\b)/i;
+  /(\bcomics?\b|#\s?\d+|\bissues?\b|\bbd\b|\bbds\b|bandes? dessin[ée]es?|romans? graphiques?|graphic novels?|\btome\b|\bomnibus\b|\bvariants?\b|couverture variante|\burban comics\b|panini comics|image comics|\bidw\b|dark horse|boom! studios|\bdc comics\b|marvel comics|\bsolicitations?\b|one-shot|\bannual\b|\bmanga\b|\bwebtoon\b|\bkickstarter\b|librairie|\bsc[ée]nariste\b|\bdessinateur|\bcoloriste\b|\bletterer\b|\bpencils?\b|\binker\b|\bartists?\b|\bdessin\b|\bintégrale\b|\bnuméro\b|\bcrossover\b)/i;
 /** Article de la rubrique Comics qui parle d'une série ou d'un film, pas d'un comic. */
 export const screenOnly = (text) => SCREEN_KEYWORDS.test(text) && !COMIC_MARKERS.test(text);
+/** Sources Comics qui couvrent aussi le cinéma et les séries (feeds.json « strict ») : seuls les articles avec un repère comics restent. */
+export const comicsOnly = (text, strict) => !screenOnly(text) && (!strict || COMIC_MARKERS.test(text));
 
 /** Rubriques à part (feeds.json « category ») : pas de plateforme de jeu, pas de note de test. */
 const SIDE_CATEGORIES = ["Anime", "Comics", "TCG"];
@@ -510,7 +513,7 @@ async function fetchFeed(feed) {
     // feeds.json « match »: "tcg" : flux général dont on ne garde que les articles sur les jeux de cartes.
     .filter(({ item }) => feed.match !== "tcg" || TCG_KEYWORDS.test(`${item.title} ${(item.categories ?? []).join(" ")}`))
     // Comics : pas de séries ni de films.
-    .filter(({ item }) => feed.category !== "Comics" || !screenOnly(`${item.title} ${(item.categories ?? []).filter((c) => typeof c === "string").join(" ")}`))
+    .filter(({ item }) => feed.category !== "Comics" || comicsOnly(`${item.title} ${(item.categories ?? []).filter((c) => typeof c === "string").join(" ")}`, feed.strict))
     .slice(0, MAX_ITEMS_PER_FEED)
     .map(({ item, link }) => {
       const title = clean(item.title, 200);
@@ -966,9 +969,11 @@ async function main() {
   // Fusion avec l'archive : les articles du jour remplacent leurs anciennes versions.
   const minArchive = Date.now() - ARCHIVE_DAYS * 86_400_000;
   const fresh = new Set(final.map((a) => a.slug));
+  const strictSources = new Set(feeds.filter((f) => f.strict).map((f) => f.name));
   const archived = readJson(ARCHIVE_FILE, [])
     .filter((a) => a?.slug && !fresh.has(a.slug) && Date.parse(a.publishedAt) >= minArchive)
-    .filter((a) => a.category !== "Comics" || !screenOnly(`${a.title} ${(a.tags ?? []).join(" ")}`)) // séries et films retirés des Comics
+    // Séries et films retirés des Comics (et, pour les sources mixtes, tout article sans repère comics).
+    .filter((a) => a.category !== "Comics" || comicsOnly(`${a.title} ${(a.tags ?? []).join(" ")}`, strictSources.has(a.source?.name)))
     .map((a) => (proofread[a.title] && proofread[a.title] !== a.title ? { ...a, title: proofread[a.title] } : a))
     .map((a) => (a.category === "Test" && !a.score && scores[a.slug] ? { ...a, score: scores[a.slug] } : a))
     .map(withImage)
