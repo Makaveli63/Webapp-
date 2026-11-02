@@ -1,7 +1,7 @@
 import { LogoMark } from "@/components/ui/Logo";
 
 /**
- * Animation d'ouverture (≈ 2 s, CSS uniquement) : des éléments évoquant chaque plateforme,
+ * Animation d'ouverture (≈ 3,5 s, CSS uniquement ; un toucher la passe) : des éléments évoquant chaque plateforme,
  * l'anime, les comics et les cartes convergent vers le logo. Formes dessinées pour le site, aucun logo de marque.
  * Masquée après la première page vue (public/splash.js) et si l'animation est réduite.
  */

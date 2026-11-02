@@ -211,10 +211,10 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         root.addSubview(tabController.view)
         tabController.didMove(toParent: self)
         attachWebView(to: 0)
-        // Cachée pendant l'animation d'ouverture du site ; elle apparaît quand le site le signale (ou après 3,5 s).
+        // Cachée pendant l'animation d'ouverture du site ; elle apparaît quand le site le signale (ou après 6 s).
         // Masquage complet (isHidden) : la barre « Liquid Glass » d'iOS 26 ne respecte pas toujours la transparence.
         if #available(iOS 18.0, *) { tabController.isTabBarHidden = true } else { tabBar.isHidden = true }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) { [weak self] in self?.showTabBar() }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 6) { [weak self] in self?.showTabBar() }
         view = root
         Self.current = self
         removeKeyboardBar()

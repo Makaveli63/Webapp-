@@ -50,9 +50,12 @@ export function NativeTabsBridge() {
     accent();
     window.addEventListener("gb-theme-change", accent);
     const splashOn = document.documentElement.getAttribute("data-splash") !== "off" && !matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const timer = window.setTimeout(() => send({ tabsReady: true }), splashOn ? 2000 : 0);
+    const ready = () => send({ tabsReady: true });
+    const timer = window.setTimeout(ready, splashOn ? 3500 : 0);
+    window.addEventListener("gb-splash-skip", ready); // animation passée d'un toucher
     return () => {
       window.removeEventListener("gb-theme-change", accent);
+      window.removeEventListener("gb-splash-skip", ready);
       window.clearTimeout(timer);
     };
   }, []);

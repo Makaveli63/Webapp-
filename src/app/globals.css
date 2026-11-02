@@ -138,7 +138,7 @@ html[data-zen] .prose-article { max-width: 38rem; margin-inline: auto; line-heig
 .prose-article code { font-family: var(--font-mono); background: var(--surface-2); padding: 0.1em 0.35em; border-radius: 4px; font-size: 0.9em; }
 .prose-article blockquote { border-left: 3px solid var(--accent); padding-left: 1em; color: var(--muted); font-style: italic; }
 
-/* ---------- Animation d'ouverture (≈ 2 s) ---------- */
+/* ---------- Animation d'ouverture (≈ 3,5 s ; toucher l'écran la passe) ---------- */
 .splash {
   position: fixed;
   inset: 0;
@@ -147,8 +147,8 @@ html[data-zen] .prose-article { max-width: 38rem; margin-inline: auto; line-heig
   place-items: center;
   overflow: hidden;
   background: radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--accent) 22%, var(--bg)), var(--bg) 65%);
-  pointer-events: none;
-  animation: splash-out 2.1s ease-in forwards;
+  pointer-events: auto; /* un toucher passe l'animation (public/splash.js) sans cliquer la page dessous */
+  animation: splash-out 3.6s ease-in forwards;
 }
 html[data-splash="off"] .splash { display: none; }
 @media (prefers-reduced-motion: reduce) { .splash { display: none; } }
@@ -160,13 +160,13 @@ html[data-splash="off"] .splash { display: none; }
   opacity: 0;
 }
 /* Déclarations complètes : le minifieur CSS perd la durée si elle est séparée du nom. */
-.splash-ps   { animation: fly-ps 1.5s cubic-bezier(.2,.8,.2,1) 0s forwards; }
-.splash-xbox { animation: fly-xbox 1.5s cubic-bezier(.2,.8,.2,1) .06s forwards; }
-.splash-nin  { animation: fly-nin 1.5s cubic-bezier(.2,.8,.2,1) .12s forwards; }
-.splash-pc   { animation: fly-pc 1.5s cubic-bezier(.2,.8,.2,1) .18s forwards; }
-.splash-anime { animation: fly-anime 1.5s cubic-bezier(.2,.8,.2,1) .24s forwards; }
-.splash-comics { animation: fly-comics 1.5s cubic-bezier(.2,.8,.2,1) .09s forwards; }
-.splash-cards { animation: fly-cards 1.5s cubic-bezier(.2,.8,.2,1) .15s forwards; }
+.splash-ps   { animation: fly-ps 2.7s cubic-bezier(.2,.8,.2,1) 0s forwards; }
+.splash-xbox { animation: fly-xbox 2.7s cubic-bezier(.2,.8,.2,1) .1s forwards; }
+.splash-nin  { animation: fly-nin 2.7s cubic-bezier(.2,.8,.2,1) .2s forwards; }
+.splash-pc   { animation: fly-pc 2.7s cubic-bezier(.2,.8,.2,1) .3s forwards; }
+.splash-anime { animation: fly-anime 2.7s cubic-bezier(.2,.8,.2,1) .4s forwards; }
+.splash-comics { animation: fly-comics 2.7s cubic-bezier(.2,.8,.2,1) .15s forwards; }
+.splash-cards { animation: fly-cards 2.7s cubic-bezier(.2,.8,.2,1) .25s forwards; }
 
 /* Les symboles approchent, puis sont aspirés dans la manette du logo (--gb-in : centre du pictogramme). */
 .splash { --gb-in: 0px; }
@@ -227,12 +227,12 @@ html[data-splash="off"] .splash { display: none; }
   flex-direction: column;
   align-items: center;
   opacity: 0;
-  animation: logo-in .35s ease-out forwards;
+  animation: logo-in .5s ease-out forwards;
 }
 .splash-logo-icon {
   width: 112px;
   height: 112px;
-  animation: logo-pop 1.9s ease-out forwards;
+  animation: logo-pop 3.4s ease-out forwards;
   filter: drop-shadow(0 10px 30px color-mix(in srgb, var(--accent) 50%, transparent));
 }
 
@@ -248,7 +248,7 @@ html[data-splash="off"] .splash { display: none; }
   letter-spacing: -0.02em;
   color: var(--heading);
   opacity: 0;
-  animation: brand-in .6s ease-out .25s forwards;
+  animation: brand-in .8s ease-out .4s forwards;
 }
 @keyframes brand-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 .splash-by {
@@ -258,7 +258,7 @@ html[data-splash="off"] .splash { display: none; }
   letter-spacing: .06em;
   color: var(--muted);
   opacity: 0;
-  animation: by-in .7s cubic-bezier(.2, .9, .3, 1.2) .75s forwards;
+  animation: by-in .8s cubic-bezier(.2, .9, .3, 1.2) 1.3s forwards;
 }
 @keyframes by-in {
   from { opacity: 0; transform: translateY(14px) scale(.96); filter: blur(4px); letter-spacing: .3em; }
@@ -268,7 +268,7 @@ html[data-splash="off"] .splash { display: none; }
    l'animation part donc de cette image (logo déjà visible, en taille réelle) au lieu d'apparaître. */
 @media (display-mode: standalone) {
   .splash-logo { opacity: 1; animation: none; }
-  .splash-logo-icon { animation: logo-pop-still 1.9s ease-out forwards; }
+  .splash-logo-icon { animation: logo-pop-still 3.4s ease-out forwards; }
 }
 @keyframes logo-pop-still {
   0%, 54% { transform: scale(1); }
@@ -916,7 +916,7 @@ html[data-refract] .tab-lens-drag {
 }
 
 /* Pendant l'animation d'ouverture, la barre d'onglets du site (Android, navigateur) n'apparaît pas encore. */
-html:not([data-splash="off"]) .tabbar { animation: tabbar-in .4s ease-out 1.9s both; }
+html:not([data-splash="off"]) .tabbar { animation: tabbar-in .4s ease-out 3.4s both; }
 @keyframes tabbar-in { from { opacity: 0; transform: translateY(12px); } }
 @media (prefers-reduced-motion: reduce) { html .tabbar { animation: none; } html .tabbar, html .tabbar > ul, html .tabbar li, html .tabbar .tab-icon { transition: none !important; } }
 
