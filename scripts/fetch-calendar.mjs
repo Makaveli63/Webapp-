@@ -33,8 +33,20 @@ function httpsUrl(raw) {
   }
 }
 
+// RAWG en panne (délai dépassé, réseau) : on ne la rappelle plus de tout le build au lieu d'attendre 15 s à chaque requête.
+let rawgDown = false;
+
 async function get(url, as = "json") {
-  const res = await fetch(url, { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(15_000) });
+  const isRawg = url.startsWith(RAWG_BASE);
+  if (isRawg && rawgDown) throw new Error("RAWG injoignable pendant ce build");
+  let res;
+  try {
+    res = await fetch(url, { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(15_000) });
+  } catch (err) {
+    if (isRawg) rawgDown = true;
+    throw err;
+  }
+  if (isRawg && res.status >= 500) rawgDown = true;
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const body = await res.arrayBuffer();
   if (body.byteLength > MAX_BYTES) throw new Error("réponse trop volumineuse");
@@ -201,16 +213,34 @@ async function ogImage(pageUrl) {
   return httpsUrl(m?.[1] ? new URL(m[1], pageUrl).href : undefined);
 }
 
-async function releaseMedia() {
+/** Jaquette Steam (capsule officielle de la boutique) d'un jeu, si la boutique le connaît. */
+async function steamImage(title) {
+  const data = await get(`https://store.steampowered.com/api/storesearch/?term=${encodeURIComponent(title)}&l=french&cc=FR`);
+  const want = norm(title).slice(0, 12);
+  const hit = (data?.items ?? []).find((it) => norm(it.name).includes(want));
+  return hit?.id ? `https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${hit.id}/header.jpg` : undefined;
+}
+
+/** Résultat du build précédent : on garde ses visuels quand une source est en panne. */
+function previousCalendar() {
+  try {
+    return JSON.parse(readFileSync(OUT_FILE, "utf8"));
+  } catch {
+    return {};
+  }
+}
+
+async function releaseMedia(previous = {}) {
   // Grosses sorties datées et jeux annoncés sans date : même recherche de visuel et de bande-annonce.
   const releases = [...JSON.parse(readFileSync("src/data/releases.json", "utf8")), ...JSON.parse(readFileSync("src/data/announced.json", "utf8"))];
   const images = {};
   const videos = {};
   for (const r of releases) {
     let rawgId;
-    try {
-      let image = httpsUrl(r.image);
-      if (RAWG_KEY) {
+    // Chaque source est essayée à part : une panne de l'une ne prive pas des suivantes.
+    let image = httpsUrl(r.image);
+    if (RAWG_KEY) {
+      try {
         const data = await get(
           `${RAWG_BASE}/api/games?key=${encodeURIComponent(RAWG_KEY)}&search=${encodeURIComponent(r.title)}&search_precise=true&page_size=1`,
         );
@@ -219,12 +249,13 @@ async function releaseMedia() {
           rawgId = found.id;
           image ??= httpsUrl(found.background_image);
         }
-      }
-      if (!image) image = await ogImage(r.source);
-      if (image) images[r.id] = image;
-    } catch (err) {
-      console.log(`[sorties] visuel introuvable pour ${r.title} (${err.message})`);
+      } catch {}
     }
+    if (!image && r.source) image = await ogImage(r.source).catch(() => undefined);
+    if (!image) image = await steamImage(r.title).catch(() => undefined);
+    image ??= httpsUrl(previous.releaseImages?.[r.id]);
+    if (image) images[r.id] = image;
+    else console.log(`[sorties] visuel introuvable pour ${r.title}`);
     // Vidéo : YouTube vérifié d'abord, puis bande-annonce RAWG ; chaque étape peut échouer sans bloquer l'autre.
     let video;
     if (r.youtube) {
@@ -405,7 +436,8 @@ async function main() {
   } catch (err) {
     console.log(`[recherche] base de jeux indisponible (${err.message})`);
   }
-  const { images, videos } = await releaseMedia();
+  const previous = previousCalendar();
+  const { images, videos } = await releaseMedia(previous);
   let anticipated = [];
   if (RAWG_KEY) {
     try {
@@ -415,6 +447,9 @@ async function main() {
       console.log(`[sorties] jeux attendus indisponibles (${err.message})`);
     }
   }
+  // RAWG en panne : jeux attendus et base de jeux du build précédent plutôt que des listes vides.
+  if (!anticipated.length && Array.isArray(previous.anticipated)) anticipated = previous.anticipated;
+  if (!database.length && Array.isArray(previous.database)) database = previous.database;
   const photos = await consolePhotos();
   console.log(`[sorties] photos libres des consoles : ${Object.keys(photos).join(", ") || "aucune"}`);
   console.log(
