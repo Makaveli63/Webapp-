@@ -98,7 +98,9 @@ jobs:
       - name: Vérifier que les pages s'affichent sans erreur
         run: |
           npm install --no-save --ignore-scripts playwright@1.63.0
-          npx playwright install --with-deps chromium
+          # Les miroirs Ubuntu tombent parfois : 4 min max pour les paquets système, sinon Chromium seul
+          # (les bibliothèques nécessaires sont déjà présentes sur les machines GitHub).
+          timeout 240 npx playwright install --with-deps chromium || npx playwright install chromium
           node scripts/smoke.mjs
         env:
           NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}
