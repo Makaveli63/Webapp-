@@ -12,7 +12,7 @@
     "canvas-confetti": "^1.9.4",
     "lucide-react": "^1.61.0",
     "marked": "^18.1.2",
-    "next": "15.5.28",
+    "next": "15.5.29",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "rss-parser": "^3.13.0",
